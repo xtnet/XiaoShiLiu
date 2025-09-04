@@ -660,7 +660,10 @@ const loadImageDirectly = (imgElement, src) => {
     const timeout = setTimeout(() => {
         img.onload = null
         img.onerror = null
-        imgElement.src = new URL('@/assets/imgs/未加载.png', import.meta.url).href
+        // 根据图片类型选择不同的占位图
+        const isAvatar = imgElement.classList.contains('lazy-avatar')
+        const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
+        imgElement.src = new URL(placeholderImg, import.meta.url).href
         imgElement.alt = '图片加载超时'
         imgElement.style.opacity = '1'
         imgElement.style.visibility = 'visible'
@@ -678,7 +681,10 @@ const loadImageDirectly = (imgElement, src) => {
 
     img.onerror = () => {
         clearTimeout(timeout)
-        imgElement.src = new URL('@/assets/imgs/未加载.png', import.meta.url).href
+        // 根据图片类型选择不同的占位图
+        const isAvatar = imgElement.classList.contains('lazy-avatar')
+        const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
+        imgElement.src = new URL(placeholderImg, import.meta.url).href
         imgElement.alt = '图片加载失败'
         imgElement.style.opacity = '1'
         imgElement.style.visibility = 'visible'
@@ -854,6 +860,13 @@ function handleAvatarError(event) {
     })
 }
 
+// 处理封面图加载失败
+function handleImageError(event) {
+    import('@/assets/imgs/未加载.png').then(module => {
+        event.target.src = module.default
+    })
+}
+
 
 </script>
 <template>
@@ -900,7 +913,7 @@ function handleAvatarError(event) {
                     <div class="item-content" :class="{ 'content-hidden': !isItemFullyLoaded(item.id) }">
                         <div class="content-img" @click="onCardClick(item, $event)">
                             <img v-img-lazy="item.image" alt="" class="lazy-image"
-                                @load="onImageLoaded(item.id, 'imageLoaded')">
+                                @error="handleImageError" @load="onImageLoaded(item.id, 'imageLoaded')">
                         </div>
                         <div class="content-title">{{ item.title }}</div>
                         <div class="contentlist">

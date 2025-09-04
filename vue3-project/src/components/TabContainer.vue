@@ -36,10 +36,10 @@ const updateSlider = () => {
     nextTick(() => {
         const activeIndex = props.tabs.findIndex(tab => tab.id === activeId.value)
         if (activeIndex === -1 || !tabItems.value[activeIndex]) return
-        
+
         const tabRect = tabItems.value[activeIndex].getBoundingClientRect()
         const containerRect = containerRef.value.getBoundingClientRect()
-        
+
         // 计算滑块相对于容器的位置
         sliderLeft.value = tabRect.left - containerRect.left
         sliderWidth.value = tabRect.width
