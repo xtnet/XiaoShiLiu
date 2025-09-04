@@ -141,7 +141,7 @@ router.get('/', optionalAuth, async (req, res) => {
            LEFT JOIN users u ON p.user_id = u.id
            ${keywordWhereClause}
            GROUP BY t.id, t.name
-           ORDER BY count DESC
+           ORDER BY t.name ASC
            LIMIT 10`,
           keywordParams
         );
