@@ -1211,8 +1211,10 @@ const handleImageError = (event) => {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid var(--border-color-primary);
-  word-wrap: break-word;
+  word-wrap: break-word; 
+  word-break: break-all;
   vertical-align: top;
+  white-space: normal;
 }
 
 .data-table th {
