@@ -847,6 +847,13 @@ function onFadeInEnd(item) {
     }
 }
 
+// 处理头像加载失败
+function handleAvatarError(event) {
+    import('@/assets/imgs/avatar.png').then(module => {
+        event.target.src = module.default
+    })
+}
+
 
 </script>
 <template>
@@ -898,7 +905,7 @@ function onFadeInEnd(item) {
                         <div class="content-title">{{ item.title }}</div>
                         <div class="contentlist">
                             <img v-img-lazy="item.avatar" alt="" class="lazy-avatar clickable-avatar"
-                                @load="onImageLoaded(item.id, 'avatarLoaded')"
+                                @error="handleAvatarError" @load="onImageLoaded(item.id, 'avatarLoaded')"
                                 @click="onUserClick(item.author_account, $event)">
                             <div class="contentlist-name clickable-name"
                                 @click="onUserClick(item.author_account, $event)">
