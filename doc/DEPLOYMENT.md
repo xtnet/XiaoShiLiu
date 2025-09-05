@@ -32,11 +32,8 @@ cd XiaoShiLiu
 #### 2. 配置环境变量（可选）
 
 ```bash
-# 复制环境配置文件
-cp .env.docker .env
-
-# 编辑配置文件（可选）
-# 默认配置已经可以直接使用
+# 可选：如果你有自定义环境变量，可以创建 .env 文件
+# 本仓库未提供 .env.docker，若无特殊需求可直接跳过，使用 docker-compose.yml 中的默认值即可
 ```
 
 #### 3. 一键启动
@@ -48,6 +45,11 @@ cp .env.docker .env
 
 # 重新构建并启动
 .\deploy.ps1 -Build
+
+# 启动并灌装示例数据（可选）
+.\deploy.ps1 -Build -Seed
+# 或服务已启动后单独灌装
+.\deploy.ps1 -Seed
 
 # 查看服务状态
 .\deploy.ps1 -Status
@@ -134,8 +136,9 @@ docker-compose logs -f
 # 重启特定服务
 docker-compose restart backend
 
-# 进入容器
-docker-compose exec backend bash
+# 进入容器（alpine 镜像通常没有 bash，请使用 sh）
+docker-compose exec backend sh
+# 或进入 MySQL 客户端
 docker-compose exec mysql mysql -u root -p
 
 # 备份数据库
@@ -176,12 +179,22 @@ services:
 docker stats
 ```
 
-#### 3. 数据库连接失败
+#### 3. 数据库连接失败 / 灌装数据
 
-检查数据库服务是否正常启动：
+- 检查数据库服务是否正常启动：
 
 ```bash
 docker-compose logs mysql
+```
+
+- 灌装示例数据（Windows）：
+```powershell
+.\deploy.ps1 -Seed
+```
+
+- 灌装示例数据（手动执行）：
+```bash
+docker-compose exec -T backend node scripts/generate-data.js
 ```
 
 #### 4. 清理和重置
