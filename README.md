@@ -123,7 +123,7 @@
 - **VueUse** - Vue组合式工具库
 - **CropperJS** - 图片裁剪
 - **Vue3 Emoji Picker** - 表情选择器
-
+- **svg-captcha** - 验证码生成器
 </details>
 
 <details>
