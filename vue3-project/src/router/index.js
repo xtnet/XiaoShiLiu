@@ -18,6 +18,7 @@ import { getValidChannelPaths } from '@/config/channels'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
 import AdminLayout from '@/views/admin/AdminLayout.vue'
 import ApiDocs from '@/views/admin/ApiDocs.vue'
+import AdminMonitor from '@/views/admin/AdminMonitor.vue'
 import UserManagement from '@/views/admin/UserManagement.vue'
 import PostManagement from '@/views/admin/PostManagement.vue'
 import CommentManagement from '@/views/admin/CommentManagement.vue'
@@ -181,6 +182,11 @@ const router = createRouter({
           path: 'api-docs',
           name: 'admin_api_docs',
           component: ApiDocs
+        },
+        {
+          path: 'monitor',
+          name: 'admin_monitor',
+          component: AdminMonitor
         },
         {
           path: 'users',

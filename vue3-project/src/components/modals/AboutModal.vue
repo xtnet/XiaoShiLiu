@@ -8,7 +8,7 @@
             <img :src="logoUrl" alt="小石榴" class="about-logo" />
             <h2 class="about-title">关于小石榴</h2>
           </div>
-          <p class="version">v1.0.1</p>
+          <p class="version">v1.0.2</p>
         </div>
         <button class="close-btn" @click="closeModal">
           <SvgIcon name="close" />

@@ -1538,7 +1538,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
 .unread-dot {
   width: 8px;
   height: 8px;
-  background: var(--primary-color);
+  background: #fe2844;
   border-radius: 50%;
   position: absolute;
   top: 0;

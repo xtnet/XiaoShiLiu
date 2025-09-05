@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.0.1</span>
+        <span class="version">版本: v1.0.2</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-01</span>
+        <span class="update-time">更新时间: 2025-09-05</span>
       </div>
     </div>
 
@@ -728,7 +728,20 @@ const apiGroups = ref([
         path: '/api/tags',
         title: '获取所有标签',
         description: '获取所有标签列表',
-        expanded: false
+        expanded: false,
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "摄影",
+      "description": "摄影相关内容",
+      "use_count": 150,
+      "created_at": "2025-08-30T00:00:00.000Z"
+    }
+  ]
+}`
       },
       {
         method: 'GET',
@@ -738,12 +751,105 @@ const apiGroups = ref([
         expanded: false,
         params: [
           { name: 'limit', type: 'int', required: false, description: '返回数量，默认10' }
-        ]
+        ],
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "摄影",
+      "description": "摄影相关内容",
+      "use_count": 150,
+      "created_at": "2025-08-30T00:00:00.000Z"
+    }
+  ]
+}`
       }
     ]
   },
   {
-    name: '通知相关接口',
+    name: '统计相关接口',
+    apis: [
+      {
+        method: 'GET',
+        path: '/api/stats',
+        title: '获取系统统计信息',
+        description: '获取系统用户、笔记、评论、点赞等统计数据',
+        expanded: false,
+        example: `{
+  "code": 200,
+  "message": "获取统计信息成功",
+  "data": {
+    "users": 1250,
+    "posts": 3420,
+    "comments": 8750,
+    "likes": 15600
+  }
+}`
+      }
+    ]
+  },
+  {
+    name: '健康检查接口',
+    apis: [
+      {
+        method: 'GET',
+        path: '/api/health',
+        title: '健康检查',
+        description: '检查服务器运行状态和运行时间',
+        expanded: false,
+        example: `{
+  "code": 200,
+  "message": "OK",
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "uptime": 3600.5
+}`
+      }
+     ]
+   },
+   {
+     name: '监控管理接口',
+     apis: [
+       {
+         method: 'GET',
+         path: '/api/admin/monitor/activities',
+         title: '获取系统活动监控',
+         description: '获取系统活动监控数据，包括新用户、新笔记、新评论、新点赞等统计',
+         expanded: false,
+         params: [
+           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+           { name: 'date_from', type: 'string', required: false, description: '开始日期（YYYY-MM-DD）' },
+           { name: 'date_to', type: 'string', required: false, description: '结束日期（YYYY-MM-DD）' },
+           { name: 'activity_type', type: 'string', required: false, description: '活动类型筛选' }
+         ],
+         example: `{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "activities": [
+      {
+        "date": "2025-01-15",
+        "new_users": 25,
+        "new_posts": 120,
+        "new_comments": 350,
+        "new_likes": 890
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 30,
+      "pages": 2
+    }
+  }
+}`
+       }
+     ]
+   },
+   {
+     name: '通知相关接口',
     apis: [
       {
         method: 'GET',
@@ -2076,5 +2182,150 @@ mark {
 .example .code-block {
   background-color: #ffffff;
   border: 1px solid #dee2e6;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .docs-header {
+    padding: 20px 15px;
+  }
+
+  .docs-header h2 {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .docs-info {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .section-content {
+    padding: 20px 15px;
+  }
+
+  .docs-section h3 {
+    padding: 15px 15px;
+    font-size: 18px;
+  }
+
+  .api-group h4 {
+    padding: 12px 15px;
+    font-size: 16px;
+  }
+
+  .api-header {
+    padding: 12px 15px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .path {
+    min-width: auto;
+    font-size: 12px;
+    word-break: break-all;
+    flex: 1;
+    margin-right: 8px;
+  }
+
+  .title {
+    font-size: 14px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .method {
+    font-size: 10px;
+    padding: 3px 6px;
+    min-width: 50px;
+    margin-right: 8px;
+  }
+
+  .api-details {
+    padding: 15px;
+  }
+
+  .params-table,
+  .status-table {
+    font-size: 12px;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .params-table th,
+  .params-table td,
+  .status-table th,
+  .status-table td {
+    padding: 6px 8px;
+  }
+
+  .code-block {
+    font-size: 12px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  .sticky-search {
+    top: 60px;
+    padding: 10px 15px;
+  }
+
+  .search-input {
+    font-size: 14px;
+    padding: 8px 40px 8px 40px;
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .clear-btn {
+    width: 18px;
+    height: 18px;
+  }
+
+  .clear-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .docs-header {
+    padding: 15px 10px;
+  }
+
+  .docs-header h2 {
+    font-size: 20px;
+  }
+
+  .section-content {
+    padding: 15px 10px;
+  }
+
+  .docs-section h3 {
+    padding: 12px 10px;
+    font-size: 16px;
+  }
+
+  .api-group h4 {
+    padding: 10px;
+    font-size: 15px;
+  }
+
+  .api-header {
+    padding: 10px;
+  }
+
+  .api-details {
+    padding: 10px;
+  }
+
+  .sticky-search {
+    padding: 8px 10px;
+  }
 }
 </style>

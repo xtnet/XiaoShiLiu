@@ -1563,4 +1563,101 @@ router.delete('/admins', adminAuth, adminsHandlers.deleteMany)
 router.get('/admins/:id', adminAuth, adminsHandlers.getOne)
 router.get('/admins', adminAuth, adminsHandlers.getList)
 
+// 监控页面API - 获取最近动态
+router.get('/monitor/activities', adminAuth, async (req, res) => {
+  try {
+    const activities = []
+
+    // 获取最近10个新注册用户
+    const [newUsers] = await pool.execute(
+      `SELECT id, user_id, nickname, avatar, created_at, 'user_register' as type
+       FROM users
+       ORDER BY created_at DESC
+       LIMIT ?`,
+      ['10']
+    )
+
+    // 获取最近10篇发布的笔记
+    const [newPosts] = await pool.execute(
+      `SELECT p.id, p.title, p.created_at, u.user_id, u.nickname, u.avatar, 'post_publish' as type
+       FROM posts p
+       LEFT JOIN users u ON p.user_id = u.id
+       WHERE p.is_draft = 0
+       ORDER BY p.created_at DESC
+       LIMIT ?`,
+      ['10']
+    )
+
+    // 获取最近10条评论
+    const [newComments] = await pool.execute(
+      `SELECT c.id, c.content, c.post_id, c.created_at, u.user_id, u.nickname, u.avatar, p.title as post_title, 'comment_publish' as type
+       FROM comments c
+       LEFT JOIN users u ON c.user_id = u.id
+       LEFT JOIN posts p ON c.post_id = p.id
+       ORDER BY c.created_at DESC
+       LIMIT ?`,
+      ['10']
+    )
+
+    // 合并所有动态
+    newUsers.forEach(user => {
+      activities.push({
+        id: `user_${user.id}`,
+        type: 'user_register',
+        user_id: user.user_id,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        title: `新用户注册`,
+        content: `用户 ${user.nickname} (${user.user_id}) 注册了账号`,
+        target_id: user.id,
+        created_at: user.created_at
+      })
+    })
+
+    newPosts.forEach(post => {
+      activities.push({
+        id: `post_${post.id}`,
+        type: 'post_publish',
+        user_id: post.user_id,
+        nickname: post.nickname,
+        avatar: post.avatar,
+        title: post.title,
+        content: `${post.nickname} 发布了笔记《${post.title}》`,
+        target_id: post.id,
+        created_at: post.created_at
+      })
+    })
+
+    newComments.forEach(comment => {
+      activities.push({
+        id: `comment_${comment.id}`,
+        type: 'comment_publish',
+        user_id: comment.user_id,
+        nickname: comment.nickname,
+        avatar: comment.avatar,
+        title: comment.post_title,
+        content: `${comment.nickname} 在《${comment.post_title}》中发表了评论：${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}`,
+        target_id: comment.post_id,
+        created_at: comment.created_at
+      })
+    })
+
+    // 按时间降序排序
+    activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    res.json({
+      code: 200,
+      message: '获取动态成功',
+      data: activities
+    })
+  } catch (error) {
+    console.error('获取监控动态失败:', error)
+    res.status(500).json({
+      code: 500,
+      message: '获取动态失败',
+      error: error.message
+    })
+  }
+})
+
 module.exports = router
