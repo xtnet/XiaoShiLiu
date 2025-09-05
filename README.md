@@ -12,8 +12,10 @@
 </p>
 <p align="center">
     <a href="https://github.com/ZTMYO/XiaoShiLiu/stargazers">
-        <img
-            src="https://img.shields.io/github/stars/ZTMYO/XiaoShiLiu?style=flat&logo=github&color=brightgreen&label=Stars">
+        <img src="https://img.shields.io/github/stars/ZTMYO/XiaoShiLiu?style=flat&logo=github&color=brightgreen&label=Stars">
+    </a>
+    <a href="https://gitee.com/ZTMYO/XiaoShiLiu/stargazers">
+        <img src="https://gitee.com/ZTMYO/XiaoShiLiu/badge/star.svg?theme=dark">
     </a>
     <a href="https://github.com/ZTMYO/XiaoShiLiu">
         <img
@@ -29,6 +31,7 @@
         src="https://img.shields.io/static/v1?&message=JavaScript&color=4f4f4f&logo=JavaScript&logoColor=F7DF1E&label=">
     </a>
 </p>
+
 
 
 
