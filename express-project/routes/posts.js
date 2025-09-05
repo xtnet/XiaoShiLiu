@@ -129,9 +129,6 @@ router.get('/', optionalAuth, async (req, res) => {
       query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
       queryParams = [isDraft.toString(), ...additionalParams, limit.toString(), offset.toString()];
     }
-
-    console.log('SQL Query:', query);
-    console.log('Query Params:', queryParams);
     const [rows] = await pool.execute(query, queryParams);
     
 
