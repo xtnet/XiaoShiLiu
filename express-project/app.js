@@ -4,8 +4,8 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description 基于Express框架的图文社区后端API服务
- * @version 1.0.0
- * @license MIT
+ * @version 1.0.2
+ * @license GPLv3
  */
 
 const express = require('express');
@@ -47,9 +47,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 健康检查路由
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    code: 200, 
-    message: 'OK', 
+  res.status(200).json({
+    code: 200,
+    message: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -66,7 +66,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/admin', adminRoutes); 
+app.use('/api/admin', adminRoutes);
 
 // 错误处理中间件
 app.use((err, req, res, next) => {
