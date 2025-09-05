@@ -1,5 +1,5 @@
 # 多阶段构建：构建阶段
-FROM node:18-alpine as build-stage
+FROM node:18-alpine AS build-stage
 
 # 设置工作目录
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # 生产阶段：使用nginx服务静态文件
-FROM nginx:alpine as production-stage
+FROM nginx:alpine AS production-stage
 
 # 复制构建产物到nginx目录
 COPY --from=build-stage /app/dist /usr/share/nginx/html

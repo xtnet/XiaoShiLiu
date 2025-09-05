@@ -38,7 +38,7 @@ const postsCrudConfig = {
     const { user_id, images, image_urls, tags } = data
 
     // 检查用户是否存在
-    const [userResult] = await pool.execute('SELECT id FROM users WHERE id = ?', [user_id])
+    const [userResult] = await pool.execute('SELECT id FROM users WHERE id = ?', [String(user_id)])
     if (userResult.length === 0) {
       throw new Error('用户不存在')
     }
@@ -118,7 +118,7 @@ const postsCrudConfig = {
           if (cleanUrl && !cleanUrl.startsWith('data:image/')) {
             await pool.execute(
               'INSERT INTO post_images (post_id, image_url) VALUES (?, ?)',
-              [postId, cleanUrl]
+              [String(postId), cleanUrl]
             )
           }
         }
@@ -141,14 +141,14 @@ const postsCrudConfig = {
           )
 
           if (existingTag.length > 0) {
-            tagId = existingTag[0].id
+            tagId = String(existingTag[0].id)
           } else {
             // 创建新标签
             const [tagResult] = await pool.execute(
               'INSERT INTO tags (name) VALUES (?)',
               [tagName]
             )
-            tagId = tagResult.insertId
+            tagId = String(tagResult.insertId)
           }
         } else {
           // 处理对象格式的标签（向后兼容）
@@ -163,13 +163,13 @@ const postsCrudConfig = {
             )
 
             if (existingTag.length > 0) {
-              tagId = existingTag[0].id
+              tagId = String(existingTag[0].id)
             } else {
               const [tagResult] = await pool.execute(
                 'INSERT INTO tags (name) VALUES (?)',
                 [tag.name]
               )
-              tagId = tagResult.insertId
+              tagId = String(tagResult.insertId)
             }
           }
         }
@@ -177,13 +177,13 @@ const postsCrudConfig = {
         // 关联笔记和标签
         await pool.execute(
           'INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)',
-          [postId, tagId]
+          [String(postId), String(tagId)]
         )
 
         // 更新标签使用次数
         await pool.execute(
           'UPDATE tags SET use_count = use_count + 1 WHERE id = ?',
-          [tagId]
+          [String(tagId)]
         )
       }
     }
@@ -211,7 +211,7 @@ const postsCrudConfig = {
     // 更新图片信息
     if (images !== undefined || image_urls !== undefined) {
       // 删除原有图片
-      await pool.execute('DELETE FROM post_images WHERE post_id = ?', [postId])
+      await pool.execute('DELETE FROM post_images WHERE post_id = ?', [String(postId)])
 
       // 使用Set来避免重复的图片URL
       const allImagesSet = new Set()
@@ -353,13 +353,13 @@ const postsCrudConfig = {
           // 关联笔记和标签
           await pool.execute(
             'INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)',
-            [postId, tagId]
+            [String(postId), String(tagId)]
           )
 
           // 更新标签使用次数
           await pool.execute(
             'UPDATE tags SET use_count = use_count + 1 WHERE id = ?',
-            [tagId]
+            [String(tagId)]
           )
         }
       }
@@ -371,12 +371,12 @@ const postsCrudConfig = {
     // 获取笔记关联的标签，减少标签使用次数
     const [tagResult] = await pool.execute(
       'SELECT tag_id FROM post_tags WHERE post_id = ?',
-      [id]
+      [String(id)]
     )
 
     // 减少标签使用次数
     for (const tag of tagResult) {
-      await pool.execute('UPDATE tags SET use_count = use_count - 1 WHERE id = ?', [tag.tag_id])
+      await pool.execute('UPDATE tags SET use_count = use_count - 1 WHERE id = ?', [String(tag.tag_id)])
     }
   },
 
@@ -387,12 +387,12 @@ const postsCrudConfig = {
     // 获取所有笔记关联的标签，减少标签使用次数
     const [tagResult] = await pool.execute(
       `SELECT tag_id FROM post_tags WHERE post_id IN (${placeholders})`,
-      ids
+      ids.map(id => String(id))
     )
 
     // 减少标签使用次数
     for (const tag of tagResult) {
-      await pool.execute('UPDATE tags SET use_count = use_count - 1 WHERE id = ?', [tag.tag_id])
+      await pool.execute('UPDATE tags SET use_count = use_count - 1 WHERE id = ?', [String(tag.tag_id)])
     }
   },
 
@@ -410,7 +410,7 @@ const postsCrudConfig = {
         FROM posts p
         LEFT JOIN users u ON p.user_id = u.id
         WHERE p.id = ?
-      `, [postId])
+      `, [String(postId)])
 
       if (postResult.length === 0) {
         return null
@@ -419,7 +419,7 @@ const postsCrudConfig = {
       const post = postResult[0]
 
       // 获取笔记图片
-      const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [postId])
+      const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [String(postId)])
       post.images = images.map(img => img.image_url)
 
       // 获取笔记标签
@@ -428,7 +428,7 @@ const postsCrudConfig = {
         FROM tags t 
         INNER JOIN post_tags pt ON t.id = pt.tag_id 
         WHERE pt.post_id = ?
-      `, [postId])
+      `, [String(postId)])
       post.tags = tags
 
       return post
@@ -498,11 +498,11 @@ const postsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [posts] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [posts] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       // 为每个笔记获取图片信息和标签信息
       for (let post of posts) {
-        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id])
+        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [String(post.id)])
         post.images = images.map(img => img.image_url)
 
         // 获取笔记标签
@@ -511,7 +511,7 @@ const postsCrudConfig = {
           FROM tags t 
           INNER JOIN post_tags pt ON t.id = pt.tag_id 
           WHERE pt.post_id = ?
-        `, [post.id])
+        `, [String(post.id)])
         post.tags = tags
       }
 
@@ -599,20 +599,20 @@ const commentsCrudConfig = {
     const { user_id, post_id, parent_id } = data
 
     // 检查用户是否存在
-    const [userResult] = await pool.execute('SELECT id FROM users WHERE id = ?', [user_id])
+    const [userResult] = await pool.execute('SELECT id FROM users WHERE id = ?', [String(user_id)])
     if (userResult.length === 0) {
       return { isValid: false, message: '用户不存在' }
     }
 
     // 检查笔记是否存在
-    const [postResult] = await pool.execute('SELECT id FROM posts WHERE id = ?', [post_id])
+    const [postResult] = await pool.execute('SELECT id FROM posts WHERE id = ?', [String(post_id)])
     if (postResult.length === 0) {
       return { isValid: false, message: '笔记不存在' }
     }
 
     // 如果是回复评论，检查父评论是否存在
     if (parent_id) {
-      const [parentResult] = await pool.execute('SELECT id FROM comments WHERE id = ?', [parent_id])
+      const [parentResult] = await pool.execute('SELECT id FROM comments WHERE id = ?', [String(parent_id)])
       if (parentResult.length === 0) {
         return { isValid: false, message: '父评论不存在' }
       }
@@ -684,7 +684,7 @@ const commentsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [comments] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [comments] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: comments,
@@ -849,7 +849,7 @@ const likesCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [likes] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [likes] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: likes,
@@ -945,7 +945,7 @@ const collectionsCrudConfig = {
     const { pool } = require('../config/database')
     const [existing] = await pool.execute(
       'SELECT id FROM collections WHERE user_id = ? AND post_id = ?',
-      [data.user_id, data.post_id]
+      [String(data.user_id), String(data.post_id)]
     )
     if (existing.length > 0) {
       return {
@@ -1023,7 +1023,7 @@ const collectionsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [collections] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [collections] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: collections,
@@ -1089,7 +1089,7 @@ const followsCrudConfig = {
     const { pool } = require('../config/database')
     const [existing] = await pool.execute(
       'SELECT id FROM follows WHERE follower_id = ? AND following_id = ?',
-      [data.follower_id, data.following_id]
+      [String(data.follower_id), String(data.following_id)]
     )
     if (existing.length > 0) {
       return {
@@ -1106,7 +1106,7 @@ const followsCrudConfig = {
     if (data.following_id) {
       // 获取当前记录的关注者ID
       const { pool } = require('../config/database')
-      const [current] = await pool.execute('SELECT follower_id FROM follows WHERE id = ?', [id])
+      const [current] = await pool.execute('SELECT follower_id FROM follows WHERE id = ?', [String(id)])
       if (current.length === 0) {
         return {
           isValid: false,
@@ -1178,7 +1178,7 @@ const followsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [follows] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [follows] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: follows,
@@ -1292,7 +1292,7 @@ const notificationsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [notifications] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [notifications] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: notifications,
@@ -1378,7 +1378,7 @@ const sessionsCrudConfig = {
 
       if (req.query.user_id) {
         whereClause += whereClause ? ' AND s.user_id = ?' : 'WHERE s.user_id = ?'
-        params.push(req.query.user_id)
+        params.push(String(req.query.user_id))
       }
 
       if (req.query.is_active !== undefined) {
@@ -1417,7 +1417,7 @@ const sessionsCrudConfig = {
         ${orderClause}
         LIMIT ? OFFSET ?
       `
-      const [sessions] = await pool.execute(dataQuery, [...params, limit, offset])
+      const [sessions] = await pool.execute(dataQuery, [...params, String(limit), String(offset)])
 
       return {
         data: sessions,
@@ -1498,11 +1498,11 @@ const usersCrudConfig = {
     // 如果没有提供密码，设置默认哈希密码（123456的SHA256哈希值）
     if (!data.password) {
       // 使用MySQL的SHA2函数生成默认密码的哈希值
-      const [result] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', ['123456'])
+      const [result] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', [String('123456')])
       data.password = result[0].hashed_password
     } else {
       // 如果提供了密码，进行哈希处理
-      const [result] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', [data.password])
+      const [result] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', [String(data.password)])
       data.password = result[0].hashed_password
     }
     data.avatar = data.avatar || ''

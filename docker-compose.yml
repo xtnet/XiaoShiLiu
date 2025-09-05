@@ -1,8 +1,9 @@
-version: '3.8'
+name: xiaoshiliu
 
 services:
   # MySQL数据库服务
   mysql:
+    # 使用官方MySQL镜像
     image: mysql:8.0
     container_name: xiaoshiliu-mysql
     restart: unless-stopped
@@ -54,7 +55,7 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

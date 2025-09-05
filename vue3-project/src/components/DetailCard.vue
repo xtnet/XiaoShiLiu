@@ -545,7 +545,8 @@ const fetchComments = async () => {
     const result = await commentStore.fetchComments(props.item.id)
     await nextTick()
     const latestComments = comments.value
-    if (latestComments && latestComments.length > 0 && userStore.isLoggedIn) {
+    if (latestComments && latestComments.length > 0) {
+      // 无论是否登录都初始化评论点赞状态，未登录用户只显示点赞数量，不显示点赞状态
       commentLikeStore.initCommentsLikeStates(latestComments)
     }
   } catch (error) {
