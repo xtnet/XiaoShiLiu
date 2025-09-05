@@ -153,6 +153,8 @@
 | yarn | >= 1.22.0 |
 | 浏览器 | 支持ES6+ |
 
+> 提示：上述为传统本地开发的最低版本要求。若使用 Docker 部署，默认镜像版本如下：MySQL 8.0、Node 18-alpine（前后端构建/运行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。详见[部署指南文档](./doc/DEPLOYMENT.md)。
+
 ### 1. 安装依赖
 
 ```bash

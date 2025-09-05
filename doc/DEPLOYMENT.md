@@ -20,12 +20,23 @@
 - 可用内存 >= 2GB
 - 可用磁盘空间 >= 5GB
 
+### 镜像与版本说明
+
+| 组件 | 镜像/来源 | 版本/标签 | 说明 |
+|------|-----------|-----------|------|
+| 数据库 | mysql | 8.0 | 使用官方镜像 `mysql:8.0`，utf8mb4 默认配置 |
+| 后端运行时 | node | 18-alpine | `express-project/Dockerfile` 采用 `node:18-alpine` |
+| 前端构建 | node | 18-alpine | `vue3-project/Dockerfile` 构建阶段使用 |
+| 前端运行时 | nginx | alpine | 使用 `nginx:alpine` 提供静态文件 |
+| Compose 健康检查 | wget | - | 前端健康检查使用 `wget --spider http://localhost/` |
+
+> 说明：上述版本与 `docker-compose.yml`、前后端 `Dockerfile` 保持一致；如需变更请同步调整对应文件与文档。
 ### 快速开始
 
 #### 1. 克隆项目
 
 ```bash
-git clone <项目地址>
+git clone https://github.com/ZTMYO/XiaoShiLiu.git
 cd XiaoShiLiu
 ```
 
