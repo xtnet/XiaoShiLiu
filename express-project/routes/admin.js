@@ -748,7 +748,7 @@ const tagsCrudConfig = {
 // 生成标签CRUD处理器
 const tagsHandlers = createCrudHandlers(tagsCrudConfig)
 
-// 标签路由（240行代码减少到6行）
+// 标签路由
 router.post('/tags', adminAuth, tagsHandlers.create)
 router.put('/tags/:id', adminAuth, tagsHandlers.update)
 router.delete('/tags/:id', adminAuth, tagsHandlers.deleteOne)
@@ -881,7 +881,7 @@ router.get('/test-users', adminAuth, async (req, res) => {
   }
 })
 
-// 点赞路由（300行代码减少到6行）
+// 点赞路由
 router.post('/likes', adminAuth, likesHandlers.create)
 router.put('/likes/:id', adminAuth, likesHandlers.update)
 router.delete('/likes/:id', adminAuth, likesHandlers.deleteOne)
@@ -1041,7 +1041,7 @@ const collectionsCrudConfig = {
 // 生成收藏CRUD处理器
 const collectionsHandlers = createCrudHandlers(collectionsCrudConfig)
 
-// 收藏路由（268行代码减少到6行）
+// 收藏路由
 router.post('/collections', adminAuth, collectionsHandlers.create)
 router.put('/collections/:id', adminAuth, collectionsHandlers.update)
 router.delete('/collections/:id', adminAuth, collectionsHandlers.deleteOne)
@@ -1196,7 +1196,7 @@ const followsCrudConfig = {
 // 生成关注CRUD处理器
 const followsHandlers = createCrudHandlers(followsCrudConfig)
 
-// 关注路由（291行代码减少到6行）
+// 关注路由
 router.post('/follows', adminAuth, followsHandlers.create)
 router.put('/follows/:id', adminAuth, followsHandlers.update)
 router.delete('/follows/:id', adminAuth, followsHandlers.deleteOne)
