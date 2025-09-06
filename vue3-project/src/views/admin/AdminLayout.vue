@@ -1045,7 +1045,7 @@ const goBack = () => {
   display: flex;
   align-items: flex-end;
   height: 100vh;
-  height: 100dvh; 
+  height: 100dvh;
 }
 
 .filter-menu-content {
@@ -1053,7 +1053,7 @@ const goBack = () => {
   border-radius: 12px 12px 0 0;
   width: 100%;
   max-height: 70vh;
-  max-height: 70dvh; 
+  max-height: 70dvh;
   overflow-y: auto;
   animation: slideUp 0.3s ease-out;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);

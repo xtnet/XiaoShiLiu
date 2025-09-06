@@ -2,33 +2,20 @@
   <div class="admin-monitor">
     <div class="monitor-content">
       <div class="activities-section">
-        <div v-if="loading" class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>加载中...</p>
-        </div>
-        
-        <div v-else-if="error" class="error-state">
+        <div v-if="error" class="error-state">
           <p>{{ error }}</p>
         </div>
-        
+
         <div v-else-if="activities.length === 0" class="empty-state">
           <p>暂无动态</p>
         </div>
-        
+
         <div v-else class="activities-list">
-          <div 
-            v-for="activity in activities" 
-            :key="activity.id" 
-            class="activity-item"
-            @click="handleActivityClick(activity)"
-          >
+          <div v-for="activity in activities" :key="activity.id" class="activity-item"
+            @click="handleActivityClick(activity)">
             <div class="activity-icon">
-              <img
-                :src="activity.avatar || defaultAvatar"
-                alt="avatar"
-                class="activity-avatar"
-                @error="onAvatarError($event)"
-              />
+              <img :src="activity.avatar || defaultAvatar" alt="avatar" class="activity-avatar"
+                @error="onAvatarError($event)" />
             </div>
             <div class="activity-content">
               <div class="activity-title">
@@ -58,7 +45,7 @@ import defaultAvatar from '@/assets/imgs/avatar.png'
 
 const router = useRouter()
 const activities = ref([])
-const loading = ref(false)
+// const loading = ref(false) // 已移除，使用AdminLayout的全局加载状态
 const error = ref('')
 
 const onAvatarError = (e) => {
@@ -68,7 +55,6 @@ const onAvatarError = (e) => {
 // 获取活动数据
 const fetchActivities = async () => {
   try {
-    loading.value = true
     error.value = ''
     const response = await adminApi.getMonitorActivities()
     if (response && response.success) {
@@ -82,7 +68,7 @@ const fetchActivities = async () => {
     error.value = '网络错误，请稍后重试'
     activities.value = []
   } finally {
-    loading.value = false
+    // loading状态已移除
   }
 }
 
@@ -113,27 +99,27 @@ const formatTime = (timeStr) => {
   const time = new Date(timeStr)
   const now = new Date()
   const diff = now - time
-  
+
   // 小于1分钟
   if (diff < 60000) {
     return '刚刚'
   }
-  
+
   // 小于1小时
   if (diff < 3600000) {
     return `${Math.floor(diff / 60000)}分钟前`
   }
-  
+
   // 小于1天
   if (diff < 86400000) {
     return `${Math.floor(diff / 3600000)}小时前`
   }
-  
+
   // 小于7天
   if (diff < 604800000) {
     return `${Math.floor(diff / 86400000)}天前`
   }
-  
+
   // 超过7天显示具体日期
   return time.toLocaleDateString('zh-CN', {
     month: 'short',
@@ -184,7 +170,6 @@ onMounted(() => {
 
 
 
-.loading-state,
 .error-state,
 .empty-state {
   display: flex;
@@ -193,16 +178,6 @@ onMounted(() => {
   justify-content: center;
   padding: 64px 32px;
   color: var(--text-color-secondary);
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border-color-primary);
-  border-top: 3px solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
 }
 
 .retry-btn {
@@ -285,6 +260,4 @@ onMounted(() => {
   white-space: nowrap;
   margin-left: 16px;
 }
-
-
 </style>
