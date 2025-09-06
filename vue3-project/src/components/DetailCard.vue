@@ -615,13 +615,16 @@ const loadMoreComments = async () => {
   }
 
   try {
-    // 计算下一页页码
-    const currentPage = Math.ceil(comments.value.length / 5) + 1
+    // 获取当前分页状态
+    const commentData = commentStore.getComments(props.item.id)
+    const nextPage = (commentData.currentPage || 0) + 1
+    
     await commentStore.fetchComments(props.item.id, {
-      page: currentPage,
+      page: nextPage,
       limit: 5,
       loadMore: true,
-      silentLoad: true
+      silentLoad: true,
+      sort: commentSortOrder.value
     })
 
     // 加载后：DOM 更新完成后，恢复滚动位置
@@ -921,7 +924,8 @@ const setCommentSort = async (order) => {
     await commentStore.fetchComments(props.item.id, {
       page: 1,
       limit: 5,
-      sort: order
+      sort: order,
+      loadMore: false // 明确重置分页状态
     })
 
     // 重新初始化评论点赞状态

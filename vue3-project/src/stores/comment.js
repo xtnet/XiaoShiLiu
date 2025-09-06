@@ -16,7 +16,15 @@ export const useCommentStore = defineStore('comment', () => {
             return postComments.value.get(postId)?.comments || []
         }
 
-        const currentData = postComments.value.get(postId) || { comments: [], hasMore: true, currentPage: 0 }
+        const currentData = postComments.value.get(postId) || { comments: [], hasMore: true, currentPage: 0, sort: 'desc' }
+
+        // 检查排序方式是否改变，如果改变则重置分页状态
+        const sortChanged = currentData.sort !== sort
+        if (sortChanged && loadMore) {
+            // 排序改变时，loadMore应该被视为重新开始
+            loadMore = false
+            page = 1
+        }
 
         // 如果是加载更多但没有更多数据，直接返回
         if (loadMore && !currentData.hasMore) {
@@ -154,7 +162,8 @@ export const useCommentStore = defineStore('comment', () => {
                     loaded: true,
                     total: serverTotal,
                     hasMore: hasMore,
-                    currentPage: page
+                    currentPage: page,
+                    sort: sort // 记录当前排序方式
                 })
 
                 return updatedComments
