@@ -1550,7 +1550,27 @@ const adminsCrudConfig = {
   },
   allowedSortFields: ['username', 'created_at'],
   defaultOrderBy: 'created_at DESC',
-  primaryKey: 'username' // 使用username作为主键
+  primaryKey: 'username', // 使用username作为主键
+  
+  // 创建前的自定义处理
+  beforeCreate: async (data) => {
+    // 对密码进行哈希加密
+    if (data.password) {
+      const [hashResult] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', [data.password])
+      data.password = hashResult[0].hashed_password
+    }
+    return { isValid: true }
+  },
+  
+  // 更新前的自定义处理
+  beforeUpdate: async (data) => {
+    // 如果更新密码，进行哈希加密
+    if (data.password) {
+      const [hashResult] = await pool.execute('SELECT SHA2(?, 256) as hashed_password', [data.password])
+      data.password = hashResult[0].hashed_password
+    }
+    return { isValid: true }
+  }
 }
 
 const adminsHandlers = createCrudHandlers(adminsCrudConfig)
