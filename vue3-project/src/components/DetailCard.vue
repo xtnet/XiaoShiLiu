@@ -1,7 +1,7 @@
 <template>
   <div :class="[pageMode ? 'detail-card-page' : 'detail-card-overlay', { 'animating': isAnimating && !pageMode }]"
     v-click-outside.mousedown="!pageMode ? closeModal : undefined" v-escape-key="!pageMode ? closeModal : undefined">
-    <div class="detail-card" @click.stop :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
+    <div class="detail-card" @click="handleDetailCardClick" :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
       :class="{ 'scale-in': isAnimating && !pageMode, 'page-mode': pageMode }">
       <button v-if="!pageMode" class="close-btn" @click="closeModal" @mouseenter="showTooltip = true"
         @mouseleave="showTooltip = false">
@@ -100,8 +100,22 @@
             <div class="divider"></div>
 
             <div class="comments-section">
-              <div class="comments-header">
+              <div class="comments-header" @click="toggleSortMenu">
                 <span class="comments-title">共 {{ commentTotal || commentCount }} 条评论</span>
+                <SvgIcon name="down" width="16" height="16" class="sort-icon" />
+                <div v-if="showSortMenu" class="sort-menu" @click.stop>
+                  <div class="sort-option" :class="{ 'active': commentSortOrder === 'desc' }"
+                    @click="setCommentSort('desc')">
+                    <span>降序</span>
+                    <SvgIcon v-if="commentSortOrder === 'desc'" name="tick" width="14" height="14"
+                      class="tick-icon" />
+                  </div>
+                  <div class="sort-option" :class="{ 'active': commentSortOrder === 'asc' }"
+                    @click="setCommentSort('asc')">
+                    <span>升序</span>
+                    <SvgIcon v-if="commentSortOrder === 'asc'" name="tick" width="14" height="14" class="tick-icon" />
+                  </div>
+                </div>
               </div>
 
               <div v-if="loadingComments" class="comments-loading">
@@ -197,14 +211,14 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 加载更多按钮 -->
                 <div v-if="hasMoreCommentsToShow" class="load-more-container">
                   <button class="load-more-btn" @click="loadMoreComments">
                     点击查看更多评论
                   </button>
                 </div>
-                
+
                 <!-- 没有更多评论提示 -->
                 <div v-if="!hasMoreCommentsToShow && enhancedComments.length > 0" class="no-more-comments">
                   <span>没有更多评论了</span>
@@ -425,6 +439,10 @@ const expandedReplies = ref(new Set())
 const showEmojiPanel = ref(false)
 const showMentionPanel = ref(false)
 
+// 评论排序相关
+const showSortMenu = ref(false)
+const commentSortOrder = ref('desc') // 默认降序
+
 const contentSectionWidth = computed(() => {
   if (windowWidth.value <= 768) {
     return windowWidth.value
@@ -566,7 +584,11 @@ watch(() => props.item.id, () => {
 
 const fetchComments = async () => {
   try {
-    const result = await commentStore.fetchComments(props.item.id)
+    const result = await commentStore.fetchComments(props.item.id, {
+      page: 1,
+      limit: 5,
+      sort: commentSortOrder.value
+    })
     await nextTick()
     const latestComments = comments.value
     if (latestComments && latestComments.length > 0) {
@@ -874,6 +896,42 @@ const handleToastClose = () => {
 // 输入框聚焦处理
 const handleInputFocus = () => {
   isInputFocused.value = true
+}
+
+// 切换排序菜单显示
+const toggleSortMenu = () => {
+  showSortMenu.value = !showSortMenu.value
+}
+
+// 点击DetailCard内部但menu外关闭排序菜单
+const handleDetailCardClick = (event) => {
+  if (showSortMenu.value && !event.target.closest('.comments-header') && !event.target.closest('.sort-menu')) {
+    showSortMenu.value = false
+  }
+}
+
+// 设置评论排序方式
+const setCommentSort = async (order) => {
+  commentSortOrder.value = order
+  showSortMenu.value = false
+
+  // 重新获取评论数据，重置为第一页
+  try {
+    await commentStore.fetchComments(props.item.id, {
+      page: 1,
+      limit: 5,
+      sort: order
+    })
+
+    // 重新初始化评论点赞状态
+    const latestComments = comments.value
+    if (latestComments && latestComments.length > 0) {
+      commentLikeStore.initCommentsLikeStates(latestComments)
+    }
+  } catch (error) {
+    console.error('重新排序评论失败:', error)
+    showMessage('排序失败，请重试', 'error')
+  }
 }
 
 // 评论按钮点击处理
@@ -1363,6 +1421,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeydown)
+  // DetailCard内部点击事件已通过@click="handleDetailCardClick"处理
 
   setTimeout(() => {
     isAnimating.value = false
@@ -1386,6 +1445,7 @@ onUnmounted(() => {
   // 移除键盘事件监听器
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('keydown', handleViewerKeydown)
+  // DetailCard内部点击事件通过模板处理，无需手动移除
 })
 
 watch(isInputFocused, async (newValue) => {
@@ -1939,12 +1999,79 @@ const onViewerContainerClick = (event) => {
 }
 
 .comments-header {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 14px;
   margin-bottom: 16px;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+
+.comments-header:hover {
+  background-color: var(--bg-color-hover);
+}
+
+.comments-header:hover .comments-title {
+  color: var(--text-color-primary);
+}
+
+.comments-header:hover .sort-icon {
+  color: var(--text-color-primary);
 }
 
 .comments-title {
   font-size: 14px;
   color: var(--text-color-secondary);
+  user-select: none;
+}
+
+/* 评论排序相关样式 */
+.sort-icon {
+  color: var(--text-color-secondary);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.sort-menu {
+  position: absolute;
+  top: 100%;
+  left: 30px;
+  background: var(--bg-color-primary);
+  border: 1px solid var(--border-color-primary);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 80px;
+  padding: 4px 2px;
+  margin-top: 4px;
+  user-select: none;
+}
+
+.sort-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-color-primary);
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+}
+
+.sort-option:hover {
+  background-color: var(--bg-color-secondary);
+}
+
+.sort-option.active {
+  background-color: var(--bg-color-active);
+  color: var(--primary-color);
+}
+
+.tick-icon {
+  color: var(--primary-color);
 }
 
 /* 评论加载状态 */

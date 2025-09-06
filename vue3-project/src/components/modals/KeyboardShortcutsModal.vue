@@ -23,20 +23,20 @@
 
             <div class="shortcut-item">
               <span class="shortcut-desc">下一张图片</span>
-                <kbd class="shortcut-key">→</kbd>
+              <kbd class="shortcut-key">→</kbd>
             </div>
 
             <div class="shortcut-item">
               <span class="shortcut-desc">关闭笔记</span>
-                <kbd class="shortcut-key">Esc</kbd>
+              <kbd class="shortcut-key">Esc</kbd>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-desc">收藏</span>
-                <kbd class="shortcut-key">S</kbd>
+              <kbd class="shortcut-key">S</kbd>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-desc">点赞</span>
-                <kbd class="shortcut-key">D</kbd>
+              <kbd class="shortcut-key">D</kbd>
             </div>
           </div>
         </div>
@@ -205,10 +205,9 @@ onMounted(() => {
   font-family: var(--font-family);
 }
 
-@media (max-width: 768px) { 
+@media (max-width: 768px) {
   .shortcuts-modal {
     width: 300px;
   }
 }
-
 </style>

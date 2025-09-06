@@ -21,7 +21,7 @@ router.get('/', optionalAuth, async (req, res) => {
         return res.status(401).json({ code: 401, message: '查看草稿需要登录' });
       }
       const forcedUserId = currentUserId;
-      
+
       let query = `
         SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
         FROM posts p
@@ -29,18 +29,18 @@ router.get('/', optionalAuth, async (req, res) => {
         WHERE p.is_draft = ? AND p.user_id = ?
       `;
       let queryParams = [isDraft.toString(), forcedUserId.toString()];
-      
+
       if (category) {
         query += ` AND p.category = ?`;
         queryParams.push(category);
       }
-      
+
       query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
       queryParams.push(limit.toString(), offset.toString());
-      
-  
-    const [rows] = await pool.execute(query, queryParams);
-      
+
+
+      const [rows] = await pool.execute(query, queryParams);
+
       // 获取每个草稿的图片和标签
       for (let post of rows) {
         // 获取笔记图片
@@ -53,12 +53,12 @@ router.get('/', optionalAuth, async (req, res) => {
           [post.id]
         );
         post.tags = tags;
-        
+
         // 草稿不需要点赞收藏状态
         post.liked = false;
         post.collected = false;
       }
-      
+
       // 获取草稿总数
       const [countResult] = await pool.execute(
         'SELECT COUNT(*) as total FROM posts WHERE is_draft = ? AND user_id = ?' + (category ? ' AND category = ?' : ''),
@@ -66,7 +66,7 @@ router.get('/', optionalAuth, async (req, res) => {
       );
       const total = countResult[0].total;
       const pages = Math.ceil(total / limit);
-      
+
       return res.json({
         code: 200,
         message: 'success',
@@ -130,7 +130,7 @@ router.get('/', optionalAuth, async (req, res) => {
       queryParams = [isDraft.toString(), ...additionalParams, limit.toString(), offset.toString()];
     }
     const [rows] = await pool.execute(query, queryParams);
-    
+
 
     // 获取每个笔记的图片、标签和用户点赞收藏状态
     for (let post of rows) {
@@ -463,9 +463,10 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
+    const sort = req.query.sort || 'desc'; // 排序方式：desc（降序）或 asc（升序）
     const currentUserId = req.user ? req.user.id : null;
 
-    console.log(`获取笔记评论列表 - 笔记ID: ${postId}, 页码: ${page}, 每页: ${limit}, 当前用户ID: ${currentUserId}`);
+    console.log(`获取笔记评论列表 - 笔记ID: ${postId}, 页码: ${page}, 每页: ${limit}, 排序: ${sort}, 当前用户ID: ${currentUserId}`);
 
     // 验证笔记是否存在
     const [postRows] = await pool.execute('SELECT id FROM posts WHERE id = ?', [postId.toString()]);
@@ -474,12 +475,13 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
     }
 
     // 获取顶级评论（parent_id为NULL）
+    const orderBy = sort === 'asc' ? 'ASC' : 'DESC';
     const [rows] = await pool.execute(
       `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location
        FROM comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.post_id = ? AND c.parent_id IS NULL
-       ORDER BY c.created_at DESC
+       ORDER BY c.created_at ${orderBy}
        LIMIT ? OFFSET ?`,
       [postId, limit.toString(), offset.toString()]
     );

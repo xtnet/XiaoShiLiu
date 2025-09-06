@@ -620,7 +620,8 @@ const apiGroups = ref([
         params: [
           { name: 'id', type: 'int', required: true, description: '笔记ID（路径参数）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认5' }
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'sort', type: 'string', required: false, description: '排序方式：desc（降序，默认）或 asc（升序）' }
         ]
       },
       {

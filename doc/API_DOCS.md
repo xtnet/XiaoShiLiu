@@ -1129,7 +1129,8 @@ Authorization: Bearer <your_jwt_token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
-| limit | int | 否 | 每页数量，默认5 |
+| limit | int | 否 | 每页数量，默认20 |
+| sort | string | 否 | 排序方式：desc（降序，默认）或 asc（升序） |
 
 **响应示例**:
 ```json
@@ -1149,9 +1150,8 @@ Authorization: Bearer <your_jwt_token>
         "post_id": 1,
         "parent_id": null,
         "created_at": "2025-08-30T00:00:00.000Z",
-        "likes_count": 5,
-        "replies_count": 2,
-        "is_liked": false
+        "reply_count": 2,
+        "liked": false
       },
       {
         "id": 2,
@@ -1164,16 +1164,15 @@ Authorization: Bearer <your_jwt_token>
         "post_id": 1,
         "parent_id": null,
         "created_at": "2025-08-30T01:00:00.000Z",
-        "likes_count": 3,
-        "replies_count": 0,
-        "is_liked": false
+        "reply_count": 0,
+        "liked": false
       }
     ],
     "pagination": {
       "page": 1,
       "limit": 20,
       "total": 50,
-      "totalPages": 3
+      "pages": 3
     }
   }
 }
@@ -1274,15 +1273,14 @@ Authorization: Bearer <your_jwt_token>
         "user_avatar": "https://img.example.com/avatar2.jpg",
         "parent_id": 1,
         "created_at": "2025-08-30T01:00:00.000Z",
-        "likes_count": 2,
-        "is_liked": false
+        "liked": false
       }
     ],
     "pagination": {
       "page": 1,
       "limit": 10,
       "total": 5,
-      "totalPages": 1
+      "pages": 1
     }
   }
 }
