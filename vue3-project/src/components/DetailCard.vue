@@ -115,7 +115,7 @@
                 </div>
                 <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item">
                   <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
-                    @click="onUserClick(comment.user_id)" />
+                    @click="onUserClick(comment.user_id)" @error="handleAvatarError" />
                   <div class="comment-content">
                     <div class="comment-header">
                       <div class="comment-user-info">
@@ -150,7 +150,7 @@
                       <div v-for="reply in getDisplayedReplies(comment.replies, comment.id)" :key="reply.id"
                         class="reply-item">
                         <img :src="reply.avatar" :alt="reply.username" class="reply-avatar "
-                          @click="onUserClick(reply.user_id)" />
+                          @click="onUserClick(reply.user_id)" @error="handleAvatarError" />
                         <div class="reply-content">
                           <div class="reply-header">
                             <div class="reply-user-info">
@@ -1406,6 +1406,13 @@ const goToImage = (index) => {
   if (index >= 0 && index < imageList.value.length) {
     currentImageIndex.value = index
   }
+}
+
+// 头像加载失败处理
+function handleAvatarError(event) {
+  import('@/assets/imgs/avatar.png').then(module => {
+    event.target.src = module.default
+  })
 }
 
 // 当点击图片查看器容器的任意非控制区域时关闭预览
