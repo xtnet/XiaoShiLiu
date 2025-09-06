@@ -6,16 +6,22 @@ import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
 import { useChangePasswordStore } from '@/stores/changePassword'
 import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
+import { useAccountSecurityStore } from '@/stores/accountSecurity'
 import AuthModal from '@/components/modals/AuthModal.vue'
 import AboutModal from '@/components/modals/AboutModal.vue'
 import ChangePasswordModal from '@/components/modals/ChangePasswordModal.vue'
 import KeyboardShortcutsModal from '@/components/modals/KeyboardShortcutsModal.vue'
+import AccountSecurityModal from '@/components/modals/AccountSecurityModal.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useConfirm } from '@/views/admin/composables/useConfirm'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
 const changePasswordStore = useChangePasswordStore()
 const keyboardShortcutsStore = useKeyboardShortcutsStore()
+const accountSecurityStore = useAccountSecurityStore()
+const { confirmState, handleConfirm, handleCancel } = useConfirm()
 
 // 应用启动时初始化用户信息
 onMounted(() => {
@@ -33,6 +39,8 @@ onMounted(() => {
       :userInfo="userStore.userInfo"
       @close="changePasswordStore.closeChangePasswordModal" />
     <KeyboardShortcutsModal v-if="keyboardShortcutsStore.showKeyboardShortcutsModal" @close="keyboardShortcutsStore.closeKeyboardShortcutsModal" />
+    <AccountSecurityModal v-model:visible="accountSecurityStore.showAccountSecurityModal" @close="accountSecurityStore.closeAccountSecurityModal" />
+    <ConfirmDialog v-model:visible="confirmState.visible" :title="confirmState.title" :message="confirmState.message" :type="confirmState.type" :confirm-text="confirmState.confirmText" :cancel-text="confirmState.cancelText" :show-cancel="confirmState.showCancel" @confirm="handleConfirm" @cancel="handleCancel" />
   </div>
 </template>
 

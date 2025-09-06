@@ -60,6 +60,11 @@ export const userApi = {
   // 修改密码
   changePassword(userId, data) {
     return request.put(`/users/${userId}/password`, data)
+  },
+
+  // 删除账号
+  deleteAccount(userId) {
+    return request.delete(`/users/${userId}`)
   }
 }
 

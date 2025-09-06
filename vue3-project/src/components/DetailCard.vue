@@ -1,7 +1,8 @@
 <template>
   <div :class="[pageMode ? 'detail-card-page' : 'detail-card-overlay', { 'animating': isAnimating && !pageMode }]"
     v-click-outside.mousedown="!pageMode ? closeModal : undefined" v-escape-key="!pageMode ? closeModal : undefined">
-    <div class="detail-card" @click="handleDetailCardClick" :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
+    <div class="detail-card" @click="handleDetailCardClick"
+      :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
       :class="{ 'scale-in': isAnimating && !pageMode, 'page-mode': pageMode }">
       <button v-if="!pageMode" class="close-btn" @click="closeModal" @mouseenter="showTooltip = true"
         @mouseleave="showTooltip = false">
@@ -107,8 +108,7 @@
                   <div class="sort-option" :class="{ 'active': commentSortOrder === 'desc' }"
                     @click="setCommentSort('desc')">
                     <span>降序</span>
-                    <SvgIcon v-if="commentSortOrder === 'desc'" name="tick" width="14" height="14"
-                      class="tick-icon" />
+                    <SvgIcon v-if="commentSortOrder === 'desc'" name="tick" width="14" height="14" class="tick-icon" />
                   </div>
                   <div class="sort-option" :class="{ 'active': commentSortOrder === 'asc' }"
                     @click="setCommentSort('asc')">
@@ -616,7 +616,7 @@ const loadMoreComments = async () => {
     // 获取当前分页状态
     const commentData = commentStore.getComments(props.item.id)
     const nextPage = (commentData.currentPage || 0) + 1
-    
+
     await commentStore.fetchComments(props.item.id, {
       page: nextPage,
       limit: 5,

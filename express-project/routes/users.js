@@ -1173,4 +1173,50 @@ router.put('/:id/password', authenticateToken, async (req, res) => {
   }
 });
 
+// 删除账号
+router.delete('/:id', authenticateToken, async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const userIdParam = req.params.id;
+    const currentUserId = req.user.id;
+    // 始终通过小石榴号查找对应的数字ID
+    const [userRows] = await connection.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ code: 404, message: '用户不存在' });
+    }
+    const targetUserId = userRows[0].id;
+
+    // 检查是否是用户本人
+    if (currentUserId !== targetUserId) {
+      return res.status(403).json({ code: 403, message: '只能删除自己的账号' });
+    }
+
+    // 开始事务
+    await connection.beginTransaction();
+    // 删除用户相关的所有数据
+    await connection.execute('DELETE FROM comments WHERE user_id = ?', [targetUserId]);
+    await connection.execute('DELETE FROM likes WHERE user_id = ?', [targetUserId]);
+    await connection.execute('DELETE FROM collections WHERE user_id = ?', [targetUserId]);
+    await connection.execute('DELETE FROM follows WHERE follower_id = ? OR following_id = ?', [targetUserId, targetUserId]);
+    await connection.execute('DELETE FROM notifications WHERE user_id = ? OR sender_id = ?', [targetUserId, targetUserId]);
+    await connection.execute('DELETE FROM posts WHERE user_id = ?', [targetUserId]);
+    await connection.execute('DELETE FROM users WHERE id = ?', [targetUserId]);
+    // 提交事务
+    await connection.commit();
+
+    res.json({
+      code: 200,
+      message: '账号删除成功',
+      success: true
+    });
+  } catch (error) {
+    // 回滚事务
+    await connection.rollback();
+    console.error('删除账号失败:', error);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;

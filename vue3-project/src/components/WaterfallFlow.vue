@@ -855,16 +855,24 @@ function onFadeInEnd(item) {
 
 // 处理头像加载失败
 function handleAvatarError(event) {
-    import('@/assets/imgs/avatar.png').then(module => {
-        event.target.src = module.default
-    })
+    if (event.target) {
+        import('@/assets/imgs/avatar.png').then(module => {
+            if (event.target) {
+                event.target.src = module.default
+            }
+        })
+    }
 }
 
 // 处理封面图加载失败
 function handleImageError(event) {
-    import('@/assets/imgs/未加载.png').then(module => {
-        event.target.src = module.default
-    })
+    if (event.target) {
+        import('@/assets/imgs/未加载.png').then(module => {
+            if (event.target) {
+                event.target.src = module.default
+            }
+        })
+    }
 }
 
 
@@ -912,8 +920,8 @@ function handleImageError(event) {
 
                     <div class="item-content" :class="{ 'content-hidden': !isItemFullyLoaded(item.id) }">
                         <div class="content-img" @click="onCardClick(item, $event)">
-                            <img v-img-lazy="item.image" alt="" class="lazy-image"
-                                @error="handleImageError" @load="onImageLoaded(item.id, 'imageLoaded')">
+                            <img v-img-lazy="item.image" alt="" class="lazy-image" @error="handleImageError"
+                                @load="onImageLoaded(item.id, 'imageLoaded')">
                         </div>
                         <div class="content-title">{{ item.title }}</div>
                         <div class="contentlist">

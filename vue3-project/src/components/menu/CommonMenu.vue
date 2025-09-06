@@ -7,12 +7,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
 import { useChangePasswordStore } from '@/stores/changePassword'
 import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
+import { useAccountSecurityStore } from '@/stores/accountSecurity'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
 const changePasswordStore = useChangePasswordStore()
 const keyboardShortcutsStore = useKeyboardShortcutsStore()
+const accountSecurityStore = useAccountSecurityStore()
 
 // 登录处理
 const handleLoginClick = () => {
@@ -38,8 +40,8 @@ const handleMenuClick = (action) => {
     handleLogout()
   } else if (action === 'login') {
     handleLoginClick()
-  } else if (action === 'changePassword') {
-    changePasswordStore.openChangePasswordModal()
+  } else if (action === 'accountSecurity') {
+    accountSecurityStore.openAccountSecurityModal()
   } else if (action === 'keyboardShortcuts') {
     keyboardShortcutsStore.openKeyboardShortcutsModal()
   }
@@ -54,8 +56,8 @@ const handleMenuClick = (action) => {
   <DropdownItem @click="handleMenuClick('keyboardShortcuts')">
     键盘快捷键
   </DropdownItem>
-  <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('changePassword')">
-    修改密码
+  <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('accountSecurity')">
+    账号与安全
   </DropdownItem>
   <DropdownDivider />
   <ThemeSwitcherMenuItem />
