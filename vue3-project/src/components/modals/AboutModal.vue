@@ -153,14 +153,13 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   opacity: 0;
   transition: opacity 0.2s ease;
-  backdrop-filter: blur(4px);
 }
 
 .about-modal-overlay.animating {
@@ -176,7 +175,7 @@ onMounted(() => {
   position: relative;
   transform: scale(0.9);
   transition: transform 0.2s ease;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 40px var(--shadow-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;

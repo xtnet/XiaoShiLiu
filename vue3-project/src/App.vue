@@ -5,14 +5,17 @@ import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
 import { useChangePasswordStore } from '@/stores/changePassword'
+import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
 import AuthModal from '@/components/modals/AuthModal.vue'
 import AboutModal from '@/components/modals/AboutModal.vue'
 import ChangePasswordModal from '@/components/modals/ChangePasswordModal.vue'
+import KeyboardShortcutsModal from '@/components/modals/KeyboardShortcutsModal.vue'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
 const changePasswordStore = useChangePasswordStore()
+const keyboardShortcutsStore = useKeyboardShortcutsStore()
 
 // 应用启动时初始化用户信息
 onMounted(() => {
@@ -29,6 +32,7 @@ onMounted(() => {
     <ChangePasswordModal v-if="changePasswordStore.showChangePasswordModal" 
       :userInfo="userStore.userInfo"
       @close="changePasswordStore.closeChangePasswordModal" />
+    <KeyboardShortcutsModal v-if="keyboardShortcutsStore.showKeyboardShortcutsModal" @close="keyboardShortcutsStore.closeKeyboardShortcutsModal" />
   </div>
 </template>
 

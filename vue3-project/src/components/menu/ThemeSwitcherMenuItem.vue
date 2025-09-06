@@ -46,7 +46,7 @@ const indicatorPosition = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 12px;
+  padding: 4px 10px;
   gap: 20px;
 }
 
@@ -145,7 +145,6 @@ const indicatorPosition = computed(() => {
   margin: auto;
 }
 
-/* 深色主题下的样式调整 */
 [data-theme="dark"] .theme-toggle-indicator {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }

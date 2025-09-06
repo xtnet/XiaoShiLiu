@@ -329,7 +329,7 @@ const handlePaste = (event, index) => {
   outline: none;
   border-color: var(--primary-color);
   background: var(--bg-color-primary);
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+  box-shadow: 0 0 0 2px var(--shadow-color);
 }
 
 

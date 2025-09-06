@@ -23,7 +23,8 @@
             </div>
             <!-- 输入框字段 -->
             <div v-for="field in inputFields" :key="field.key" class="search-field">
-              <input v-model="searchParams[field.key]" :type="field.type || 'text'" :placeholder="field.placeholder" @keyup.enter="handleSearch" />
+              <input v-model="searchParams[field.key]" :type="field.type || 'text'" :placeholder="field.placeholder"
+                @keyup.enter="handleSearch" />
             </div>
           </div>
           <button @click="handleSearch" class="btn btn-outline btn-sm">筛选</button>
@@ -36,19 +37,14 @@
             <div class="mobile-search-inputs">
               <div v-for="field in selectFields" :key="field.key" class="mobile-search-field">
                 <label class="field-label">{{ field.label || field.placeholder }}</label>
-                <DropdownSelect 
-                  :model-value="searchParams[field.key] || ''"
-                  @change="handleSelectChange(field.key, $event)"
-                  :options="field.options"
-                  :placeholder="field.placeholder"
-                  label-key="label"
-                  value-key="value"
-                  min-width="100%" />
+                <DropdownSelect :model-value="searchParams[field.key] || ''"
+                  @change="handleSelectChange(field.key, $event)" :options="field.options"
+                  :placeholder="field.placeholder" label-key="label" value-key="value" min-width="100%" />
               </div>
               <div v-for="field in inputFields" :key="field.key" class="mobile-search-field">
                 <label class="field-label">{{ field.label || field.placeholder }}</label>
-                <input v-model="searchParams[field.key]" :type="field.type || 'text'"
-                  :placeholder="field.placeholder" class="mobile-input" @keyup.enter="handleSearch" />
+                <input v-model="searchParams[field.key]" :type="field.type || 'text'" :placeholder="field.placeholder"
+                  class="mobile-input" @keyup.enter="handleSearch" />
               </div>
             </div>
             <div class="mobile-search-actions">
@@ -320,18 +316,18 @@ function checkTeleportTarget() {
 // 监听DOM变化，当mobile-filter-container出现或消失时更新teleportReady
 function setupTeleportWatcher() {
   if (typeof window === 'undefined' || !window.MutationObserver) return
-  
+
   const observer = new MutationObserver(() => {
     const target = document.getElementById('mobile-filter-container')
     teleportReady.value = !!target
   })
-  
+
   // 监听整个document的子树变化
   observer.observe(document.body, {
     childList: true,
     subtree: true
   })
-  
+
   // 返回observer以便在组件卸载时清理
   return observer
 }
@@ -1758,15 +1754,15 @@ const handleImageError = (event) => {
   .desktop-only {
     display: none;
   }
-  
+
   .table-header {
     justify-content: center;
   }
-  
+
   .header-left {
     display: none;
   }
-  
+
   .table-actions {
     justify-content: center;
     flex-wrap: wrap;

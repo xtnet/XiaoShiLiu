@@ -176,14 +176,13 @@ const handleChangePassword = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   opacity: 0;
   transition: opacity 0.2s ease;
-  backdrop-filter: blur(4px);
   width: 100vw;
   height: 100vh;
 }

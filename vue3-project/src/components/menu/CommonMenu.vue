@@ -6,11 +6,13 @@ import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
 import { useChangePasswordStore } from '@/stores/changePassword'
+import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
 const changePasswordStore = useChangePasswordStore()
+const keyboardShortcutsStore = useKeyboardShortcutsStore()
 
 // 登录处理
 const handleLoginClick = () => {
@@ -38,6 +40,8 @@ const handleMenuClick = (action) => {
     handleLoginClick()
   } else if (action === 'changePassword') {
     changePasswordStore.openChangePasswordModal()
+  } else if (action === 'keyboardShortcuts') {
+    keyboardShortcutsStore.openKeyboardShortcutsModal()
   }
 }
 </script>
@@ -47,14 +51,14 @@ const handleMenuClick = (action) => {
   <DropdownItem @click="handleMenuClick('about')">
     关于小石榴
   </DropdownItem>
-
-  <ThemeSwitcherMenuItem />
-  <DropdownDivider />
-
+  <DropdownItem @click="handleMenuClick('keyboardShortcuts')">
+    键盘快捷键
+  </DropdownItem>
   <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('changePassword')">
     修改密码
   </DropdownItem>
-
+  <DropdownDivider />
+  <ThemeSwitcherMenuItem />
   <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('logout')">
     退出登录
   </DropdownItem>

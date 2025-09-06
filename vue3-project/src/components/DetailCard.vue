@@ -223,7 +223,8 @@
 
                 <div class="action-buttons">
                   <div class="action-btn" :class="{ active: isLiked }">
-                    <LikeButton :is-liked="isLiked" size="large" @click="(willBeLiked) => toggleLike(willBeLiked)" />
+                    <LikeButton ref="likeButtonRef" :is-liked="isLiked" size="large"
+                      @click="(willBeLiked) => toggleLike(willBeLiked)" />
                     <span>{{ likeCount }}</span>
                   </div>
                   <button class="action-btn collect-btn" :class="{ active: isCollected }" @click="toggleCollect">
@@ -396,6 +397,7 @@ const showImageViewer = ref(false) // 图片查看器状态
 // 用于mention功能的用户数据（实际使用中应该从 API 获取）
 const mentionUsers = ref([])
 const focusedInput = ref(null)
+const likeButtonRef = ref(null)
 const isAnimating = ref(true)
 const isSendingComment = ref(false)
 const showToast = ref(false)
@@ -1267,10 +1269,47 @@ const handleResize = () => {
   windowWidth.value = window.innerWidth
 }
 
+// 键盘快捷键处理
+const handleKeydown = (event) => {
+  // 如果正在输入评论，不处理快捷键
+  if (isInputFocused.value) return
+
+  // 如果图片查看器打开，不处理这些快捷键（图片查看器有自己的键盘处理）
+  if (showImageViewer.value) return
+
+  switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault()
+      prevImage()
+      break
+    case 'ArrowRight':
+      event.preventDefault()
+      nextImage()
+      break
+    case 'c':
+    case 'C':
+      event.preventDefault()
+      toggleCollect()
+      break
+    case 'l':
+    case 'L':
+      event.preventDefault()
+      // 通过程序化点击LikeButton来触发动画效果
+      if (likeButtonRef.value) {
+        likeButtonRef.value.$el.click()
+      } else {
+        toggleLike()
+      }
+      break
+  }
+}
+
 onMounted(() => {
   lock()
 
   window.addEventListener('resize', handleResize)
+  // 添加键盘事件监听
+  document.addEventListener('keydown', handleKeydown)
 
   setTimeout(() => {
     isAnimating.value = false
@@ -1291,7 +1330,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  // 确保移除键盘事件监听器
+  // 移除键盘事件监听器
+  document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('keydown', handleViewerKeydown)
 })
 
