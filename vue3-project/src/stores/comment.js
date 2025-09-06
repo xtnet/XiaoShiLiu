@@ -9,7 +9,7 @@ export const useCommentStore = defineStore('comment', () => {
 
     // 获取笔记评论
     const fetchComments = async (postId, params = {}) => {
-        const { page = 1, limit = 5, loadMore = false, sort = 'desc' } = params
+        const { page = 1, limit = 5, loadMore = false, sort = 'desc', silentLoad = false } = params
 
         // 如果已经在加载中，则不重复请求
         if (postComments.value.get(postId)?.loading) {
@@ -23,12 +23,14 @@ export const useCommentStore = defineStore('comment', () => {
             return currentData.comments
         }
 
-        // 设置加载状态
-        postComments.value.set(postId, {
-            ...currentData,
-            loading: true,
-            loaded: false
-        })
+        // 设置加载状态（静默加载时不显示loading状态）
+        if (!silentLoad) {
+            postComments.value.set(postId, {
+                ...currentData,
+                loading: true,
+                loaded: false
+            })
+        }
 
         try {
             // 构建API参数，包含分页信息

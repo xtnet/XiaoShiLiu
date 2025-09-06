@@ -620,7 +620,8 @@ const loadMoreComments = async () => {
     await commentStore.fetchComments(props.item.id, {
       page: currentPage,
       limit: 5,
-      loadMore: true
+      loadMore: true,
+      silentLoad: true
     })
 
     // 加载后：DOM 更新完成后，恢复滚动位置
