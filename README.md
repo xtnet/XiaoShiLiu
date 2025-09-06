@@ -68,12 +68,18 @@
     <td><img src="./doc/imgs/8.png" alt="PC端界面8" width="300"/></td>
     <td><img src="./doc/imgs/9.png" alt="PC端界面9" width="300"/></td>
   </tr>
-    <tr>
-    <td><img src="./doc/imgs/10.png" alt="PC端界面7" width="300"/></td>
-    <td><img src="./doc/imgs/11.png" alt="PC端界面8" width="300"/></td>
-    <td><img src="./doc/imgs/12.png" alt="PC端界面9" width="300"/></td>
+  <tr>
+    <td><img src="./doc/imgs/10.png" alt="PC端界面10" width="300"/></td>
+    <td><img src="./doc/imgs/11.png" alt="PC端界面11" width="300"/></td>
+    <td><img src="./doc/imgs/12.png" alt="PC端界面12" width="300"/></td>
+  </tr>
+  <tr>
+    <td><img src="./doc/imgs/13.png" alt="PC端界面13" width="300"/></td>
+    <td><img src="./doc/imgs/14.png" alt="PC端界面14" width="300"/></td>
+    <td><img src="./doc/imgs/15.png" alt="PC端界面15" width="300"/></td>
   </tr>
 </table>
+
 
 
 ### 移动端界面
@@ -91,7 +97,14 @@
     <td><img src="./doc/imgs/m7.png" alt="移动端界面7" width="200"/></td>
     <td><img src="./doc/imgs/m8.png" alt="移动端界面8" width="200"/></td>
   </tr>
+  <tr>
+    <td><img src="./doc/imgs/m9.png" alt="移动端界面9" width="200"/></td>
+    <td><img src="./doc/imgs/m10.png" alt="移动端界面10" width="200"/></td>
+    <td><img src="./doc/imgs/m11.png" alt="移动端界面11" width="200"/></td>
+    <td><img src="./doc/imgs/m12.png" alt="移动端界面12" width="200"/></td>
+  </tr>
 </table>
+
 ## 项目文档
 
 | 文档 | 说明 |
