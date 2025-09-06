@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { generateAccessToken, generateRefreshToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/auth');
@@ -56,7 +57,7 @@ router.get('/captcha', (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       data: {
         captchaId,
         captchaSvg: captcha.data
@@ -65,7 +66,7 @@ router.get('/captcha', (req, res) => {
     });
   } catch (error) {
     console.error('生成验证码失败:', error);
-    res.status(500).json({ code: 500, message: '生成验证码失败' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -74,7 +75,7 @@ router.get('/check-user-id', async (req, res) => {
   try {
     const { user_id } = req.query; // 前端传过来的小石榴号
     if (!user_id) {
-      return res.status(400).json({ code: 400, message: '请输入小石榴号' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入小石榴号' });
     }
     // 查数据库是否已有该ID
     const [existingUser] = await pool.execute(
@@ -83,13 +84,13 @@ router.get('/check-user-id', async (req, res) => {
     );
     // 存在返回false，不存在返回true（供前端判断是否可继续）
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       data: { isUnique: existingUser.length === 0 },
       message: existingUser.length > 0 ? '小石榴号已存在' : '小石榴号可用'
     });
   } catch (error) {
     console.error('检查用户ID失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -99,7 +100,7 @@ router.post('/register', async (req, res) => {
     const { user_id, nickname, password, captchaId, captchaText } = req.body;
 
     if (!user_id || !nickname || !password || !captchaId || !captchaText) {
-      return res.status(400).json({ code: 400, message: '缺少必要参数' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
     // 检查用户ID是否已存在
     const [existingUser] = await pool.execute(
@@ -107,41 +108,41 @@ router.post('/register', async (req, res) => {
       [user_id.toString()]
     );
     if (existingUser.length > 0) {
-      return res.status(400).json({ code: 400, message: '用户ID已存在' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.CONFLICT, message: '用户ID已存在' });
     }
 
     // 验证验证码
     const storedCaptcha = captchaStore.get(captchaId);
     if (!storedCaptcha) {
-      return res.status(400).json({ code: 400, message: '验证码已过期或不存在' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期或不存在' });
     }
 
     if (Date.now() > storedCaptcha.expires) {
       captchaStore.delete(captchaId);
-      return res.status(400).json({ code: 400, message: '验证码已过期' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期' });
     }
 
     if (captchaText !== storedCaptcha.text) {
-      return res.status(400).json({ code: 400, message: '验证码错误' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码错误' });
     }
 
     // 验证码验证成功，删除已使用的验证码
     captchaStore.delete(captchaId);
 
     if (user_id.length < 3 || user_id.length > 15) {
-      return res.status(400).json({ code: 400, message: '小石榴号长度必须在3-15位之间' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号长度必须在3-15位之间' });
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(user_id)) {
-      return res.status(400).json({ code: 400, message: '小石榴号只能包含字母、数字和下划线' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号只能包含字母、数字和下划线' });
     }
 
     if (nickname.length > 10) {
-      return res.status(400).json({ code: 400, message: '昵称长度必须少于10位' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '昵称长度必须少于10位' });
     }
 
     if (password.length < 6 || password.length > 20) {
-      return res.status(400).json({ code: 400, message: '密码长度必须在6-20位之间' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码长度必须在6-20位之间' });
     }
 
 
@@ -186,7 +187,7 @@ router.post('/register', async (req, res) => {
     console.log(`用户注册成功 - 用户ID: ${userId}, 小石榴号: ${userRows[0].user_id}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '注册成功',
       data: {
         user: userRows[0],
@@ -199,7 +200,7 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('用户注册失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -208,7 +209,7 @@ router.post('/login', async (req, res) => {
   try {
     const { user_id, password } = req.body;
     if (!user_id || !password) {
-      return res.status(400).json({ code: 400, message: '缺少必要参数' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
 
     // 查找用户
@@ -218,13 +219,13 @@ router.post('/login', async (req, res) => {
     );
 
     if (userRows.length === 0) {
-      return res.status(400).json({ code: 400, message: '用户不存在' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
 
     const user = userRows[0];
 
     if (!user.is_active) {
-      return res.status(400).json({ code: 400, message: '账户已被禁用' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '账户已被禁用' });
     }
 
     // 验证密码（哈希比较）
@@ -234,7 +235,7 @@ router.post('/login', async (req, res) => {
     );
 
     if (passwordCheck.length === 0) {
-      return res.status(400).json({ code: 400, message: '密码错误' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码错误' });
     }
 
     // 生成JWT令牌
@@ -279,7 +280,7 @@ router.post('/login', async (req, res) => {
     console.log(`用户登录成功 - 用户ID: ${user.id}, 小石榴号: ${user.user_id}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '登录成功',
       data: {
         user,
@@ -292,7 +293,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('用户登录失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -302,7 +303,7 @@ router.post('/refresh', async (req, res) => {
     const { refresh_token } = req.body;
 
     if (!refresh_token) {
-      return res.status(400).json({ code: 400, message: '缺少刷新令牌' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少刷新令牌' });
     }
 
     // 验证刷新令牌
@@ -315,7 +316,7 @@ router.post('/refresh', async (req, res) => {
     );
 
     if (sessionRows.length === 0) {
-      return res.status(401).json({ code: 401, message: '刷新令牌无效或已过期' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ code: RESPONSE_CODES.UNAUTHORIZED, message: '刷新令牌无效或已过期' });
     }
 
     // 生成新的令牌
@@ -340,7 +341,7 @@ router.post('/refresh', async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '令牌刷新成功',
       data: {
         access_token: newAccessToken,
@@ -350,7 +351,7 @@ router.post('/refresh', async (req, res) => {
     });
   } catch (error) {
     console.error('刷新令牌失败:', error);
-    res.status(401).json({ code: 401, message: '刷新令牌无效' });
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({ code: RESPONSE_CODES.UNAUTHORIZED, message: '刷新令牌无效' });
   }
 });
 
@@ -369,12 +370,12 @@ router.post('/logout', authenticateToken, async (req, res) => {
     console.log(`用户退出成功 - 用户ID: ${userId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '退出成功'
     });
   } catch (error) {
     console.error('退出登录失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -389,7 +390,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     );
 
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
 
     const user = userRows[0];
@@ -406,13 +407,13 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: user
     });
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -422,7 +423,7 @@ router.post('/admin/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ code: 400, message: '缺少必要参数' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
 
     // 查找管理员
@@ -432,7 +433,7 @@ router.post('/admin/login', async (req, res) => {
     );
 
     if (adminRows.length === 0) {
-      return res.status(400).json({ code: 400, message: '管理员账号不存在' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员账号不存在' });
     }
 
     const admin = adminRows[0];
@@ -444,7 +445,7 @@ router.post('/admin/login', async (req, res) => {
     );
 
     if (passwordCheck.length === 0) {
-      return res.status(400).json({ code: 400, message: '密码错误' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码错误' });
     }
 
     // 生成JWT令牌
@@ -463,7 +464,7 @@ router.post('/admin/login', async (req, res) => {
     delete admin.password;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '登录成功',
       data: {
         admin,
@@ -476,7 +477,7 @@ router.post('/admin/login', async (req, res) => {
     });
   } catch (error) {
     console.error('管理员登录失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -485,7 +486,7 @@ router.get('/admin/me', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const adminId = req.user.adminId;
@@ -496,17 +497,17 @@ router.get('/admin/me', authenticateToken, async (req, res) => {
     );
 
     if (adminRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '管理员不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员不存在' });
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: adminRows[0]
     });
   } catch (error) {
     console.error('获取管理员信息失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -515,7 +516,7 @@ router.get('/admin/admins', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const page = parseInt(req.query.page) || 1;
@@ -552,7 +553,7 @@ router.get('/admin/admins', authenticateToken, async (req, res) => {
     const [adminRows] = await pool.execute(dataQuery, [...params, String(limit), String(offset)]);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         data: adminRows,
@@ -566,7 +567,7 @@ router.get('/admin/admins', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取管理员列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -575,14 +576,14 @@ router.post('/admin/admins', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const { username, password } = req.body;
 
     // 验证必填字段
     if (!username || !password) {
-      return res.status(400).json({ code: 400, message: '账号和密码不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '账号和密码不能为空' });
     }
 
     // 检查用户名是否已存在
@@ -592,7 +593,7 @@ router.post('/admin/admins', authenticateToken, async (req, res) => {
     );
 
     if (existingRows.length > 0) {
-      return res.status(400).json({ code: 400, message: '账号已存在' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.CONFLICT, message: '账号已存在' });
     }
 
     // 创建管理员（密码使用SHA2哈希加密）
@@ -602,7 +603,7 @@ router.post('/admin/admins', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '创建管理员成功',
       data: {
         id: result.insertId
@@ -610,7 +611,7 @@ router.post('/admin/admins', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('创建管理员失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -619,7 +620,7 @@ router.put('/admin/admins/:id', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const adminId = req.params.id;
@@ -627,7 +628,7 @@ router.put('/admin/admins/:id', authenticateToken, async (req, res) => {
 
     // 验证必填字段
     if (!password) {
-      return res.status(400).json({ code: 400, message: '密码不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码不能为空' });
     }
 
     // 检查管理员是否存在
@@ -637,7 +638,7 @@ router.put('/admin/admins/:id', authenticateToken, async (req, res) => {
     );
 
     if (adminRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '管理员不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员不存在' });
     }
 
     // 更新管理员密码（使用SHA2哈希加密）
@@ -647,12 +648,12 @@ router.put('/admin/admins/:id', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '更新管理员信息成功'
     });
   } catch (error) {
     console.error('更新管理员信息失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -661,7 +662,7 @@ router.delete('/admin/admins/:id', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const adminId = req.params.id;
@@ -673,19 +674,19 @@ router.delete('/admin/admins/:id', authenticateToken, async (req, res) => {
     );
 
     if (adminRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '管理员不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员不存在' });
     }
 
     // 删除管理员
     await pool.execute('DELETE FROM admin WHERE username = ?', [adminId]);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '删除管理员成功'
     });
   } catch (error) {
     console.error('删除管理员失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -694,7 +695,7 @@ router.put('/admin/admins/:id/password', authenticateToken, async (req, res) => 
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const adminId = req.params.id;
@@ -702,7 +703,7 @@ router.put('/admin/admins/:id/password', authenticateToken, async (req, res) => 
 
     // 验证密码
     if (!password || password.length < 6) {
-      return res.status(400).json({ code: 400, message: '密码不能为空且长度不能少于6位' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码不能为空且长度不能少于6位' });
     }
 
     // 检查管理员是否存在
@@ -712,7 +713,7 @@ router.put('/admin/admins/:id/password', authenticateToken, async (req, res) => 
     );
 
     if (adminRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '管理员不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员不存在' });
     }
 
     // 更新密码（使用SHA2哈希加密）
@@ -722,12 +723,12 @@ router.put('/admin/admins/:id/password', authenticateToken, async (req, res) => 
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '重置密码成功'
     });
   } catch (error) {
     console.error('重置密码失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -736,7 +737,7 @@ router.put('/admin/admins/:id/status', authenticateToken, async (req, res) => {
   try {
     // 检查是否为管理员token
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({ code: 403, message: '权限不足' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '权限不足' });
     }
 
     const adminId = req.params.id;
@@ -744,7 +745,7 @@ router.put('/admin/admins/:id/status', authenticateToken, async (req, res) => {
 
     // 验证状态
     if (![0, 1].includes(status)) {
-      return res.status(400).json({ code: 400, message: '无效的状态' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '无效的状态' });
     }
 
     // 检查管理员是否存在
@@ -754,12 +755,12 @@ router.put('/admin/admins/:id/status', authenticateToken, async (req, res) => {
     );
 
     if (adminRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '管理员不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '管理员不存在' });
     }
 
     // 不能禁用自己
     if (parseInt(adminId) === req.user.adminId && status === 0) {
-      return res.status(400).json({ code: 400, message: '不能禁用自己' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '不能禁用自己' });
     }
 
     // 更新状态
@@ -769,12 +770,12 @@ router.put('/admin/admins/:id/status', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: `${status === 1 ? '启用' : '禁用'}管理员成功`
     });
   } catch (error) {
     console.error('更新管理员状态失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

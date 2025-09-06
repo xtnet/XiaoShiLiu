@@ -1,5 +1,6 @@
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
 const { pool } = require('../config/database');
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 
 /**
  * 认证中间件 - 验证JWT token
@@ -9,8 +10,8 @@ async function authenticateToken(req, res, next) {
     const token = extractTokenFromHeader(req);
 
     if (!token) {
-      return res.status(401).json({
-        code: 401,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        code: RESPONSE_CODES.UNAUTHORIZED,
         message: '访问令牌缺失'
       });
     }
@@ -27,8 +28,8 @@ async function authenticateToken(req, res, next) {
       );
 
       if (adminRows.length === 0) {
-        return res.status(401).json({
-          code: 401,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          code: RESPONSE_CODES.UNAUTHORIZED,
           message: '管理员不存在'
         });
       }
@@ -45,8 +46,8 @@ async function authenticateToken(req, res, next) {
     } else {
       // 普通用户token验证
       if (!decoded.userId) {
-        return res.status(401).json({
-          code: 401,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          code: RESPONSE_CODES.UNAUTHORIZED,
           message: '无效的访问令牌'
         });
       }
@@ -58,8 +59,8 @@ async function authenticateToken(req, res, next) {
       );
 
       if (userRows.length === 0) {
-        return res.status(401).json({
-          code: 401,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          code: RESPONSE_CODES.UNAUTHORIZED,
           message: '用户不存在或已被禁用'
         });
       }
@@ -71,8 +72,8 @@ async function authenticateToken(req, res, next) {
       );
 
       if (sessionRows.length === 0) {
-        return res.status(401).json({
-          code: 401,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          code: RESPONSE_CODES.UNAUTHORIZED,
           message: '会话已过期，请重新登录'
         });
       }
@@ -85,8 +86,8 @@ async function authenticateToken(req, res, next) {
     }
   } catch (error) {
     console.error('Token验证失败:', error);
-    return res.status(401).json({
-      code: 401,
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      code: RESPONSE_CODES.UNAUTHORIZED,
       message: '无效的访问令牌'
     });
   }

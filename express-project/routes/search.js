@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { optionalAuth } = require('../middleware/auth');
 
@@ -17,7 +18,7 @@ router.get('/', optionalAuth, async (req, res) => {
     // 如果既没有关键词也没有标签，返回空结果
     if (!keyword.trim() && !tag.trim()) {
       return res.json({
-        code: 200,
+        code: RESPONSE_CODES.SUCCESS,
         message: 'success',
         data: {
           keyword,
@@ -250,7 +251,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         keyword,
@@ -261,7 +262,7 @@ router.get('/', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('搜索失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

@@ -1,6 +1,7 @@
 /**
  * 通用CRUD操作工厂
  */
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants')
 const { success, error, handleError, validateRequired, validateIds } = require('../utils/responseHelper')
 const {
   recordExists,
@@ -57,13 +58,13 @@ function createCrudHandlers(config) {
       // 验证必填字段
       const validation = validateRequired(data, requiredFields)
       if (!validation.isValid) {
-        return error(res, validation.message, 400, 400)
+        return error(res, validation.message, RESPONSE_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST)
       }
 
       // 验证唯一性约束
       for (const field of uniqueFields) {
         if (data[field] && !(await isUnique(table, field, data[field]))) {
-          return error(res, `${field}已存在`, 409, 409)
+          return error(res, `${field}已存在`, RESPONSE_CODES.CONFLICT, HTTP_STATUS.CONFLICT)
         }
       }
 
@@ -71,7 +72,7 @@ function createCrudHandlers(config) {
       if (beforeCreate) {
         const customValidation = await beforeCreate(data, req)
         if (!customValidation.isValid) {
-          return error(res, customValidation.message, customValidation.code || 400, customValidation.code || 400)
+          return error(res, customValidation.message, customValidation.code || RESPONSE_CODES.VALIDATION_ERROR, customValidation.code || HTTP_STATUS.BAD_REQUEST)
         }
       }
 
@@ -99,7 +100,7 @@ function createCrudHandlers(config) {
 
       // 检查记录是否存在
       if (!(await recordExists(table, 'id', id))) {
-        return error(res, `${name}不存在`, 404, 404)
+        return error(res, `${name}不存在`, RESPONSE_CODES.NOT_FOUND, HTTP_STATUS.NOT_FOUND)
       }
 
       // 过滤允许更新的字段
@@ -113,7 +114,7 @@ function createCrudHandlers(config) {
       // 验证唯一性约束
       for (const field of uniqueFields) {
         if (updateData[field] && !(await isUnique(table, field, updateData[field], id))) {
-          return error(res, `${field}已存在`, 409, 409)
+          return error(res, `${field}已存在`, RESPONSE_CODES.CONFLICT, HTTP_STATUS.CONFLICT)
         }
       }
 
@@ -121,7 +122,7 @@ function createCrudHandlers(config) {
       if (beforeUpdate) {
         const customValidation = await beforeUpdate(updateData, id, req)
         if (!customValidation.isValid) {
-          return error(res, customValidation.message, customValidation.code || 400, customValidation.code || 400)
+          return error(res, customValidation.message, customValidation.code || RESPONSE_CODES.VALIDATION_ERROR, customValidation.code || HTTP_STATUS.BAD_REQUEST)
         }
       }
 
@@ -148,14 +149,14 @@ function createCrudHandlers(config) {
 
       // 检查记录是否存在
       if (!(await recordExists(table, 'id', id))) {
-        return error(res, `${name}不存在`, 404, 404)
+        return error(res, `${name}不存在`, RESPONSE_CODES.NOT_FOUND, HTTP_STATUS.NOT_FOUND)
       }
 
       // 自定义验证
       if (beforeDelete) {
         const customValidation = await beforeDelete(id, req)
         if (!customValidation.isValid) {
-          return error(res, customValidation.message, customValidation.code || 400, customValidation.code || 400)
+          return error(res, customValidation.message, customValidation.code || RESPONSE_CODES.VALIDATION_ERROR, customValidation.code || HTTP_STATUS.BAD_REQUEST)
         }
       }
 
@@ -183,13 +184,13 @@ function createCrudHandlers(config) {
       // 验证ID数组
       const validation = validateIds(ids, `${name}ID`)
       if (!validation.isValid) {
-        return error(res, validation.message, 400, 400)
+        return error(res, validation.message, RESPONSE_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST)
       }
 
       // 检查记录是否存在
       const { existingCount, missingValues } = await recordsExist(table, 'id', ids)
       if (missingValues.length > 0) {
-        return error(res, `部分${name}不存在: ${missingValues.join(', ')}`, 404, 404)
+        return error(res, `部分${name}不存在: ${missingValues.join(', ')}`, RESPONSE_CODES.NOT_FOUND, HTTP_STATUS.NOT_FOUND)
       }
 
       // 自定义验证
@@ -197,7 +198,7 @@ function createCrudHandlers(config) {
         for (const id of ids) {
           const customValidation = await beforeDelete(id, req)
           if (!customValidation.isValid) {
-            return error(res, customValidation.message, customValidation.code || 400, customValidation.code || 400)
+            return error(res, customValidation.message, customValidation.code || RESPONSE_CODES.VALIDATION_ERROR, customValidation.code || HTTP_STATUS.BAD_REQUEST)
           }
         }
       }
@@ -225,7 +226,7 @@ function createCrudHandlers(config) {
 
       const record = await getRecord(table, id)
       if (!record) {
-        return error(res, `${name}不存在`, 404, 404)
+        return error(res, `${name}不存在`, RESPONSE_CODES.NOT_FOUND, HTTP_STATUS.NOT_FOUND)
       }
 
       success(res, record)

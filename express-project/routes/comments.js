@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
@@ -39,7 +40,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const currentUserId = req.user ? req.user.id : null;
 
     if (!postId) {
-      return res.status(400).json({ code: 400, message: '缺少笔记ID' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少笔记ID' });
     }
 
     // 获取顶级评论（parent_id为NULL）
@@ -81,7 +82,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         comments: rows,
@@ -95,7 +96,7 @@ router.get('/', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取评论列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -107,20 +108,20 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // 验证必填字段
     if (!post_id || !content) {
-      return res.status(400).json({ code: 400, message: '笔记ID和评论内容不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '笔记ID和评论内容不能为空' });
     }
 
     // 验证笔记是否存在
     const [postRows] = await pool.execute('SELECT id FROM posts WHERE id = ?', [post_id.toString()]);
     if (postRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     // 如果是回复评论，验证父评论是否存在
     if (parent_id) {
       const [parentRows] = await pool.execute('SELECT id FROM comments WHERE id = ?', [parent_id.toString()]);
       if (parentRows.length === 0) {
-        return res.status(404).json({ code: 404, message: '父评论不存在' });
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '父评论不存在' });
       }
     }
 
@@ -195,13 +196,13 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log(`创建评论成功 - 用户ID: ${userId}, 评论ID: ${commentId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '评论成功',
       data: { id: commentId }
     });
   } catch (error) {
     console.error('创建评论失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -248,7 +249,7 @@ router.get('/:id/replies', optionalAuth, async (req, res) => {
 
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         comments: rows,
@@ -262,7 +263,7 @@ router.get('/:id/replies', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取子评论列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -281,14 +282,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     );
 
     if (commentRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '评论不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '评论不存在' });
     }
 
     const comment = commentRows[0];
 
     // 检查是否是评论作者
     if (comment.user_id !== userId) {
-      return res.status(403).json({ code: 403, message: '只能删除自己发布的评论' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '只能删除自己发布的评论' });
     }
 
     // 使用递归删除函数删除评论及其所有子评论，获取删除的评论总数
@@ -300,7 +301,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     console.log(`删除评论成功 - 用户ID: ${userId}, 评论ID: ${commentId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '删除成功',
       data: { 
         id: commentId,
@@ -309,7 +310,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('删除评论失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

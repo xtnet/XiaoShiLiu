@@ -2,6 +2,7 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 
 /**
  * 上传文件到图床
@@ -151,15 +152,15 @@ function adminAuth(req, res, next) {
 
   authenticateToken(req, res, (err) => {
     if (err) {
-      return res.status(401).json({
-        code: 401,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        code: RESPONSE_CODES.UNAUTHORIZED,
         message: '认证失败'
       });
     }
 
     if (!req.user.type || req.user.type !== 'admin') {
-      return res.status(403).json({
-        code: 403,
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        code: RESPONSE_CODES.FORBIDDEN,
         message: '权限不足，需要管理员权限'
       });
     }

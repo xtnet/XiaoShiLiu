@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
 const { uploadToImageHost, uploadBase64ToImageHost } = require('../utils/uploadHelper');
@@ -30,7 +31,7 @@ const upload = multer({
 router.post('/single', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ code: 400, message: '没有上传文件' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有上传文件' });
     }
 
     // 直接使用图床上传函数（传入buffer数据）
@@ -45,7 +46,7 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
       console.log(`单文件上传成功 - 用户ID: ${req.user.id}, 文件名: ${req.file.originalname}`);
 
       res.json({
-        code: 200,
+        code: RESPONSE_CODES.SUCCESS,
         message: '上传成功',
         data: {
           originalname: req.file.originalname,
@@ -54,11 +55,11 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
         }
       });
     } else {
-      res.status(400).json({ code: 400, message: result.message || '图床上传失败' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: result.message || '图床上传失败' });
     }
   } catch (error) {
     console.error('单文件上传失败:', error);
-    res.status(500).json({ code: 500, message: '上传失败' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });
 
@@ -66,7 +67,7 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
 router.post('/multiple', authenticateToken, upload.array('files', 9), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ code: 400, message: '没有上传文件' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有上传文件' });
     }
 
     const uploadResults = [];
@@ -88,20 +89,20 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
     }
 
     if (uploadResults.length === 0) {
-      return res.status(400).json({ code: 400, message: '所有文件上传失败' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '所有文件上传失败' });
     }
 
     // 记录用户上传操作日志
     console.log(`多文件上传成功 - 用户ID: ${req.user.id}, 文件数量: ${uploadResults.length}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '上传成功',
       data: uploadResults
     });
   } catch (error) {
     console.error('多文件上传失败:', error);
-    res.status(500).json({ code: 500, message: '上传失败' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });
 
@@ -111,7 +112,7 @@ router.post('/base64', authenticateToken, async (req, res) => {
     const { images } = req.body;
 
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ code: 400, message: '没有提供图片数据' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有提供图片数据' });
     }
 
     const uploadResults = [];
@@ -129,14 +130,14 @@ router.post('/base64', authenticateToken, async (req, res) => {
     }
 
     if (uploadResults.length === 0) {
-      return res.status(400).json({ code: 400, message: '所有图片上传失败' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '所有图片上传失败' });
     }
 
     // 记录用户上传操作日志
     console.log(`Base64图片上传成功 - 用户ID: ${req.user.id}, 上传数量: ${uploadResults.length}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '上传成功',
       data: {
         urls: uploadResults,
@@ -145,7 +146,7 @@ router.post('/base64', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Base64图片上传失败:', error);
-    res.status(500).json({ code: 500, message: '上传失败' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });
 
@@ -155,19 +156,19 @@ router.post('/base64', authenticateToken, async (req, res) => {
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ code: 400, message: '文件大小超过限制（5MB）' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件大小超过限制（5MB）' });
     }
     if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ code: 400, message: '文件数量超过限制（9个）' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件数量超过限制（9个）' });
     }
   }
 
   if (error.message === '只允许上传图片文件') {
-    return res.status(400).json({ code: 400, message: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: error.message });
   }
 
   console.error('文件上传错误:', error);
-  res.status(500).json({ code: 500, message: '文件上传失败' });
+  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '文件上传失败' });
 });
 
 module.exports = router;

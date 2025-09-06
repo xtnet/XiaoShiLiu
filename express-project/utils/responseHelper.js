@@ -1,6 +1,7 @@
 /**
  * 通用响应处理工具
  */
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants')
 
 /**
  * 成功响应
@@ -9,7 +10,7 @@
  * @param {string} message - 响应消息
  * @param {number} code - 响应代码
  */
-function success(res, data = null, message = '操作成功', code = 200) {
+function success(res, data = null, message = '操作成功', code = RESPONSE_CODES.SUCCESS) {
   const response = {
     code,
     message
@@ -19,7 +20,7 @@ function success(res, data = null, message = '操作成功', code = 200) {
     response.data = data
   }
 
-  res.status(200).json(response)
+  res.status(HTTP_STATUS.OK).json(response)
 }
 
 /**
@@ -29,8 +30,8 @@ function success(res, data = null, message = '操作成功', code = 200) {
  * @param {number} code - 错误代码
  * @param {number} httpStatus - HTTP状态码
  */
-function error(res, message = '操作失败', code = 500, httpStatus = null) {
-  const statusCode = httpStatus || (code >= 400 && code < 600 ? code : 500)
+function error(res, message = '操作失败', code = RESPONSE_CODES.ERROR, httpStatus = null) {
+  const statusCode = httpStatus || (code >= HTTP_STATUS.BAD_REQUEST && code < 600 ? code : HTTP_STATUS.INTERNAL_SERVER_ERROR)
 
   res.status(statusCode).json({
     code,
@@ -49,21 +50,21 @@ function handleError(err, res, operation = '操作') {
 
   // 数据库约束错误
   if (err.code === 'ER_DUP_ENTRY') {
-    return error(res, '数据已存在，请检查唯一性约束', 409, 409)
+    return error(res, '数据已存在，请检查唯一性约束', RESPONSE_CODES.CONFLICT, HTTP_STATUS.CONFLICT)
   }
 
   // 外键约束错误
   if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-    return error(res, '关联数据不存在', 400, 400)
+    return error(res, '关联数据不存在', RESPONSE_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST)
   }
 
   // 数据格式错误
   if (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
-    return error(res, '数据格式错误', 400, 400)
+    return error(res, '数据格式错误', RESPONSE_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST)
   }
 
   // 默认服务器错误
-  return error(res, '服务器内部错误', 500, 500)
+  return error(res, '服务器内部错误', RESPONSE_CODES.ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR)
 }
 
 /**

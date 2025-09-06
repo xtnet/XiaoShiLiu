@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const { uploadBase64ToImageHost } = require('../utils/uploadHelper');
@@ -18,7 +19,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     if (isDraft === 1) {
       if (!currentUserId) {
-        return res.status(401).json({ code: 401, message: '查看草稿需要登录' });
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({ code: RESPONSE_CODES.UNAUTHORIZED, message: '查看草稿需要登录' });
       }
       const forcedUserId = currentUserId;
 
@@ -68,7 +69,7 @@ router.get('/', optionalAuth, async (req, res) => {
       const pages = Math.ceil(total / limit);
 
       return res.json({
-        code: 200,
+        code: RESPONSE_CODES.SUCCESS,
         message: 'success',
         data: {
           posts: rows,
@@ -196,7 +197,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         posts: rows,
@@ -210,7 +211,7 @@ router.get('/', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取笔记列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -230,7 +231,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     const post = rows[0];
@@ -270,13 +271,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: post
     });
   } catch (error) {
     console.error('获取笔记详情失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -288,7 +289,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // 验证必填字段：发布时要求标题和内容，草稿时不强制要求
     if (!is_draft && (!title || !content)) {
-      return res.status(400).json({ code: 400, message: '发布时标题和内容不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题和内容不能为空' });
     }
 
     // 插入笔记
@@ -358,13 +359,13 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log(`创建笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '发布成功',
       data: { id: postId }
     });
   } catch (error) {
     console.error('创建笔记失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -378,7 +379,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     const currentUserId = req.user ? req.user.id : null;
 
     if (!keyword) {
-      return res.status(400).json({ code: 400, message: '请输入搜索关键词' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入搜索关键词' });
     }
 
     console.log(`🔍 搜索笔记 - 关键词: ${keyword}, 页码: ${page}, 每页: ${limit}, 当前用户ID: ${currentUserId}`);
@@ -437,7 +438,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     console.log(`  搜索笔记结果 - 找到 ${total} 个笔记，当前页 ${rows.length} 个`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         posts: rows,
@@ -452,7 +453,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('搜索笔记失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -471,7 +472,7 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
     // 验证笔记是否存在
     const [postRows] = await pool.execute('SELECT id FROM posts WHERE id = ?', [postId.toString()]);
     if (postRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     // 获取顶级评论（parent_id为NULL）
@@ -515,7 +516,7 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
 
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         comments: rows,
@@ -529,7 +530,7 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取笔记评论列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -544,7 +545,7 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
     // 验证笔记是否存在
     const [postRows] = await pool.execute('SELECT id FROM posts WHERE id = ?', [postId]);
     if (postRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     // 检查是否已经收藏
@@ -564,7 +565,7 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
       await pool.execute('UPDATE posts SET collect_count = collect_count - 1 WHERE id = ?', [postId.toString()]);
 
       console.log(`取消收藏成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
-      res.json({ code: 200, message: '取消收藏成功', data: { collected: false } });
+      res.json({ code: RESPONSE_CODES.SUCCESS, message: '取消收藏成功', data: { collected: false } });
     } else {
       // 未收藏，执行收藏
       await pool.execute(
@@ -588,11 +589,11 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
       }
 
       console.log(`收藏成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
-      res.json({ code: 200, message: '收藏成功', data: { collected: true } });
+      res.json({ code: RESPONSE_CODES.SUCCESS, message: '收藏成功', data: { collected: true } });
     }
   } catch (error) {
     console.error('笔记收藏操作失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -605,7 +606,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     // 验证必填字段：如果不是草稿（is_draft=0），则要求标题、内容和分类不能为空
     if (!is_draft && (!title || !content || !category || category === '未知分类')) {
-      return res.status(400).json({ code: 400, message: '发布时标题、内容和分类不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题、内容和分类不能为空' });
     }
 
     // 检查笔记是否存在且属于当前用户
@@ -615,11 +616,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     );
 
     if (postRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     if (postRows[0].user_id !== userId) {
-      return res.status(403).json({ code: 403, message: '无权限修改此笔记' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '无权限修改此笔记' });
     }
 
     // 更新笔记基本信息
@@ -693,13 +694,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
     console.log(`更新笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '更新成功',
       data: { id: postId }
     });
   } catch (error) {
     console.error('更新笔记失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -716,11 +717,11 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     );
 
     if (postRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '笔记不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '笔记不存在' });
     }
 
     if (postRows[0].user_id !== userId) {
-      return res.status(403).json({ code: 403, message: '无权限删除此笔记' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '无权限删除此笔记' });
     }
 
     // 获取笔记关联的标签，减少标签使用次数
@@ -748,12 +749,12 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     console.log(`删除笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '删除成功'
     });
   } catch (error) {
     console.error('删除笔记失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -772,17 +773,17 @@ router.delete('/:id/collect', authenticateToken, async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ code: 404, message: '收藏记录不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '收藏记录不存在' });
     }
 
     // 更新笔记收藏数
     await pool.execute('UPDATE posts SET collect_count = collect_count - 1 WHERE id = ?', [postId.toString()]);
 
     console.log(`取消收藏成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
-    res.json({ code: 200, message: '取消收藏成功', data: { collected: false } });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '取消收藏成功', data: { collected: false } });
   } catch (error) {
     console.error('取消笔记收藏失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

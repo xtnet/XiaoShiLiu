@@ -12,6 +12,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const config = require('./config/config');
+const { HTTP_STATUS, RESPONSE_CODES } = require('./constants');
 
 // 导入路由模块
 const authRoutes = require('./routes/auth');
@@ -47,8 +48,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 健康检查路由
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    code: 200,
+  res.status(HTTP_STATUS.OK).json({
+    code: RESPONSE_CODES.SUCCESS,
     message: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
@@ -71,12 +72,12 @@ app.use('/api/admin', adminRoutes);
 // 错误处理中间件
 app.use((err, req, res, next) => {
   console.error('服务器错误:', err);
-  res.status(500).json({ code: 500, message: '服务器内部错误' });
+  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '服务器内部错误' });
 });
 
 // 404 处理
 app.use('*', (req, res) => {
-  res.status(404).json({ code: 404, message: '接口不存在' });
+  res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '接口不存在' });
 });
 
 // 启动服务器

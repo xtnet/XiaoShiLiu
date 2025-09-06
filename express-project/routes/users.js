@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
@@ -14,7 +15,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     const currentUserId = req.user ? req.user.id : null;
 
     if (!keyword) {
-      return res.status(400).json({ code: 400, message: '请输入搜索关键词' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入搜索关键词' });
     }
 
     // 搜索用户：支持昵称和小石榴号搜索
@@ -76,7 +77,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         users: rows,
@@ -91,7 +92,7 @@ router.get('/search', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('搜索用户失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -108,8 +109,8 @@ router.get('/:id/personality-tags', async (req, res) => {
 
     if (rows.length === 0) {
       console.log('❌ 用户不存在:', userIdParam);
-      return res.status(404).json({
-        code: 404,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.NOT_FOUND,
         message: '用户不存在',
         data: null
       });
@@ -129,13 +130,13 @@ router.get('/:id/personality-tags', async (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: personalityTags
     });
   } catch (error) {
     console.error('获取用户个性标签失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -150,8 +151,8 @@ router.get('/:id', async (req, res) => {
 
     if (rows.length === 0) {
       console.log('❌ 用户不存在:', userIdParam);
-      return res.status(404).json({
-        code: 404,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.NOT_FOUND,
         message: '用户不存在',
         data: null
       });
@@ -171,13 +172,13 @@ router.get('/:id', async (req, res) => {
     }
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: user
     });
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -197,7 +198,7 @@ router.get('/', async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         users: rows,
@@ -211,7 +212,7 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('获取用户列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -230,7 +231,7 @@ router.get('/:id/posts', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -306,7 +307,7 @@ router.get('/:id/posts', optionalAuth, async (req, res) => {
 
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         posts: rows,
@@ -320,7 +321,7 @@ router.get('/:id/posts', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取用户笔记列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -336,7 +337,7 @@ router.get('/:id/collections', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -390,7 +391,7 @@ router.get('/:id/collections', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         collections: rows,
@@ -404,7 +405,7 @@ router.get('/:id/collections', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取收藏列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -420,7 +421,7 @@ router.get('/:id/likes', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -475,7 +476,7 @@ router.get('/:id/likes', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         posts: rows,
@@ -489,7 +490,7 @@ router.get('/:id/likes', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取点赞列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -503,13 +504,13 @@ router.post('/:id/follow', authenticateToken, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
     // 不能关注自己
     if (followerId == userId) {
-      return res.status(400).json({ code: 400, message: '不能关注自己' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '不能关注自己' });
     }
 
     // 检查是否已经关注
@@ -519,7 +520,7 @@ router.post('/:id/follow', authenticateToken, async (req, res) => {
     );
 
     if (existingFollow.length > 0) {
-      return res.status(400).json({ code: 400, message: '已经关注了该用户' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '已经关注了该用户' });
     }
 
     // 添加关注记录
@@ -543,10 +544,10 @@ router.post('/:id/follow', authenticateToken, async (req, res) => {
     }
 
     console.log(`关注成功 - 用户ID: ${followerId}, 目标用户ID: ${userId}`);
-    res.json({ code: 200, message: '关注成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '关注成功' });
   } catch (error) {
     console.error('关注失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -559,7 +560,7 @@ router.delete('/:id/follow', authenticateToken, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -570,7 +571,7 @@ router.delete('/:id/follow', authenticateToken, async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ code: 404, message: '关注记录不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '关注记录不存在' });
     }
 
     // 更新关注者的关注数
@@ -588,10 +589,10 @@ router.delete('/:id/follow', authenticateToken, async (req, res) => {
 
     console.log(`取消关注成功 - 用户ID: ${followerId}, 目标用户ID: ${userId}`);
     console.log(`已删除相关关注通知 - 接收者: ${userId}, 发送者: ${followerId}`);
-    res.json({ code: 200, message: '取消关注成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '取消关注成功' });
   } catch (error) {
     console.error('取消关注失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -605,7 +606,7 @@ router.get('/:id/follow-status', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -643,7 +644,7 @@ router.get('/:id/follow-status', optionalAuth, async (req, res) => {
     // 如果用户未登录，保持默认值：isFollowing = false, isMutual = false, buttonType = 'follow'
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         followed: isFollowing,
@@ -654,7 +655,7 @@ router.get('/:id/follow-status', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取关注状态失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -670,7 +671,7 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -733,7 +734,7 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         following: rows,
@@ -747,7 +748,7 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取关注列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -765,7 +766,7 @@ router.get('/:id/followers', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -822,7 +823,7 @@ router.get('/:id/followers', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         followers: rows,
@@ -836,7 +837,7 @@ router.get('/:id/followers', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取粉丝列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -854,7 +855,7 @@ router.get('/:id/mutual-follows', optionalAuth, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -933,7 +934,7 @@ router.get('/:id/mutual-follows', optionalAuth, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         mutualFollows: rows,
@@ -947,7 +948,7 @@ router.get('/:id/mutual-follows', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('获取互关列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -960,7 +961,7 @@ router.get('/:id/stats', async (req, res) => {
     // 通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const userId = userRows[0].id;
 
@@ -971,7 +972,7 @@ router.get('/:id/stats', async (req, res) => {
     );
 
     if (userStats.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
 
     // 获取笔记数量
@@ -1000,13 +1001,13 @@ router.get('/:id/stats', async (req, res) => {
 
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: stats
     });
   } catch (error) {
     console.error('获取用户统计信息失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -1022,18 +1023,18 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const targetUserId = userRows[0].id;
 
     // 检查是否是用户本人
     if (currentUserId !== targetUserId) {
-      return res.status(403).json({ code: 403, message: '只能修改自己的资料' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '只能修改自己的资料' });
     }
 
     // 验证必填字段
     if (!nickname || !nickname.trim()) {
-      return res.status(400).json({ code: 400, message: '昵称不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '昵称不能为空' });
     }
 
     // 构建更新SQL
@@ -1105,14 +1106,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '资料更新成功',
       success: true,
       data: updatedUser[0]
     });
   } catch (error) {
     console.error('更新用户资料失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -1127,23 +1128,23 @@ router.put('/:id/password', authenticateToken, async (req, res) => {
 
     // 验证必填字段
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ code: 400, message: '当前密码和新密码不能为空' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '当前密码和新密码不能为空' });
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ code: 400, message: '新密码长度不能少于6位' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '新密码长度不能少于6位' });
     }
 
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const targetUserId = userRows[0].id;
 
     // 检查是否是用户本人
     if (currentUserId !== targetUserId) {
-      return res.status(403).json({ code: 403, message: '只能修改自己的密码' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '只能修改自己的密码' });
     }
 
     // 验证当前密码（使用SHA2哈希比较）
@@ -1153,7 +1154,7 @@ router.put('/:id/password', authenticateToken, async (req, res) => {
     );
 
     if (passwordRows.length === 0) {
-      return res.status(400).json({ code: 400, message: '当前密码错误' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '当前密码错误' });
     }
 
     // 更新密码（使用SHA2哈希加密）
@@ -1163,13 +1164,13 @@ router.put('/:id/password', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '密码修改成功',
       success: true
     });
   } catch (error) {
     console.error('修改密码失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -1182,13 +1183,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     // 始终通过小石榴号查找对应的数字ID
     const [userRows] = await connection.execute('SELECT id FROM users WHERE user_id = ?', [userIdParam]);
     if (userRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
     }
     const targetUserId = userRows[0].id;
 
     // 检查是否是用户本人
     if (currentUserId !== targetUserId) {
-      return res.status(403).json({ code: 403, message: '只能删除自己的账号' });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '只能删除自己的账号' });
     }
 
     // 开始事务
@@ -1205,7 +1206,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     await connection.commit();
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '账号删除成功',
       success: true
     });
@@ -1213,7 +1214,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     // 回滚事务
     await connection.rollback();
     console.error('删除账号失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   } finally {
     connection.release();
   }

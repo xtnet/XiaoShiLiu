@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
@@ -12,12 +13,12 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // 验证参数
     if (!target_type || !target_id) {
-      return res.status(400).json({ code: 400, message: '缺少必要参数' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
 
     // target_type: 1=笔记, 2=评论
     if (![1, 2].includes(parseInt(target_type))) {
-      return res.status(400).json({ code: 400, message: '无效的目标类型' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '无效的目标类型' });
     }
 
     // 检查是否已经点赞
@@ -49,7 +50,7 @@ router.post('/', authenticateToken, async (req, res) => {
       }
 
       console.log(`取消点赞成功 - 用户ID: ${userId}`);
-      res.json({ code: 200, message: '取消点赞成功', data: { liked: false } });
+      res.json({ code: RESPONSE_CODES.SUCCESS, message: '取消点赞成功', data: { liked: false } });
     } else {
       // 未点赞，执行点赞
       await pool.execute(
@@ -109,11 +110,11 @@ router.post('/', authenticateToken, async (req, res) => {
         }
       }
       console.log(`点赞成功 - 用户ID: ${userId}`);
-      res.json({ code: 200, message: '点赞成功', data: { liked: true } });
+      res.json({ code: RESPONSE_CODES.SUCCESS, message: '点赞成功', data: { liked: true } });
     }
   } catch (error) {
     console.error('点赞操作失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -125,7 +126,7 @@ router.delete('/', authenticateToken, async (req, res) => {
 
     // 验证参数
     if (!target_type || !target_id) {
-      return res.status(400).json({ code: 400, message: '缺少必要参数' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
 
     // 删除点赞记录
@@ -135,7 +136,7 @@ router.delete('/', authenticateToken, async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ code: 404, message: '点赞记录不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '点赞记录不存在' });
     }
 
     // 更新对应表的点赞数
@@ -154,10 +155,10 @@ router.delete('/', authenticateToken, async (req, res) => {
     }
 
     console.log(`取消点赞成功 - 用户ID: ${userId}`);
-    res.json({ code: 200, message: '取消点赞成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '取消点赞成功' });
   } catch (error) {
     console.error('取消点赞失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

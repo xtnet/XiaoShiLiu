@@ -1,5 +1,6 @@
 import axios from 'axios'
 import apiConfig from '@/config/api.js'
+import { HTTP_STATUS, ERROR_MESSAGES } from '@/config/constants.js'
 
 // 创建axios实例
 const request = axios.create({
@@ -43,7 +44,7 @@ request.interceptors.response.use(
     // 对于后端返回的 { code, message, data } 格式，转换为前端期望的 { success, message, data } 格式
     if (response.data && response.data.hasOwnProperty('code')) {
       return {
-        success: response.data.code === 200,
+        success: response.data.code === HTTP_STATUS.OK,
         message: response.data.message,
         data: response.data.data
       }
@@ -56,9 +57,9 @@ request.interceptors.response.use(
     // 对响应错误做点什么
     if (error.response) {
       // 处理特定的HTTP状态码
-      let errorMessage = '请求失败'
+      let errorMessage = ERROR_MESSAGES.REQUEST_FAILED
       switch (error.response.status) {
-        case 401:
+        case HTTP_STATUS.UNAUTHORIZED:
           // 未授权，需要区分是会话过期还是未登录状态
           console.log('检测到401错误，开始处理未授权访问')
           
@@ -81,10 +82,10 @@ request.interceptors.response.use(
               if (!window.location.pathname.includes('/admin/login')) {
                 window.location.href = '/admin/login'
               }
-              errorMessage = '会话已过期，已自动退出登录'
+              errorMessage = ERROR_MESSAGES.SESSION_EXPIRED
             } else {
               // 没有token，说明是未登录状态，不需要跳转
-              errorMessage = '未授权访问'
+              errorMessage = ERROR_MESSAGES.UNAUTHORIZED
             }
           } else {
             // 普通用户相关请求
@@ -97,21 +98,21 @@ request.interceptors.response.use(
               localStorage.removeItem('userInfo')
               // 跳转到首页
               window.location.href = '/'
-              errorMessage = '会话已过期，已自动退出登录'
+              errorMessage = ERROR_MESSAGES.SESSION_EXPIRED
             } else {
               // 没有token，说明是未登录状态，不需要跳转
-              errorMessage = '未授权访问'
+              errorMessage = ERROR_MESSAGES.UNAUTHORIZED
             }
           }
           break
-        case 403:
-          errorMessage = '禁止访问'
+        case HTTP_STATUS.FORBIDDEN:
+          errorMessage = ERROR_MESSAGES.FORBIDDEN
           break
-        case 404:
-          errorMessage = '资源不存在'
+        case HTTP_STATUS.NOT_FOUND:
+          errorMessage = ERROR_MESSAGES.NOT_FOUND
           break
-        case 500:
-          errorMessage = '服务器内部错误'
+        case HTTP_STATUS.INTERNAL_SERVER_ERROR:
+          errorMessage = ERROR_MESSAGES.INTERNAL_SERVER_ERROR
           console.error('服务器内部错误:', error.response.data)
           break
         default:
@@ -137,7 +138,7 @@ request.interceptors.response.use(
       console.error('网络连接失败，请检查网络设置')
       return {
         success: false,
-        message: '网络连接失败，请检查网络设置',
+        message: ERROR_MESSAGES.NETWORK_ERROR,
         data: null
       }
     } else {
@@ -145,7 +146,7 @@ request.interceptors.response.use(
       console.error('请求配置错误:', error.message)
       return {
         success: false,
-        message: error.message || '请求配置错误',
+        message: error.message || ERROR_MESSAGES.REQUEST_CONFIG_ERROR,
         data: null
       }
     }

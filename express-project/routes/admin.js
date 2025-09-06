@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const { HTTP_STATUS, RESPONSE_CODES } = require('../constants')
 const { pool } = require('../config/database')
 const { createCrudHandlers } = require('../middleware/crudFactory')
 const { recordExists } = require('../utils/dbHelper')
@@ -539,20 +540,20 @@ router.get('/posts/:id', adminAuth, async (req, res) => {
   try {
     const result = await postsCrudConfig.customQueries.getOne(req)
     if (!result) {
-      return res.status(404).json({
-        code: 404,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.NOT_FOUND,
         message: '笔记不存在'
       })
     }
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取笔记详情失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取笔记详情失败'
     })
   }
@@ -562,14 +563,14 @@ router.get('/posts', adminAuth, async (req, res) => {
   try {
     const result = await postsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取笔记列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取笔记列表失败'
     })
   }
@@ -712,14 +713,14 @@ router.get('/comments', adminAuth, async (req, res) => {
   try {
     const result = await commentsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取评论列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取评论列表失败'
     })
   }
@@ -782,7 +783,7 @@ const likesCrudConfig = {
       return {
         isValid: false,
         message: data.target_type == 1 ? '笔记不存在' : '评论不存在',
-        code: 404
+        code: RESPONSE_CODES.NOT_FOUND
       }
     }
 
@@ -874,10 +875,10 @@ router.get('/test-users', adminAuth, async (req, res) => {
     const [users] = await pool.execute(
       'SELECT id, user_id, nickname FROM users WHERE id IN (SELECT DISTINCT user_id FROM likes LIMIT 10)'
     )
-    res.json({ code: 200, data: users })
+    res.json({ code: RESPONSE_CODES.SUCCESS, data: users })
   } catch (error) {
     console.error('测试用户数据失败:', error)
-    res.status(500).json({ code: 500, message: '服务器错误' })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '服务器错误' })
   }
 })
 
@@ -892,14 +893,14 @@ router.get('/likes', adminAuth, async (req, res) => {
   try {
     const result = await likesCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取点赞列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取点赞列表失败'
     })
   }
@@ -928,7 +929,7 @@ const collectionsCrudConfig = {
       return {
         isValid: false,
         message: '用户不存在',
-        code: 404
+        code: RESPONSE_CODES.NOT_FOUND
       }
     }
 
@@ -937,7 +938,7 @@ const collectionsCrudConfig = {
       return {
         isValid: false,
         message: '笔记不存在',
-        code: 404
+        code: RESPONSE_CODES.NOT_FOUND
       }
     }
 
@@ -951,7 +952,7 @@ const collectionsCrudConfig = {
       return {
         isValid: false,
         message: '已经收藏过该笔记',
-        code: 409
+        code: RESPONSE_CODES.CONFLICT
       }
     }
 
@@ -964,7 +965,7 @@ const collectionsCrudConfig = {
       return {
         isValid: false,
         message: '笔记不存在',
-        code: 404
+        code: RESPONSE_CODES.NOT_FOUND
       }
     }
 
@@ -1052,14 +1053,14 @@ router.get('/collections', adminAuth, async (req, res) => {
   try {
     const result = await collectionsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取收藏列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取收藏列表失败'
     })
   }
@@ -1095,7 +1096,7 @@ const followsCrudConfig = {
       return {
         isValid: false,
         message: '已经关注过了',
-        code: 409
+        code: RESPONSE_CODES.CONFLICT
       }
     }
 
@@ -1111,7 +1112,7 @@ const followsCrudConfig = {
         return {
           isValid: false,
           message: '关注记录不存在',
-          code: 404
+          code: RESPONSE_CODES.NOT_FOUND
         }
       }
 
@@ -1207,14 +1208,14 @@ router.get('/follows', adminAuth, async (req, res) => {
   try {
     const result = await followsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取关注列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取关注列表失败'
     })
   }
@@ -1320,14 +1321,14 @@ router.get('/notifications', adminAuth, async (req, res) => {
   try {
     const result = await notificationsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取通知列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取通知列表失败'
     })
   }
@@ -1446,14 +1447,14 @@ router.get('/sessions', adminAuth, async (req, res) => {
   try {
     const result = await sessionsCrudConfig.customQueries.getList(req)
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: result
     })
   } catch (error) {
     console.error('获取会话列表失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取会话列表失败'
     })
   }
@@ -1666,14 +1667,14 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
     activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: '获取动态成功',
       data: activities
     })
   } catch (error) {
     console.error('获取监控动态失败:', error)
-    res.status(500).json({
-      code: 500,
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
       message: '获取动态失败',
       error: error.message
     })

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -51,7 +52,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         notifications: rows,
@@ -65,7 +66,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取评论通知失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -102,7 +103,7 @@ router.get('/likes', authenticateToken, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         notifications: rows,
@@ -116,7 +117,7 @@ router.get('/likes', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取点赞通知失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -150,7 +151,7 @@ router.get('/follows', authenticateToken, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         notifications: rows,
@@ -164,7 +165,7 @@ router.get('/follows', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取关注通知失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -201,7 +202,7 @@ router.get('/collections', authenticateToken, async (req, res) => {
     const total = countResult[0].total;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         notifications: rows,
@@ -215,7 +216,7 @@ router.get('/collections', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取收藏通知失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -269,7 +270,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const unread = unreadResult[0].unread;
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         notifications: rows,
@@ -284,7 +285,7 @@ router.get('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取通知列表失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -301,7 +302,7 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
     );
 
     if (notificationRows.length === 0) {
-      return res.status(404).json({ code: 404, message: '通知不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '通知不存在' });
     }
 
     // 标记为已读
@@ -310,10 +311,10 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
       [notificationId.toString()]
     );
 
-    res.json({ code: 200, message: '标记成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '标记成功' });
   } catch (error) {
     console.error('标记通知已读失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -329,10 +330,10 @@ router.put('/read-all', authenticateToken, async (req, res) => {
     );
 
 
-    res.json({ code: 200, message: '全部标记成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '全部标记成功' });
   } catch (error) {
     console.error('标记所有通知已读失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -349,13 +350,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ code: 404, message: '通知不存在' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '通知不存在' });
     }
 
-    res.json({ code: 200, message: '删除成功' });
+    res.json({ code: RESPONSE_CODES.SUCCESS, message: '删除成功' });
   } catch (error) {
     console.error('删除通知失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -379,7 +380,7 @@ router.get('/unread-count-by-type', authenticateToken, async (req, res) => {
 
     const counts = result[0];
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: {
         comments: parseInt(counts.comments || 0),
@@ -391,7 +392,7 @@ router.get('/unread-count-by-type', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('获取按类型分组的未读通知数量失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -406,13 +407,13 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
     );
 
     res.json({
-      code: 200,
+      code: RESPONSE_CODES.SUCCESS,
       message: 'success',
       data: { count: result[0].count }
     });
   } catch (error) {
     console.error('获取未读通知数量失败:', error);
-    res.status(500).json({ code: 500, message: '服务器内部错误' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
