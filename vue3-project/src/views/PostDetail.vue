@@ -13,8 +13,7 @@
         <SvgIcon name="close" />
       </button>
 
-      <DetailCard :item="postData" :page-mode="true" :disable-auto-fetch="true" @follow="handleFollow"
-        @unfollow="handleUnfollow" @like="handleLike" @collect="handleCollect" />
+      <DetailCard :item="postData" :page-mode="true" />
     </div>
   </div>
 </template>
@@ -75,32 +74,13 @@ const fetchPostDetail = async (postId) => {
 
 
 
-// DetailCard事件处理函数
-const handleFollow = (userId) => {
-  console.log('关注用户:', userId)
-  // 这里可以添加关注逻辑
-}
 
-const handleUnfollow = (userId) => {
-  console.log('取消关注用户:', userId)
-  // 这里可以添加取消关注逻辑
-}
-
-const handleLike = (postId) => {
-  console.log('点赞帖子:', postId)
-  // 这里可以添加点赞逻辑
-}
-
-const handleCollect = (postId) => {
-  console.log('收藏帖子:', postId)
-  // 这里可以添加收藏逻辑
-}
 
 // 组件挂载时获取帖子详情
 onMounted(() => {
   // 保存原始页面标题
   originalTitle.value = document.title
-  
+
   const postId = route.query.id
   if (postId) {
     fetchPostDetail(postId)
@@ -120,7 +100,7 @@ onUnmounted(() => {
   if (originalTitle.value) {
     document.title = originalTitle.value
   }
-  
+
   // 移除事件监听器
   window.removeEventListener('resize', updateShowBackButton)
 })

@@ -32,11 +32,11 @@
             </div>
             <div class="shortcut-item">
               <span class="shortcut-desc">收藏</span>
-                <kbd class="shortcut-key">C</kbd>
+                <kbd class="shortcut-key">S</kbd>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-desc">点赞</span>
-                <kbd class="shortcut-key">L</kbd>
+                <kbd class="shortcut-key">D</kbd>
             </div>
           </div>
         </div>

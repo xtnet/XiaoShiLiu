@@ -504,9 +504,9 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
       comment.reply_count = childCount[0].count;
     }
 
-    // 获取总数
+    // 获取总数（包括所有顶级评论和子评论）
     const [countResult] = await pool.execute(
-      'SELECT COUNT(*) as total FROM comments WHERE post_id = ? AND parent_id IS NULL',
+      'SELECT COUNT(*) as total FROM comments WHERE post_id = ?',
       [postId]
     );
     const total = countResult[0].total;

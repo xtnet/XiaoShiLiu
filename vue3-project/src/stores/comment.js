@@ -4,25 +4,40 @@ import { commentApi } from '@/api/index.js'
 import { formatTime } from '@/utils/timeFormat'
 
 export const useCommentStore = defineStore('comment', () => {
-    // 存储笔记的评论数据 { postId: { comments: Array, loading: boolean, loaded: boolean } }
+    // 存储笔记的评论数据 { postId: { comments: Array, loading: boolean, loaded: boolean, hasMore: boolean, currentPage: number } }
     const postComments = ref(new Map())
 
     // 获取笔记评论
     const fetchComments = async (postId, params = {}) => {
+        const { page = 1, limit = 5, loadMore = false } = params
+
         // 如果已经在加载中，则不重复请求
         if (postComments.value.get(postId)?.loading) {
             return postComments.value.get(postId)?.comments || []
         }
 
+        const currentData = postComments.value.get(postId) || { comments: [], hasMore: true, currentPage: 0 }
+
+        // 如果是加载更多但没有更多数据，直接返回
+        if (loadMore && !currentData.hasMore) {
+            return currentData.comments
+        }
+
         // 设置加载状态
         postComments.value.set(postId, {
-            ...postComments.value.get(postId),
+            ...currentData,
             loading: true,
             loaded: false
         })
 
         try {
-            const response = await commentApi.getComments(postId, params)
+            // 构建API参数，包含分页信息
+            const apiParams = {
+                ...params,
+                page,
+                limit
+            }
+            const response = await commentApi.getComments(postId, apiParams)
 
             // 检查响应是否存在
             if (!response) {
@@ -121,15 +136,26 @@ export const useCommentStore = defineStore('comment', () => {
                 // 计算所有评论的总数（包括顶级评论和所有回复）
                 const totalComments = calculateTotalComments(parentComments)
 
+                // 判断是否还有更多评论
+                const hasMore = parentComments.length === limit
+
                 // 更新评论数据
+                const existingComments = loadMore ? currentData.comments : []
+                const updatedComments = loadMore ? [...existingComments, ...parentComments] : parentComments
+
+                // 使用服务器返回的真实总数，而不是计算的总数
+                const serverTotal = response.data.pagination ? response.data.pagination.total : 0
+
                 postComments.value.set(postId, {
-                    comments: parentComments,
+                    comments: updatedComments,
                     loading: false,
                     loaded: true,
-                    total: totalComments
+                    total: serverTotal,
+                    hasMore: hasMore,
+                    currentPage: page
                 })
 
-                return parentComments
+                return updatedComments
             } else {
                 console.error(`笔记[${postId}]评论获取失败，响应结构:`, {
                     success: response.success,
@@ -139,12 +165,12 @@ export const useCommentStore = defineStore('comment', () => {
 
                 // 设置加载失败状态
                 postComments.value.set(postId, {
-                    ...postComments.value.get(postId),
+                    ...currentData,
                     loading: false,
                     loaded: false,
-                    comments: []
+                    comments: loadMore ? currentData.comments : []
                 })
-                return []
+                return loadMore ? currentData.comments : []
             }
         } catch (error) {
             console.error(`获取笔记[${postId}]评论失败:`, error)

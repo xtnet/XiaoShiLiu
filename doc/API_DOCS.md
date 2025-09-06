@@ -2,10 +2,10 @@
 
 ## 项目信息
 - **项目名称**: 小石榴图文社区
-- **版本**: v1.0.2
+- **版本**: v1.0.3
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-05
+- **更新时间**: 2025-09-06
 
 ## 通用说明
 
@@ -1117,15 +1117,19 @@ Authorization: Bearer <your_jwt_token>
 ## 评论相关接口
 
 ### 1. 获取评论列表
-**接口地址**: `GET /api/comments`
+**接口地址**: `GET /api/posts/:id/comments`
 **需要认证**: 否（可选）
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 笔记ID |
 
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| post_id | int | 是 | 笔记ID |
 | page | int | 否 | 页码，默认1 |
-| limit | int | 否 | 每页数量，默认20 |
+| limit | int | 否 | 每页数量，默认5 |
 
 **响应示例**:
 ```json
@@ -1182,13 +1186,17 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. 创建评论
-**接口地址**: `POST /api/comments`
+**接口地址**: `POST /api/posts/:id/comments`
 **需要认证**: 是
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 笔记ID |
 
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| post_id | int | 是 | 笔记ID |
 | content | string | 是 | 评论内容（支持@功能的HTML格式） |
 | parent_id | int | 否 | 父评论ID（回复评论时使用） |
 
@@ -1199,9 +1207,8 @@ Authorization: Bearer <your_jwt_token>
 - 支持在一条评论中@多个用户
 
 **请求示例**:
-​```json
+```json
 {
-  "post_id": 1,
   "content": "这是一条普通评论",
   "parent_id": null
 }
@@ -1210,7 +1217,6 @@ Authorization: Bearer <your_jwt_token>
 **包含@用户的请求示例**:
 ```json
 {
-  "post_id": 1,
   "content": "<p><a href=\"/user/user012\" data-user-id=\"user012\" class=\"mention-link\" contenteditable=\"false\">@摄影爱好者</a>&nbsp;你的作品真的很棒！</p>",
   "parent_id": null
 }
@@ -1225,7 +1231,6 @@ Authorization: Bearer <your_jwt_token>
     "id": 1,
     "content": "<p><a href=\"/user/user012\" data-user-id=\"user012\" class=\"mention-link\" contenteditable=\"false\">@摄影爱好者</a>&nbsp;你的作品真的很棒！</p>",
     "user_id": 1,
-    "post_id": 1,
     "parent_id": null,
     "created_at": "2025-08-30T00:00:00.000Z"
   }

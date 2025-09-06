@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.0.2</span>
+        <span class="version">版本: v1.0.3</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-05</span>
+        <span class="update-time">更新时间: 2025-09-06</span>
       </div>
     </div>
 
@@ -613,25 +613,25 @@ const apiGroups = ref([
     apis: [
       {
         method: 'GET',
-        path: '/api/comments',
+        path: '/api/posts/:id/comments',
         title: '获取评论列表',
         description: '获取指定笔记的评论列表',
         expanded: false,
         params: [
-          { name: 'post_id', type: 'int', required: true, description: '笔记ID' },
+          { name: 'id', type: 'int', required: true, description: '笔记ID（路径参数）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认5' }
         ]
       },
       {
         method: 'POST',
-        path: '/api/comments',
+        path: '/api/posts/:id/comments',
         title: '发表评论',
         description: '对笔记发表评论或回复评论，会自动创建通知',
         auth: true,
         expanded: false,
         params: [
-          { name: 'post_id', type: 'int', required: true, description: '笔记ID' },
+          { name: 'id', type: 'int', required: true, description: '笔记ID（路径参数）' },
           { name: 'content', type: 'string', required: true, description: '评论内容' },
           { name: 'parent_id', type: 'int', required: false, description: '父评论ID（回复时使用）' }
         ]
@@ -806,25 +806,25 @@ const apiGroups = ref([
   "uptime": 3600.5
 }`
       }
-     ]
-   },
-   {
-     name: '监控管理接口',
-     apis: [
-       {
-         method: 'GET',
-         path: '/api/admin/monitor/activities',
-         title: '获取系统活动监控',
-         description: '获取系统活动监控数据，包括新用户、新笔记、新评论、新点赞等统计',
-         expanded: false,
-         params: [
-           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
-           { name: 'date_from', type: 'string', required: false, description: '开始日期（YYYY-MM-DD）' },
-           { name: 'date_to', type: 'string', required: false, description: '结束日期（YYYY-MM-DD）' },
-           { name: 'activity_type', type: 'string', required: false, description: '活动类型筛选' }
-         ],
-         example: `{
+    ]
+  },
+  {
+    name: '监控管理接口',
+    apis: [
+      {
+        method: 'GET',
+        path: '/api/admin/monitor/activities',
+        title: '获取系统活动监控',
+        description: '获取系统活动监控数据，包括新用户、新笔记、新评论、新点赞等统计',
+        expanded: false,
+        params: [
+          { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'date_from', type: 'string', required: false, description: '开始日期（YYYY-MM-DD）' },
+          { name: 'date_to', type: 'string', required: false, description: '结束日期（YYYY-MM-DD）' },
+          { name: 'activity_type', type: 'string', required: false, description: '活动类型筛选' }
+        ],
+        example: `{
   "code": 200,
   "message": "success",
   "data": {
@@ -845,11 +845,11 @@ const apiGroups = ref([
     }
   }
 }`
-       }
-     ]
-   },
-   {
-     name: '通知相关接口',
+      }
+    ]
+  },
+  {
+    name: '通知相关接口',
     apis: [
       {
         method: 'GET',

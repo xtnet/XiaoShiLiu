@@ -54,7 +54,7 @@
               @follow="handleFollow" @unfollow="handleUnfollow" />
           </div>
 
-          <div class="scrollable-content">
+          <div class="scrollable-content" ref="scrollableContent">
             <div v-if="imageList && imageList.length > 0" class="mobile-image-container">
               <div class="mobile-image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
                 @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
@@ -196,6 +196,18 @@
                       </div>
                     </div>
                   </div>
+                </div>
+                
+                <!-- 加载更多按钮 -->
+                <div v-if="hasMoreCommentsToShow" class="load-more-container">
+                  <button class="load-more-btn" @click="loadMoreComments">
+                    点击查看更多评论
+                  </button>
+                </div>
+                
+                <!-- 没有更多评论提示 -->
+                <div v-if="!hasMoreCommentsToShow && enhancedComments.length > 0" class="no-more-comments">
+                  <span>没有更多评论了</span>
                 </div>
               </div>
             </div>
@@ -389,6 +401,8 @@ const commentCount = ref(props.item.commentCount || props.item.comment_count || 
 const showTooltip = ref(false)
 const imageSectionWidth = ref(400)
 const isInputFocused = ref(false)
+const scrollableContent = ref(null)
+let lastScrollTop = 0
 
 const currentImageIndex = ref(0)
 const showImageControls = ref(false)
@@ -509,6 +523,14 @@ const comments = computed(() => commentStore.getComments(props.item.id).comments
 const loadingComments = computed(() => commentStore.getComments(props.item.id).loading || false)
 const commentTotal = computed(() => commentStore.getComments(props.item.id).total || 0)
 
+// 评论分页加载（不再需要displayedCommentsCount，直接显示所有已获取的评论）
+
+// 判断是否还有更多评论可以显示
+const hasMoreCommentsToShow = computed(() => {
+  const commentData = commentStore.getComments(props.item.id)
+  return commentData.hasMore || false
+})
+
 const enhancedComments = computed(() => {
   return comments.value.map(comment => {
     const commentLikeState = commentLikeStore.getCommentLikeState(comment.id)
@@ -556,6 +578,37 @@ const fetchComments = async () => {
     if (error.message && !error.message.includes('401') && !error.message.includes('未授权')) {
       showMessage('获取评论失败，请稍后重试', 'error')
     }
+  }
+}
+
+// 加载更多评论（从服务器获取更多数据）
+const loadMoreComments = async () => {
+  if (!hasMoreCommentsToShow.value) {
+    return
+  }
+
+  // 加载前：保存当前滚动位置
+  if (scrollableContent.value) {
+    lastScrollTop = scrollableContent.value.scrollTop
+  }
+
+  try {
+    // 计算下一页页码
+    const currentPage = Math.ceil(comments.value.length / 5) + 1
+    await commentStore.fetchComments(props.item.id, {
+      page: currentPage,
+      limit: 5,
+      loadMore: true
+    })
+
+    // 加载后：DOM 更新完成后，恢复滚动位置
+    nextTick(() => {
+      if (scrollableContent.value) {
+        scrollableContent.value.scrollTop = lastScrollTop
+      }
+    })
+  } catch (error) {
+    console.error('加载更多评论失败:', error)
   }
 }
 
@@ -1286,13 +1339,13 @@ const handleKeydown = (event) => {
       event.preventDefault()
       nextImage()
       break
-    case 'c':
-    case 'C':
+    case 's':
+    case 'S':
       event.preventDefault()
       toggleCollect()
       break
-    case 'l':
-    case 'L':
+    case 'd':
+    case 'D':
       event.preventDefault()
       // 通过程序化点击LikeButton来触发动画效果
       if (likeButtonRef.value) {
@@ -3055,5 +3108,36 @@ const onViewerContainerClick = (event) => {
 .image-viewer-enter-to,
 .image-viewer-leave-from {
   opacity: 1;
+}
+
+/* 加载更多按钮样式 */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.load-more-btn {
+  background: transparent;
+  color: var(--text-color-secondary);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.load-more-btn:hover {
+  color: var(--text-color-primary);
+  background: var(--bg-color-secondary);
+}
+
+.no-more-comments {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  color: var(--text-color-secondary);
+  font-size: 14px;
 }
 </style>
