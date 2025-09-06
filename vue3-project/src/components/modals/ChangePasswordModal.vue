@@ -117,7 +117,7 @@ const handleChangePassword = async () => {
 
   try {
     const { userApi } = await import('@/api/index.js')
-    const userId = props.userInfo.id
+    const userId = props.userInfo.user_id
 
     const result = await userApi.changePassword(userId, {
       currentPassword: form.currentPassword,
