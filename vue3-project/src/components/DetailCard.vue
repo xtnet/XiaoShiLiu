@@ -101,7 +101,7 @@
 
             <div class="comments-section">
               <div class="comments-header" @click="toggleSortMenu">
-                <span class="comments-title">共 {{ commentTotal || commentCount }} 条评论</span>
+                <span class="comments-title">共 {{ commentCount }} 条评论</span>
                 <SvgIcon name="down" width="16" height="16" class="sort-icon" />
                 <div v-if="showSortMenu" class="sort-menu" @click.stop>
                   <div class="sort-option" :class="{ 'active': commentSortOrder === 'desc' }"
@@ -259,7 +259,7 @@
                   </button>
                   <button class="action-btn comment-btn" @click="handleCommentButtonClick">
                     <SvgIcon name="chat" />
-                    <span>{{ commentTotal || commentCount }}</span>
+                    <span>{{ commentCount }}</span>
                   </button>
                   <button class="action-btn share-btn" @click="handleShare" @mouseleave="handleShareMouseLeave">
                     <SvgIcon :name="isShared ? 'tick' : 'share'" />
@@ -411,7 +411,7 @@ const isLiked = computed(() => likeStore.getPostLikeState(props.item.id)?.liked 
 const likeCount = computed(() => likeStore.getPostLikeState(props.item.id)?.likeCount || props.item.likeCount || props.item.like_count || 0)
 const isCollected = computed(() => collectStore.getPostCollectState(props.item.id)?.collected || false)
 const collectCount = computed(() => collectStore.getPostCollectState(props.item.id)?.collectCount || props.item.collectCount || props.item.collect_count || 0)
-const commentCount = ref(props.item.commentCount || props.item.comment_count || 0)
+
 const showTooltip = ref(false)
 const imageSectionWidth = ref(400)
 const isInputFocused = ref(false)
@@ -539,7 +539,7 @@ const hasMultipleImages = computed(() => imageList.value.length > 1)
 
 const comments = computed(() => commentStore.getComments(props.item.id).comments || [])
 const loadingComments = computed(() => commentStore.getComments(props.item.id).loading || false)
-const commentTotal = computed(() => commentStore.getComments(props.item.id).total || 0)
+const commentCount = computed(() => commentStore.getComments(props.item.id).total || 0)
 
 // 评论分页加载（不再需要displayedCommentsCount，直接显示所有已获取的评论）
 
@@ -570,9 +570,7 @@ const enhancedComments = computed(() => {
   })
 })
 
-watch(commentTotal, (newTotal) => {
-  commentCount.value = newTotal
-
+watch(commentCount, (newTotal) => {
   if (props.item.commentCount !== newTotal) {
     props.item.commentCount = newTotal
   }
