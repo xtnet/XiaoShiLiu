@@ -16,7 +16,7 @@ const captchaStore = new Map();
 router.get('/captcha', (req, res) => {
   try {
     // 字体文件路径
-    const fontDir = path.join(__dirname, '../../vue3-project/src/assets/fonts');
+    const fontDir = path.join(__dirname, 'fonts');
     
     // 自动读取字体文件夹中的所有.ttf文件
     let fontFiles = [];
@@ -33,7 +33,7 @@ router.get('/captcha', (req, res) => {
 
     const captcha = svgCaptcha.create({
       size: 4, // 验证码长度
-      ignoreChars: '0o1ilc', // 排除容易混淆的字符
+      ignoreChars: '0o1ilcIC', // 排除容易混淆的字符
       noise: 4, // 干扰线条数
       color: true, // 彩色验证码
       fontSize:40,
