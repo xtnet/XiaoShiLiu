@@ -11,7 +11,7 @@
     <i>A high-fidelity Xiaohongshu-style graphic community project supporting core features like graphic posting and social interaction, designed to provide a complete frontend-to-backend practice template</i>
 <p align="center"><a href="https://www.shiliu.space">Demo Site</a> · <a href="https://www.bilibili.com/video/BV1J4agztEBX/?spm_id_from=333.1387.homepage.video_card.click">Video Introduction</a>
 </p>
-<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">简体中文</a> · <a href="README_En.md">English</a>  · <a href="README_zh-Hant.md">繁體中文</a>
+<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">简体中文</a>|<a href="README_En.md">English</a>|<a href="README_zh-Hant.md">繁體中文</a>
 
 <p align="center">
     <a href="https://github.com/ZTMYO/XiaoShiLiu/stargazers">
@@ -41,7 +41,7 @@
 
 ---
 
-> 📁 **Project Structure Explanation**: This project contains complete frontend and backend code. The frontend is located in the `vue3-project/` directory, and the backend is in the `express-project/` directory. For detailed structure, please refer to the [Project Structure Document](../PROJECT_STRUCTURE.md).
+> 📁 **Project Structure Explanation**: This project contains complete frontend and backend code. The frontend is located in the `vue3-project/` directory, and the backend is in the `express-project/` directory. For detailed structure, please refer to the [Project Structure Document](PROJECT_STRUCTURE_En.md).
 
 ## Project Demonstration
 
@@ -104,10 +104,10 @@
 
 | Document | Description |
 |----------|-------------|
-| [Deployment Guide](../DEPLOYMENT.md) | Deployment configuration and environment setup instructions |
-| [Project Structure](../PROJECT_STRUCTURE.md) | Project directory structure and architecture explanation |
-| [Database Design](../DATABASE_DESIGN.md) | Database table structure design document |
-| [API Docs](../API_DOCS.md) | Backend API interface description and examples |
+| [Deployment Guide](DEPLOYMENT_En.md) | Deployment configuration and environment setup instructions |
+| [Project Structure](PROJECT_STRUCTURE_En.md) | Project directory structure and architecture explanation |
+| [Database Design](DATABASE_DESIGN_En.md) | Database table structure design document |
+| [API Docs](API_DOCS_En.md) | Backend API interface description and examples |
 
 ## Project Highlights
 
@@ -166,7 +166,7 @@
 | yarn | >= 1.22.0 |
 | Browser | ES6+ supported |
 
-> Note: The above are the minimum version requirements for traditional local development. For Docker deployment, the default image versions are as follows: MySQL 8.0, Node 18-alpine (frontend/backend build/run), Nginx alpine; Docker >= 20, Docker Compose >= 2. See [Deployment Guide](../DEPLOYMENT.md) for details.
+> Note: The above are the minimum version requirements for traditional local development. For Docker deployment, the default image versions are as follows: MySQL 8.0, Node 18-alpine (frontend/backend build/run), Nginx alpine; Docker >= 20, Docker Compose >= 2. See [Deployment Guide](DEPLOYMENT_En.md) for details.
 
 ### 1. Install Dependencies
 
@@ -199,7 +199,7 @@ npm run build
 npm run preview
 ```
 
-> ⚠️ **Important Reminder**: The frontend project needs to work with the backend service. For detailed configuration, please refer to the [Deployment Guide](../DEPLOYMENT.md)
+> ⚠️ **Important Reminder**: The frontend project needs to work with the backend service. For detailed configuration, please refer to the [Deployment Guide](DEPLOYMENT_En.md)
 
 ## Star History
 

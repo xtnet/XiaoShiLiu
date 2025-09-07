@@ -5,13 +5,13 @@
 
 ---
 <p align="center">
-    <b>基於 Express + Vue 前後端分離仿小紅書專案</b>
+    <b>基於 Express + Vue 前後端分離仿小紅書項目</b>
 </p>
 <p align="center">
-    <i>一個高仿小紅書的圖文社群專案，支援圖文發布、社交互動等核心功能，旨在提供從前端到後端的完整實踐範本</i>
+    <i>一個高仿小紅書的圖文社群項目，支援圖文發布、社交互動等核心功能，旨在提供從前端到後端的完整實踐範本</i>
 <p align="center"><a href="https://www.shiliu.space">演示網站</a> · <a href="https://www.bilibili.com/video/BV1J4agztEBX/?spm_id_from=333.1387.homepage.video_card.click">影片介紹</a>
 </p>
-<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">簡體中文</a> · <a href="README_En.md">English</a>  · <a href="./i18n/README_zh-Hant.md">繁體中文</a>
+<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">簡體中文</a>|<a href="README_En.md">English</a>|<a href="./i18n/README_zh-Hant.md">繁體中文</a>
 </p>
 <p align="center">
     <a href="https://github.com/ZTMYO/XiaoShiLiu/stargazers">
@@ -37,82 +37,82 @@
 
 
 > **聲明**  
-> 本專案基於 [GPLv3 協議](./LICENSE)，免費開源，僅供學習交流，禁止轉賣，謹防受騙。如需商用請保留版權資訊，確保合法合規使用，運營風險自負，與作者無關。
+> 本項目基於 [GPLv3 協議](./LICENSE)，免費開源，僅供學習交流，禁止轉賣，謹防受騙。如需商用請保留版權信息，確保合法合規使用，運營風險自負，與作者無關。
 
 ---
 
-> 📁 **專案結構說明**：本專案包含完整的前後端程式碼，前端位於 `vue3-project/` 目錄，後端位於 `express-project/` 目錄。詳細結構請查看 [專案結構文件](../PROJECT_STRUCTURE.md)。
+> 📁 **項目結構說明**：本項目包含完整的前後端程式碼，前端位於 `vue3-project/` 目錄，後端位於 `express-project/` 目錄。詳細結構請查看 [項目結構文件](PROJECT_STRUCTURE_zh-Hant.md)。
 
-## 專案展示
+## 項目展示
 
-### PC端介面
+### PC端界面
 
 <table>
   <tr>
-    <td><img src="../imgs/1.png" alt="PC端介面1" width="300"/></td>
-    <td><img src="../imgs/2.png" alt="PC端介面2" width="300"/></td>
-    <td><img src="../imgs/3.png" alt="PC端介面3" width="300"/></td>
+    <td><img src="../imgs/1.png" alt="PC端界面1" width="300"/></td>
+<td><img src="../imgs/2.png" alt="PC端界面2" width="300"/></td>
+<td><img src="../imgs/3.png" alt="PC端界面3" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/4.png" alt="PC端介面4" width="300"/></td>
-    <td><img src="../imgs/5.png" alt="PC端介面5" width="300"/></td>
-    <td><img src="../imgs/6.png" alt="PC端介面6" width="300"/></td>
+    <td><img src="../imgs/4.png" alt="PC端界面4" width="300"/></td>
+<td><img src="../imgs/5.png" alt="PC端界面5" width="300"/></td>
+<td><img src="../imgs/6.png" alt="PC端界面6" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/7.png" alt="PC端介面7" width="300"/></td>
-    <td><img src="../imgs/8.png" alt="PC端介面8" width="300"/></td>
-    <td><img src="../imgs/9.png" alt="PC端介面9" width="300"/></td>
+    <td><img src="../imgs/7.png" alt="PC端界面7" width="300"/></td>
+<td><img src="../imgs/8.png" alt="PC端界面8" width="300"/></td>
+<td><img src="../imgs/9.png" alt="PC端界面9" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/10.png" alt="PC端介面10" width="300"/></td>
-    <td><img src="../imgs/11.png" alt="PC端介面11" width="300"/></td>
-    <td><img src="../imgs/12.png" alt="PC端介面12" width="300"/></td>
+    <td><img src="../imgs/10.png" alt="PC端界面10" width="300"/></td>
+<td><img src="../imgs/11.png" alt="PC端界面11" width="300"/></td>
+<td><img src="../imgs/12.png" alt="PC端界面12" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/13.png" alt="PC端介面13" width="300"/></td>
-    <td><img src="../imgs/14.png" alt="PC端介面14" width="300"/></td>
-    <td><img src="../imgs/15.png" alt="PC端介面15" width="300"/></td>
+    <td><img src="../imgs/13.png" alt="PC端界面13" width="300"/></td>
+<td><img src="../imgs/14.png" alt="PC端界面14" width="300"/></td>
+<td><img src="../imgs/15.png" alt="PC端界面15" width="300"/></td>
   </tr>
 </table>
 
 
 
-### 行動端介面
+### 移動端界面
 
 <table>
   <tr>
-    <td><img src="../imgs/m1.png" alt="行動端介面1" width="200"/></td>
-    <td><img src="../imgs/m2.png" alt="行動端介面2" width="200"/></td>
-    <td><img src="../imgs/m3.png" alt="行動端介面3" width="200"/></td>
-    <td><img src="../imgs/m4.png" alt="行動端介面4" width="200"/></td>
+    <td><img src="../imgs/m1.png" alt="移動端界面1" width="200"/></td>
+<td><img src="../imgs/m2.png" alt="移動端界面2" width="200"/></td>
+<td><img src="../imgs/m3.png" alt="移動端界面3" width="200"/></td>
+<td><img src="../imgs/m4.png" alt="移動端界面4" width="200"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/m5.png" alt="行動端介面5" width="200"/></td>
-    <td><img src="../imgs/m6.png" alt="行動端介面6" width="200"/></td>
-    <td><img src="../imgs/m7.png" alt="行動端介面7" width="200"/></td>
-    <td><img src="../imgs/m8.png" alt="行動端介面8" width="200"/></td>
+    <td><img src="../imgs/m5.png" alt="移動端界面5" width="200"/></td>
+<td><img src="../imgs/m6.png" alt="移動端界面6" width="200"/></td>
+<td><img src="../imgs/m7.png" alt="移動端界面7" width="200"/></td>
+<td><img src="../imgs/m8.png" alt="移動端界面8" width="200"/></td>
   </tr>
   <tr>
-    <td><img src="../imgs/m9.png" alt="行動端介面9" width="200"/></td>
-    <td><img src="../imgs/m10.png" alt="行動端介面10" width="200"/></td>
-    <td><img src="../imgs/m11.png" alt="行動端介面11" width="200"/></td>
-    <td><img src="../imgs/m12.png" alt="行動端介面12" width="200"/></td>
+    <td><img src="../imgs/m9.png" alt="移動端界面9" width="200"/></td>
+<td><img src="../imgs/m10.png" alt="移動端界面10" width="200"/></td>
+<td><img src="../imgs/m11.png" alt="移動端界面11" width="200"/></td>
+<td><img src="../imgs/m12.png" alt="移動端界面12" width="200"/></td>
   </tr>
 </table>
 
-## 專案文件
+## 項目文件
 
 | 文件 | 說明 |
 |------|------|
-| [部署指南](../DEPLOYMENT.md) | 部署配置和環境搭建說明 |
-| [專案結構](../PROJECT_STRUCTURE.md) | 專案目錄結構架構說明 |
-| [資料庫設計](../DATABASE_DESIGN.md) | 資料庫表結構設計文件 |
-| [API介面文件](../API_DOCS.md) | 後端API介面說明和示例 |
+| [部署指南](DEPLOYMENT_zh-Hant.md) | 部署配置和環境搭建說明 |
+| [項目結構](PROJECT_STRUCTURE_zh-Hant.md) | 項目目錄結構架構說明 |
+| [資料庫設計](DATABASE_DESIGN_zh-Hant.md) | 資料庫表結構設計文件 |
+| [API接口文件](API_DOCS_zh-Hant.md) | 後端API接口說明和示例 |
 
-## 專案亮點
+## 項目亮點
 
 - **工程化：** 環境配置、程式碼規範、建構與產物最佳化的完整流程
-- **業務能力：** 驗權流程、路由守衛、狀態管理與介面封裝
+- **業務能力：** 驗權流程、路由守衛、狀態管理與接口封裝
 - **體驗優化：** 骨架屏、延遲載入、預載入、無障礙與響應式適配
 - **元件與分層：** 可復用元件拆分、按領域分組與別名引入
 - **後台管理：** 基礎CRUD、數據管理與配置面板，支援後續擴展權限與統計
@@ -142,7 +142,7 @@
 - **Express.js** - Web框架
 - **MySQL** - 資料庫
 - **JWT** - 身份驗證
-- **Multer** - 檔案上傳
+- **Multer** - 文件上傳
 - **bcrypt** - 密碼加密
 - **CORS** - 跨域資源共享
 
@@ -167,7 +167,7 @@
 | yarn | >= 1.22.0 |
 | 瀏覽器 | 支援ES6+ |
 
-> 提示：上述為傳統本地開發的最低版本要求。若使用 Docker 部署，預設鏡像版本如下：MySQL 8.0、Node 18-alpine（前後端建構/執行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。詳見[部署指南文件](../DEPLOYMENT.md)。
+> 提示：上述為傳統本地開發的最低版本要求。若使用 Docker 部署，預設鏡像版本如下：MySQL 8.0、Node 18-alpine（前後端建構/執行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。詳見[部署指南文件](DEPLOYMENT_zh-Hant.md)。
 
 ### 1. 安裝依賴
 
@@ -200,7 +200,7 @@ npm run build
 npm run preview
 ```
 
-> ⚠️ **重要提醒**：前端專案需配合後端服務使用，詳細配置請查看 [部署指南](../DEPLOYMENT.md)
+> ⚠️ **重要提醒**：前端項目需配合後端服務使用，詳細配置請查看 [部署指南](DEPLOYMENT_zh-Hant.md)
 
 ## Star歷史
 
