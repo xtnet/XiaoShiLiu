@@ -16,27 +16,35 @@ function transformPostData(backendPost) {
     id: backendPost.id,
     image: (backendPost.images && backendPost.images[0]) || new URL('@/assets/imgs/未加载.png', import.meta.url).href,
     title: backendPost.title,
+    content: backendPost.content,
+    images: backendPost.images || [],
     avatar: backendPost.user_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
     author: backendPost.nickname || '匿名用户',
-    location: backendPost.location || '', // 添加作者的location字段
+    location: backendPost.location || '',
+    // 统计数据 - 统一使用后端字段名
+    view_count: backendPost.view_count || 0,
+    like_count: backendPost.like_count || 0,
+    comment_count: backendPost.comment_count || 0,
+    collect_count: backendPost.collect_count || 0,
+    // 兼容旧的字段名
     likeCount: likeCount,
-    liked: liked, // 使用后端返回的真实点赞状态
-    collected: backendPost.collected || false, // 使用后端返回的真实收藏状态
-    collectCount: collectCount, // 添加收藏数量到顶层
-    commentCount: commentCount, // 添加评论数量到顶层
+    collectCount: collectCount,
+    commentCount: commentCount,
+    // 状态字段
+    liked: liked,
+    collected: backendPost.collected || false,
+    // 其他字段
+    created_at: backendPost.created_at,
     path: `/post/${backendPost.id}`,
     category: backendPost.category || 'general',
-    author_auto_id: backendPost.author_auto_id, // 作者自增ID
-    author_account: backendPost.author_account, // 作者小石榴号
-    user_id: backendPost.user_id, // 保持兼容性
+    author_auto_id: backendPost.author_auto_id,
+    author_account: backendPost.author_account,
+    user_id: backendPost.user_id,
     // 保留原始数据以备需要
     originalData: {
       content: backendPost.content,
       images: backendPost.images || [],
       tags: backendPost.tags || [],
-      viewCount: backendPost.view_count || 0,
-      commentCount: backendPost.comment_count || 0,
-      collectCount: collectCount,
       createdAt: backendPost.created_at,
       userId: backendPost.user_id
     }

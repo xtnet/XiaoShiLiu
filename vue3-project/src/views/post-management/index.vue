@@ -61,15 +61,19 @@
             <div class="post-meta">
               <span class="category">{{ getCategoryName(post.category) }}</span>
               <span class="stats">
-                <SvgIcon name="eye" width="14" height="14" />
+                <SvgIcon name="view" width="14" height="14" />
                 {{ post.view_count }}
               </span>
               <span class="stats">
-                <SvgIcon name="heart" width="14" height="14" />
+                <SvgIcon name="like" width="14" height="14" />
                 {{ post.like_count }}
               </span>
               <span class="stats">
-                <SvgIcon name="comment" width="14" height="14" />
+                <SvgIcon name="collect" width="14" height="14" />
+                {{ post.collect_count }}
+              </span>
+              <span class="stats">
+                <SvgIcon name="chat" width="14" height="14" />
                 {{ post.comment_count }}
               </span>
               <span class="date">{{ formatDate(post.originalData?.createdAt || post.created_at) }}</span>
