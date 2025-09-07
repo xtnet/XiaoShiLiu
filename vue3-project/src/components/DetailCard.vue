@@ -48,8 +48,9 @@
           <div class="author-wrapper">
             <div class="author-info">
               <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
-                @click="onUserClick(authorData.id)" />
-              <span class="author-name" @click="onUserClick(authorData.id)">{{ authorData.name }}</span>
+                @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
+              <span class="author-name" @click="onUserClick(authorData.id)"
+                v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
             </div>
             <FollowButton v-if="!isCurrentUserPost" :is-following="authorData.isFollowing" :user-id="authorData.id"
               @follow="handleFollow" @unfollow="handleUnfollow" />
@@ -129,11 +130,13 @@
                 </div>
                 <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item">
                   <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
-                    @click="onUserClick(comment.user_id)" @error="handleAvatarError" />
+                    @click="onUserClick(comment.user_id)" @error="handleAvatarError" 
+                    v-user-hover="getCommentUserHoverConfig(comment)" />
                   <div class="comment-content">
                     <div class="comment-header">
                       <div class="comment-user-info">
-                        <span class="comment-username" @click="onUserClick(comment.user_id)">
+                        <span class="comment-username" @click="onUserClick(comment.user_id)"
+                          v-user-hover="getCommentUserHoverConfig(comment)">
                           <span v-if="isCurrentUserComment(comment)">我</span>
                           <span v-else>{{ comment.username }}</span>
                         </span>
@@ -164,11 +167,13 @@
                       <div v-for="reply in getDisplayedReplies(comment.replies, comment.id)" :key="reply.id"
                         class="reply-item">
                         <img :src="reply.avatar" :alt="reply.username" class="reply-avatar "
-                          @click="onUserClick(reply.user_id)" @error="handleAvatarError" />
+                          @click="onUserClick(reply.user_id)" @error="handleAvatarError" 
+                          v-user-hover="getCommentUserHoverConfig(reply)" />
                         <div class="reply-content">
                           <div class="reply-header">
                             <div class="reply-user-info">
-                              <span class="reply-username" @click="onUserClick(reply.user_id)">
+                              <span class="reply-username" @click="onUserClick(reply.user_id)"
+                                v-user-hover="getCommentUserHoverConfig(reply)">
                                 <span v-if="isCurrentUserComment(reply)">我</span>
                                 <span v-else>{{ reply.username }}</span>
                               </span>
@@ -366,7 +371,7 @@ import { useFollowStore } from '@/stores/follow.js'
 import { useAuthStore } from '@/stores/auth'
 import { useCommentStore } from '@/stores/comment'
 import { useCommentLikeStore } from '@/stores/commentLike'
-import { commentApi, postApi } from '@/api/index.js'
+import { commentApi, userApi, postApi } from '@/api/index.js'
 import { getPostDetail } from '@/api/posts.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { formatTime } from '@/utils/timeFormat'
@@ -485,7 +490,8 @@ const authorData = computed(() => {
     id: userId,
     name: props.item.nickname || props.item.author || '匿名用户',
     avatar: props.item.user_avatar || props.item.avatar || new URL('@/assets/imgs/未加载.png', import.meta.url).href,
-    isFollowing: followState.followed
+    isFollowing: followState.followed,
+    buttonType: followState.buttonType
   }
 })
 
@@ -1057,6 +1063,323 @@ const onUserClick = (userId) => {
   }
 }
 
+// 获取评论用户悬停配置
+const getCommentUserHoverConfig = (comment) => {
+  if (!comment) return null
+  
+  return {
+    getUserInfo: async () => {
+      const userId = comment.user_id
+      
+      // 获取用户统计数据
+      let userStats = {
+        follow_count: 0,
+        fans_count: 0,
+        likes_and_collects: 0
+      }
+      
+      try {
+        const statsResponse = await userApi.getUserStats(userId)
+        if (statsResponse.success) {
+          userStats = statsResponse.data
+        }
+      } catch (error) {
+        console.error('获取用户统计失败:', error)
+      }
+      
+      // 获取关注状态 - 使用followStore保持状态一致性
+      let followStatus = {
+        followed: false,
+        isMutual: false,
+        buttonType: 'follow'
+      }
+      
+      if (userStore.isLoggedIn) {
+        // 优先使用followStore中的状态
+        const storeState = followStore.getUserFollowState(userId)
+        if (storeState.hasState) {
+          followStatus = {
+            followed: storeState.followed,
+            isMutual: storeState.isMutual,
+            buttonType: storeState.buttonType
+          }
+        } else {
+          // 如果store中没有状态，则从API获取并更新store
+          try {
+            const followResponse = await userApi.getFollowStatus(userId)
+            if (followResponse.success) {
+              followStatus = followResponse.data
+              // 更新store状态
+              followStore.initUserFollowState(
+                userId,
+                followStatus.followed,
+                followStatus.isMutual,
+                followStatus.buttonType
+              )
+            }
+          } catch (error) {
+            console.error('获取关注状态失败:', error)
+          }
+        }
+      }
+      
+      // 获取用户的前三个笔记封面图
+      let userImages = []
+      try {
+        const postsResponse = await postApi.getUserPosts(userId, { page: 1, limit: 3 })
+        
+        if (postsResponse && postsResponse.data && postsResponse.data.posts) {
+          // 收集每个笔记的第一张图片作为封面
+          const coverImages = []
+          postsResponse.data.posts.forEach((post) => {
+            // 使用图片数组的第一张作为封面
+            if (post.images && post.images.length > 0) {
+              coverImages.push(post.images[0])
+            }
+          })
+          // 取前3张封面图
+          userImages = coverImages.slice(0, 3)
+        }
+      } catch (error) {
+        console.error('获取用户笔记封面失败:', error)
+      }
+      
+      // 获取完整的用户信息
+      let userInfo = {
+        avatar: comment.avatar || '',
+        nickname: comment.username || `用户${userId}`,
+        bio: '还没有简介'
+      }
+      
+      try {
+        const userInfoResponse = await userApi.getUserInfo(userId)
+        if (userInfoResponse.success && userInfoResponse.data) {
+          userInfo = {
+            avatar: userInfoResponse.data.avatar || comment.avatar || '',
+            nickname: userInfoResponse.data.nickname || comment.username || `用户${userId}`,
+            bio: userInfoResponse.data.bio || '还没有简介'
+          }
+        }
+      } catch (error) {
+        console.error('获取用户详细信息失败:', error)
+      }
+      
+      return {
+        id: userId,
+        avatar: userInfo.avatar,
+        nickname: userInfo.nickname,
+        bio: userInfo.bio,
+        followCount: userStats.follow_count || 0,
+        fansCount: userStats.fans_count || 0,
+        likeAndCollectCount: userStats.likes_and_collects || 0,
+        isFollowing: followStatus.followed,
+        isMutual: followStatus.isMutual,
+        buttonType: followStatus.buttonType,
+        images: userImages
+      }
+    },
+    onFollow: async () => {
+      if (!userStore.isLoggedIn) {
+        showMessage('请先登录', 'error')
+        return
+      }
+      try {
+        const result = await followStore.toggleUserFollow(comment.user_id)
+        if (result.success) {
+          const newState = followStore.getUserFollowState(comment.user_id)
+          if (newState.followed) {
+            showMessage('关注成功', 'success')
+          } else {
+            showMessage('取消关注成功', 'success')
+          }
+        } else {
+          showMessage(result.error || '操作失败，请重试', 'error')
+        }
+      } catch (error) {
+        console.error('关注操作失败:', error)
+        showMessage('操作失败，请重试', 'error')
+      }
+    },
+    onUnfollow: async () => {
+      if (!userStore.isLoggedIn) {
+        showMessage('请先登录', 'error')
+        return
+      }
+      try {
+        const result = await followStore.toggleUserFollow(comment.user_id)
+        if (result.success) {
+          const newState = followStore.getUserFollowState(comment.user_id)
+          if (newState.followed) {
+            showMessage('关注成功', 'success')
+          } else {
+            showMessage('取消关注成功', 'success')
+          }
+        } else {
+          showMessage(result.error || '操作失败，请重试', 'error')
+        }
+      } catch (error) {
+        console.error('关注操作失败:', error)
+        showMessage('操作失败，请重试', 'error')
+      }
+    },
+    delay: 500
+  }
+}
+
+// 获取作者用户悬停配置
+const getAuthorUserHoverConfig = () => {
+  if (!authorData.value) return null
+  
+  return {
+    getUserInfo: async () => {
+      const userId = authorData.value.id
+      
+      // 获取用户统计数据
+      let userStats = {
+        follow_count: 0,
+        fans_count: 0,
+        likes_and_collects: 0
+      }
+      
+      try {
+        const statsResponse = await userApi.getUserStats(userId)
+        if (statsResponse.success) {
+          userStats = statsResponse.data
+        }
+      } catch (error) {
+        console.error('获取用户统计失败:', error)
+      }
+      
+      // 优先使用followStore中的关注状态
+      const storeState = followStore.getUserFollowState(userId)
+      let followStatus = {
+        followed: storeState.followed,
+        isMutual: storeState.isMutual,
+        buttonType: storeState.buttonType
+      }
+      
+      // 如果store中没有状态且用户已登录，则从API获取并更新store
+      if (!storeState.hasState && userStore.isLoggedIn) {
+        try {
+          const followResponse = await userApi.getFollowStatus(userId)
+          if (followResponse.success) {
+            followStatus = followResponse.data
+            // 更新store状态
+            followStore.initUserFollowState(
+              userId,
+              followStatus.followed,
+              followStatus.isMutual,
+              followStatus.buttonType
+            )
+          }
+        } catch (error) {
+          console.error('获取关注状态失败:', error)
+        }
+      }
+      
+      // 获取用户的前三个笔记封面图
+      let userImages = []
+      try {
+        const postsResponse = await postApi.getUserPosts(userId, { page: 1, limit: 3 })
+        
+        if (postsResponse && postsResponse.data && postsResponse.data.posts) {
+          // 收集每个笔记的第一张图片作为封面
+          const coverImages = []
+          postsResponse.data.posts.forEach((post) => {
+            // 使用图片数组的第一张作为封面
+            if (post.images && post.images.length > 0) {
+              coverImages.push(post.images[0])
+            }
+          })
+          // 取前3张封面图
+          userImages = coverImages.slice(0, 3)
+        }
+      } catch (error) {
+        console.error('获取用户笔记封面失败:', error)
+      }
+      
+      // 获取完整的用户信息
+      let userInfo = {
+        avatar: authorData.value.avatar || '',
+        nickname: authorData.value.name || `用户${userId}`,
+        bio: '还没有简介'
+      }
+      
+      try {
+        const userInfoResponse = await userApi.getUserInfo(userId)
+        if (userInfoResponse.success && userInfoResponse.data) {
+          userInfo = {
+            avatar: userInfoResponse.data.avatar || authorData.value.avatar || '',
+            nickname: userInfoResponse.data.nickname || authorData.value.name || `用户${userId}`,
+            bio: userInfoResponse.data.bio || '还没有简介'
+          }
+        }
+      } catch (error) {
+        console.error('获取用户详细信息失败:', error)
+      }
+      
+      return {
+        id: userId,
+        avatar: userInfo.avatar,
+        nickname: userInfo.nickname,
+        bio: userInfo.bio,
+        followCount: userStats.follow_count || 0,
+        fansCount: userStats.fans_count || 0,
+        likeAndCollectCount: userStats.likes_and_collects || 0,
+        isFollowing: followStatus.followed,
+        isMutual: followStatus.isMutual,
+        buttonType: followStatus.buttonType,
+        images: userImages
+      }
+    },
+    onFollow: async () => {
+      if (!userStore.isLoggedIn) {
+        showMessage('请先登录', 'error')
+        return
+      }
+      try {
+        const result = await followStore.toggleUserFollow(authorData.value.id)
+        if (result.success) {
+          const newState = followStore.getUserFollowState(authorData.value.id)
+          if (newState.followed) {
+            showMessage('关注成功', 'success')
+          } else {
+            showMessage('取消关注成功', 'success')
+          }
+        } else {
+          showMessage(result.error || '操作失败，请重试', 'error')
+        }
+      } catch (error) {
+        console.error('关注操作失败:', error)
+        showMessage('操作失败，请重试', 'error')
+      }
+    },
+    onUnfollow: async () => {
+      if (!userStore.isLoggedIn) {
+        showMessage('请先登录', 'error')
+        return
+      }
+      try {
+        const result = await followStore.toggleUserFollow(authorData.value.id)
+        if (result.success) {
+          const newState = followStore.getUserFollowState(authorData.value.id)
+          if (newState.followed) {
+            showMessage('关注成功', 'success')
+          } else {
+            showMessage('取消关注成功', 'success')
+          }
+        } else {
+          showMessage(result.error || '操作失败，请重试', 'error')
+        }
+      } catch (error) {
+        console.error('关注操作失败:', error)
+        showMessage('操作失败，请重试', 'error')
+      }
+    },
+    delay: 500
+  }
+}
+
 
 const toggleRepliesExpanded = (commentId) => {
   if (expandedReplies.value.has(commentId)) {
@@ -1360,6 +1683,24 @@ const fetchPostDetail = async () => {
         postDetail.collected || false,
         postDetail.collectCount || postDetail.collect_count || 0
       )
+
+      // 初始化作者的关注状态
+      const authorId = postDetail.author_account || postDetail.user_id
+      if (authorId && userStore.isLoggedIn) {
+        try {
+          const followResponse = await followStore.fetchFollowStatus(authorId)
+          if (followResponse.success) {
+            followStore.initUserFollowState(
+              authorId,
+              followResponse.data.followed,
+              followResponse.data.isMutual,
+              followResponse.data.buttonType
+            )
+          }
+        } catch (error) {
+          console.error('获取作者关注状态失败:', error)
+        }
+      }
     }
   } catch (error) {
     console.error(`❌ 获取笔记${props.item.id}详情失败:`, error)

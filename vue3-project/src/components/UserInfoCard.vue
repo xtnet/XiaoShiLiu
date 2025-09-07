@@ -6,9 +6,8 @@
         <img :src="userInfo.avatar" :alt="userInfo.nickname" class="avatar" @error="handleAvatarError" />
         <span class="nickname">{{ userInfo.nickname }}</span>
       </div>
-      <FollowButton v-if="!isCurrentUser" :user-id="userInfo.user_id || userInfo.userId || userInfo.id"
-        :is-following="userInfo.isFollowing" :follow-text="getFollowText(userInfo)"
-        :following-text="getFollowingText(userInfo)" size="small" @follow="handleFollow" @unfollow="handleUnfollow"
+      <FollowButton v-if="!isCurrentUser" :user-id="mergedUserInfo.user_id || mergedUserInfo.userId || mergedUserInfo.id"
+        :is-following="mergedUserInfo.isFollowing" :follow-text="getFollowText(mergedUserInfo)" :following-text="getFollowingText(mergedUserInfo)" size="small" @follow="handleFollow" @unfollow="handleUnfollow"
         @click.stop />
     </div>
 
@@ -84,10 +83,35 @@ const props = defineProps({
     type: String,
     default: 'bottom',
     validator: (value) => ['top', 'bottom', 'left', 'right'].includes(value)
+  },
+  onFollow: {
+    type: Function,
+    default: null
+  },
+  onUnfollow: {
+    type: Function,
+    default: null
   }
 })
 
 const emit = defineEmits(['follow', 'unfollow', 'click'])
+
+// 实时获取关注状态
+const currentFollowState = computed(() => {
+  const userId = props.userInfo.user_id || props.userInfo.userId || props.userInfo.id
+  return followStore.getUserFollowState(userId)
+})
+
+// 合并用户信息和实时关注状态
+const mergedUserInfo = computed(() => {
+  const followState = currentFollowState.value
+  return {
+    ...props.userInfo,
+    isFollowing: followState?.followed ?? props.userInfo.isFollowing,
+    isMutual: followState?.isMutual ?? props.userInfo.isMutual,
+    buttonType: followState?.buttonType ?? props.userInfo.buttonType
+  }
+})
 
 // 判断是否为当前用户
 const isCurrentUser = computed(() => {
@@ -129,26 +153,54 @@ function handleCardClick() {
 }
 
 // 处理关注事件 - FollowButton组件已经处理了消息提示
-function handleFollow(userId) {
+async function handleFollow(userId) {
+  // 如果有外部的onFollow回调，优先使用外部回调
+  if (props.onFollow) {
+    await props.onFollow(userId)
+  } else {
+    // 否则使用内部的toggleUserFollow逻辑
+    if (!userStore.isLoggedIn) {
+      return
+    }
+    try {
+      await followStore.toggleUserFollow(userId)
+    } catch (error) {
+      console.error('关注操作失败:', error)
+    }
+  }
   emit('follow', userId)
 }
 
 // 处理取消关注事件 - FollowButton组件已经处理了消息提示
-function handleUnfollow(userId) {
+async function handleUnfollow(userId) {
+  // 如果有外部的onUnfollow回调，优先使用外部回调
+  if (props.onUnfollow) {
+    await props.onUnfollow(userId)
+  } else {
+    // 否则使用内部的toggleUserFollow逻辑
+    if (!userStore.isLoggedIn) {
+      return
+    }
+    try {
+      await followStore.toggleUserFollow(userId)
+    } catch (error) {
+      console.error('取消关注操作失败:', error)
+    }
+  }
   emit('unfollow', userId)
 }
 
-// 计算关注按钮文字（未关注状态）
-function getFollowText(userInfo) {
-  if (userInfo.buttonType === 'back') {
+// 根据用户状态获取关注按钮文本
+function getFollowText(user) {
+  if (user.buttonType === 'back') {
     return '回关'
   }
   return '关注'
 }
 
-// 计算关注按钮文字（已关注状态）
-function getFollowingText(userInfo) {
-  if (userInfo.buttonType === 'mutual' || userInfo.isMutual) {
+// 根据用户状态获取已关注按钮文本
+function getFollowingText(user) {
+  if (user.buttonType === 'mutual') {
     return '互相关注'
   }
   return '已关注'
@@ -166,11 +218,26 @@ watch(() => props.userInfo, (newUserInfo) => {
     // 初始化关注状态到 store
     // 确保使用正确的用户ID（小石榴号）
     const userId = newUserInfo.user_id || newUserInfo.userId || newUserInfo.id
+    const isFollowing = newUserInfo.isFollowing || false
+    const isMutual = newUserInfo.isMutual || false
+    
+    // 根据关注状态确定buttonType
+    let buttonType = newUserInfo.buttonType
+    if (!buttonType) {
+      if (isFollowing) {
+        buttonType = isMutual ? 'mutual' : 'unfollow'
+      } else {
+        // 未关注时，需要判断是否为回关情况
+        // 这里应该从API获取，但作为fallback使用follow
+        buttonType = 'follow'
+      }
+    }
+    
     followStore.initUserFollowState(
       userId,
-      newUserInfo.isFollowing || false,
-      newUserInfo.isMutual || false,
-      newUserInfo.buttonType || (newUserInfo.isFollowing ? 'unfollow' : 'follow')
+      isFollowing,
+      isMutual,
+      buttonType
     )
   }
 }, { immediate: true })

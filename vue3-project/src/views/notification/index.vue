@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import SimpleSpinner from '@/components/spinner/SimpleSpinner.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-
 import MessageToast from '@/components/MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
@@ -13,6 +11,7 @@ import NotificationTab from './components/NotificationTab.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import LikeButton from '@/components/LikeButton.vue'
 import DetailCard from '@/components/DetailCard.vue'
+import BackToTopButton from '@/components/BackToTopButton.vue'
 import { getCommentNotifications, getLikeNotifications, getFollowNotifications, getCollectionNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/api/notification.js'
 import { getPostDetail } from '@/api/posts.js'
 import { postApi, userApi, commentApi } from '@/api/index.js'
@@ -26,8 +25,6 @@ import { formatTime } from '@/utils/timeFormat'
 import avatarPlaceholder from '@/assets/imgs/avatar.png'
 import imagePlaceholder from '@/assets/imgs/未加载.png'
 
-// Router实例
-const router = useRouter()
 
 // Store实例
 const userStore = useUserStore()
@@ -519,11 +516,6 @@ async function markAllAsRead() {
     // 显示错误提示
     showToastMessage('操作失败，请稍后重试', 'error')
   }
-}
-
-// 点击通知项时的处理（移除已读逻辑，因为悬停时已经处理了）
-function handleNotificationClick(item) {
-  // 点击时不再处理已读状态，因为悬停时已经处理了
 }
 
 // 处理用户点击事件
@@ -1118,6 +1110,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
       <NotificationTab v-model:activeTab="activeTab" :tabs="TABS" :unread-counts="notificationStore.unreadCountByType"
         ref="notificationTabRef" />
 
+      <BackToTopButton />
 
       <div v-if="isLoggedIn" class="floating-mark-read-btn-wrapper" @click="markAllAsRead">
         <div class="floating-mark-read-btn">
@@ -1125,6 +1118,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
         </div>
         <div class="tooltip">一键已读</div>
       </div>
+
 
 
       <div class="login-prompt" v-if="!isLoggedIn">
@@ -1221,7 +1215,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                     </div>
                   </div>
                   <div class="post-thumbnail">
-                    <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" />
+                    <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" @click="onUserClick(item.id, $event)">{{ item.username }}/>
                   </div>
                 </div>
               </div>
@@ -1333,7 +1327,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                   </div>
                   <div class="follow-button">
                     <FollowButton :is-following="item.isFollowing || false" :user-id="item.from_user_id"
-                      follow-text="回关" following-text="互相关注" @follow="handleFollow" @unfollow="handleUnfollow" />
+                      @follow="handleFollow" @unfollow="handleUnfollow" />
                   </div>
                 </div>
               </div>
@@ -1482,6 +1476,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
 .floating-mark-read-btn .btn-icon {
   color: var(--text-color-secondary);
   transition: color 0.2s ease;
+}
+
+/* 自定义回到顶部按钮在通知页面的位置 */
+:deep(.back-to-top) {
+  bottom: 108px !important;
 }
 
 /* Tooltip 样式 */
@@ -1690,6 +1689,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   overflow: hidden;
   margin-left: 12px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .post-thumbnail img {
