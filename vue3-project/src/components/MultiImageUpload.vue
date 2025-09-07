@@ -3,8 +3,15 @@
     <div class="upload-grid" @dragover.prevent @drop.prevent="handleDrop">
 
       <div v-for="(imageItem, index) in imageList" :key="imageItem.id" class="image-item"
-        :class="{ 'dragging': dragIndex === index }" draggable="true" @dragstart="handleDragStart(index, $event)"
-        @dragenter.prevent="handleDragEnter(index)" @dragover.prevent @dragend="handleDragEnd">
+        :class="{ 
+          'dragging': dragIndex === index, 
+          'touch-dragging': isTouchDragging && touchStartIndex === index,
+          'long-pressing': isLongPressed && touchStartIndex === index && !isTouchDragging
+        }" 
+        draggable="true" @dragstart="handleDragStart(index, $event)"
+        @dragenter.prevent="handleDragEnter(index)" @dragover.prevent @dragend="handleDragEnd"
+        @touchstart="handleTouchStart(index, $event)" @touchmove="handleTouchMove($event)"
+        @touchend="handleTouchEnd($event)">
         <div class="image-preview">
           <img :src="imageItem.preview" alt="预览图片" />
           <div class="image-overlay">
@@ -44,7 +51,7 @@
       <p>• 最多上传{{ maxImages }}张图片</p>
       <p>• 支持 JPG、PNG 格式</p>
       <p>• 单张图片不超过5MB</p>
-      <p>• 拖拽图片可调整顺序</p>
+      <p class="drag-tip">• <span class="desktop-tip">拖拽图片可调整顺序</span><span class="mobile-tip">长按图片可拖拽排序</span></p>
     </div>
 
 
@@ -89,6 +96,17 @@ const toastType = ref('success')
 // 拖拽相关状态
 const dragIndex = ref(-1)
 const dragOverIndex = ref(-1)
+
+// 触摸拖拽相关状态
+const touchStartIndex = ref(-1)
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const touchCurrentY = ref(0)
+const isTouchDragging = ref(false)
+const touchThreshold = 10 // 触摸移动阈值
+const longPressTimer = ref(null)
+const longPressDelay = 300 // 长按延迟时间
+const isLongPressed = ref(false)
 
 // 生成唯一ID
 const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9)
@@ -290,6 +308,128 @@ const handleDrop = (event) => {
   handleDragEnd()
 }
 
+// 触摸事件处理函数
+const handleTouchStart = (index, event) => {
+  // 不阻止默认行为，允许正常滚动
+  const touch = event.touches[0]
+  touchStartIndex.value = index
+  touchStartX.value = touch.clientX
+  touchStartY.value = touch.clientY
+  touchCurrentY.value = touch.clientY
+  isTouchDragging.value = false
+  isLongPressed.value = false
+  
+  // 设置长按定时器
+  longPressTimer.value = setTimeout(() => {
+    isLongPressed.value = true
+    // 触发触觉反馈（如果支持）
+    if (navigator.vibrate) {
+      navigator.vibrate(50)
+    }
+  }, longPressDelay)
+}
+
+const handleTouchMove = (event) => {
+  if (touchStartIndex.value === -1) return
+  
+  const touch = event.touches[0]
+  touchCurrentY.value = touch.clientY
+  const deltaX = Math.abs(touch.clientX - touchStartX.value)
+  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
+  const totalDelta = Math.sqrt(deltaX * deltaX + deltaY * deltaY) // 计算总移动距离
+  // 如果移动距离超过阈值，清除长按定时器
+  if (totalDelta > touchThreshold && longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  
+  // 只有在长按后才允许拖拽（使用总移动距离判定）
+  if (isLongPressed.value && totalDelta > touchThreshold && !isTouchDragging.value) {
+    isTouchDragging.value = true
+    dragIndex.value = touchStartIndex.value
+  }
+  
+  // 只有在实际拖拽状态下才阻止默认滚动行为
+  if (isTouchDragging.value) {
+    event.preventDefault() // 防止页面滚动
+    // 计算当前触摸位置对应的目标索引
+    const targetIndex = getTouchTargetIndex(touch.clientX, touch.clientY)
+    if (targetIndex !== -1 && targetIndex !== dragIndex.value) {
+      dragOverIndex.value = targetIndex
+    }
+  }
+}
+
+const handleTouchEnd = (event) => {
+  // 清除长按定时器
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  
+  // 如果正在拖拽状态，尝试执行排序
+  if (isTouchDragging.value && dragIndex.value !== -1) {
+    // 始终根据最终触摸位置重新计算目标索引，确保准确性
+    const touch = event.changedTouches[0]
+    let finalTargetIndex = -1
+    
+    if (touch) {
+      // 尝试使用clientX和clientY计算
+      finalTargetIndex = getTouchTargetIndex(touch.clientX, touch.clientY)
+    }
+    
+    // 执行排序（如果有有效的目标位置且不同于起始位置）
+    if (finalTargetIndex !== -1 && finalTargetIndex !== dragIndex.value) {
+      const draggedItem = imageList.value[dragIndex.value]
+      imageList.value.splice(dragIndex.value, 1)
+      imageList.value.splice(finalTargetIndex, 0, draggedItem)
+      
+      // 排序成功后的触觉反馈
+      if (navigator.vibrate) {
+        navigator.vibrate(30)
+      }
+    }
+  }
+  
+  // 重置触摸状态
+  touchStartIndex.value = -1
+  touchStartX.value = 0
+  touchStartY.value = 0
+  touchCurrentY.value = 0
+  isTouchDragging.value = false
+  isLongPressed.value = false
+  dragIndex.value = -1
+  dragOverIndex.value = -1
+}
+
+// 根据触摸位置直接检测目标元素（使用 elementFromPoint）
+const getTouchTargetIndex = (clientX, clientY) => {
+  // 使用 elementFromPoint 直接获取触摸点下的元素
+  const elementAtPoint = document.elementFromPoint(clientX, clientY)
+  if (!elementAtPoint) {
+    return -1
+  }
+  
+  // 查找最近的 .image-item 元素
+  let imageItem = elementAtPoint.closest('.image-item')
+  
+  if (!imageItem) {
+    return -1
+  }
+  
+  // 获取所有图片项来确定索引
+  const uploadGrid = document.querySelector('.upload-grid')
+  if (!uploadGrid) {
+    return -1
+  }
+  
+  const imageItems = uploadGrid.querySelectorAll('.image-item')
+  const targetIndex = Array.from(imageItems).indexOf(imageItem)
+  return targetIndex >= 0 ? targetIndex : -1
+}
+
+
+
 // 获取所有图片数据（包括已有URL和新图片的base64）
 const getAllImageData = async () => {
   const allImageData = []
@@ -310,9 +450,6 @@ const getAllImageData = async () => {
     }
   }
 
-  console.log('获取到的图片数据:', allImageData.map(data =>
-    data.startsWith('data:') ? `base64数据(${data.substring(0, 50)}...)` : data
-  ))
   return allImageData
 }
 
@@ -391,7 +528,6 @@ const fileToBase64 = async (file) => {
 const uploadAllImages = async () => {
   // 如果正在上传，防止重复上传
   if (isUploading.value) {
-    console.log('正在上传中，请勿重复操作')
     return []
   }
 
@@ -403,7 +539,6 @@ const uploadAllImages = async () => {
     const existingUrls = imageList.value
       .filter(item => item.uploaded && item.url && !item.url.startsWith('data:'))
       .map(item => item.url)
-    console.log('没有新图片需要上传，返回现有URL:', existingUrls)
     return existingUrls
   }
 
@@ -414,10 +549,8 @@ const uploadAllImages = async () => {
   try {
     // 上传新图片
     const files = unuploadedImages.map(item => item.file)
-    console.log('准备上传的文件:', files.map(f => f.name))
 
     const result = await imageUploadApi.uploadImages(files)
-    console.log('上传API返回结果:', result)
 
     if (result.success && result.data && result.data.uploaded && result.data.uploaded.length > 0) {
 
@@ -441,8 +574,6 @@ const uploadAllImages = async () => {
       const allUrls = imageList.value
         .filter(item => item.uploaded && item.url && !item.url.startsWith('data:'))
         .map(item => item.url)
-
-      console.log('最终返回的所有URL:', allUrls)
       return allUrls
     } else {
       const errorMsg = result.message || '上传失败，没有成功上传的图片'
@@ -598,6 +729,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
 .image-overlay {
@@ -702,9 +834,47 @@ defineExpose({
   transform: scale(0.95);
 }
 
+.image-item.touch-dragging {
+  opacity: 0.8;
+  transform: scale(1.05);
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: none;
+}
+
+.image-item.long-pressing {
+  transform: scale(0.98);
+  opacity: 0.9;
+  transition: all 0.1s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 .image-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .image-item {
+    touch-action: pan-y; /* 允许垂直滚动，但禁用其他手势 */
+  }
+  
+  .image-item.touch-dragging {
+    touch-action: none; /* 拖拽时完全禁用默认触摸行为 */
+  }
+  
+  .image-overlay {
+    pointer-events: none; /* 移动端让overlay不干扰触摸事件 */
+  }
+  
+  .image-overlay .action-btn {
+    pointer-events: auto; /* 但保持按钮可点击 */
+  }
+  
+  .upload-grid {
+    user-select: none; /* 防止文本选择 */
+  }
 }
 
 .upload-placeholder {
@@ -776,5 +946,24 @@ defineExpose({
 
 .upload-tips p {
   margin: 2px 0;
+}
+
+.drag-tip .mobile-tip {
+  display: none;
+}
+
+.drag-tip .desktop-tip {
+  display: inline;
+}
+
+/* 移动端显示不同的提示 */
+@media (max-width: 768px) {
+  .drag-tip .mobile-tip {
+    display: inline;
+  }
+  
+  .drag-tip .desktop-tip {
+    display: none;
+  }
 }
 </style>

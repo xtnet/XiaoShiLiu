@@ -1148,10 +1148,8 @@ const handleSaveDraft = async () => {
     font-size: 1.1rem;
   }
 
-
-
   .publish-content {
-    padding: 0.75rem;
+    padding: 1rem;
   }
 
   .tag-input {
@@ -1200,7 +1198,7 @@ const handleSaveDraft = async () => {
   }
 
   .publish-content {
-    padding: 0.5rem;
+    padding: 1rem;
   }
 
 
