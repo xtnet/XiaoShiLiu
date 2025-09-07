@@ -11,7 +11,7 @@
     <i>一个高仿小红书的图文社区项目，支持图文发布、社交互动等核心功能，旨在提供从前端到后端的完整实践范本</i>
 <p align="center"><a href="https://www.shiliu.space">演示网站</a> · <a href="https://www.bilibili.com/video/BV1J4agztEBX/?spm_id_from=333.1387.homepage.video_card.click">视频介绍</a>
 </p>
-<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">简体中文</a> · <a href=".doc/i18n/README_En.md">English</a>  · <a href="./i18n/README_zh-Hant.md">繁體中文</a>
+<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">简体中文</a> · <a href="doc/i18n/README_En.md">English</a>  · <a href="doc/i18n/README_zh-Hant.md">繁體中文</a>
 
 <p align="center">
     <a href="https://github.com/ZTMYO/XiaoShiLiu/stargazers">
