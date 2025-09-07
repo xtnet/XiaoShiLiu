@@ -57,8 +57,12 @@
             <h3 class="post-title">{{ draft.title }}</h3>
             <p class="post-content">{{ truncateContent(draft.content) }}</p>
             <div class="post-meta">
-              <span class="category" v-if="draft.category">{{ getCategoryName(draft.category) }}</span>
-              <span class="date">{{ formatDate(draft.originalData?.createdAt || draft.created_at) }}</span>
+              <div class="date-row">
+                <span class="date">{{ formatDate(draft.originalData?.createdAt || draft.created_at) }}</span>
+              </div>
+              <div class="meta-row" v-if="draft.category">
+                <span class="category">{{ getCategoryName(draft.category) }}</span>
+              </div>
             </div>
           </div>
 
@@ -587,10 +591,21 @@ onMounted(() => {
 
 .post-meta {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
   font-size: 0.8rem;
   color: var(--text-color-secondary);
+}
+
+.date-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .category {
@@ -602,7 +617,24 @@ onMounted(() => {
 }
 
 .date {
-  margin-left: auto;
+  font-size: 0.8rem;
+}
+
+/* 桌面端保持原有布局 */
+@media (min-width: 769px) {
+  .post-meta {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .date-row {
+    margin-left: auto;
+  }
+  
+  .meta-row {
+    gap: 1rem;
+  }
 }
 
 .post-actions {
