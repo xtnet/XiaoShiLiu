@@ -129,14 +129,14 @@ async function uploadFileToImageHost(filePath, originalname, mimetype, deleteAft
 
     return result;
   } catch (error) {
-    console.error('❌ 文件上传失败:', error.message);
+    console.error('❌ 图片上传失败:', error.message);
     // 确保删除临时文件
     if (deleteAfterUpload && fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
     return {
       success: false,
-      message: error.message || '文件上传失败'
+      message: error.message || '图片上传失败'
     };
   }
 }

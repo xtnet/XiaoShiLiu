@@ -5,7 +5,7 @@
       <div class="docs-info">
         <span class="version">版本: v1.0.3</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-06</span>
+        <span class="update-time">更新时间: 2025-09-07</span>
       </div>
     </div>
 
@@ -953,12 +953,12 @@ const apiGroups = ref([
     ]
   },
   {
-    name: '文件上传接口',
+    name: '图片上传接口',
     apis: [
       {
         method: 'POST',
         path: '/api/upload/single',
-        title: '单文件上传',
+        title: '单图片上传',
         description: '上传单个图片文件，限制5MB',
         auth: true,
         expanded: false,
@@ -978,7 +978,7 @@ const apiGroups = ref([
       {
         method: 'POST',
         path: '/api/upload/multiple',
-        title: '多文件上传',
+        title: '多图片上传',
         description: '上传多个图片文件，最多9个，每个限制5MB',
         auth: true,
         expanded: false,

@@ -174,7 +174,7 @@ export async function uploadCroppedImage(blob, options = {}) {
       throw new Error('未登录，请先登录')
     }
 
-    // 使用后端的单文件上传接口
+    // 使用后端的单图片上传接口
     const response = await fetch('/api/upload/single', {
       method: 'POST',
       body: formData,

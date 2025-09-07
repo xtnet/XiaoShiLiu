@@ -5,7 +5,7 @@
 - **版本**: v1.0.3
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-06
+- **更新时间**: 2025-09-07
 
 ## 通用说明
 
@@ -1584,9 +1584,9 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 文件上传接口
+## 图片上传接口
 
-### 1. 单文件上传
+### 1. 单图片上传
 **接口地址**: `POST /api/upload/single`
 **需要认证**: 是
 
@@ -1600,7 +1600,7 @@ Authorization: Bearer <your_jwt_token>
 ```json
 {
   "code": 200,
-  "message": "文件上传成功",
+  "message": "图片上传成功",
   "data": {
     "originalname": "image.jpg",
     "size": 1024000,
@@ -1609,7 +1609,7 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 2. 多文件上传
+### 2. 多图片上传
 **接口地址**: `POST /api/upload/multiple`
 **需要认证**: 是
 
@@ -2241,7 +2241,7 @@ async function example() {
 1. **认证要求**: 需要认证的接口必须在请求头中携带有效的JWT token
 2. **Token管理**: 访问令牌有效期为1小时，刷新令牌有效期为7天
 3. **请求格式**: 所有POST/PUT请求需要设置`Content-Type: application/json`（文件上传除外）
-4. **文件上传**: 文件上传接口使用`multipart/form-data`格式，支持jpg、jpeg、png、gif、webp格式，单文件最大5MB
+4. **图片上传**: 图片上传接口使用`multipart/form-data`格式，支持jpg、jpeg、png、gif、webp格式，单图片最大5MB
 5. **状态切换**: 点赞、收藏、关注等操作支持切换状态（已点赞则取消点赞）
 6. **自动更新**: 访问笔记详情会自动增加浏览量，创建评论会自动更新笔记的评论数
 7. **关系更新**: 关注操作会自动更新用户的关注数和粉丝数

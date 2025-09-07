@@ -240,7 +240,7 @@ export const authApi = {
 // 导入新的图片上传API
 import * as imageUploadApi from './upload.js'
 
-// 文件上传API（保持向后兼容）
+// 图片上传API（保持向后兼容）
 export const uploadApi = {
   // 上传图片（后端接口）
   uploadImage(file) {

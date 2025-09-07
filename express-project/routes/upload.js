@@ -27,7 +27,7 @@ const upload = multer({
   }
 });
 
-// 单文件上传到图床
+// 单图片上传到图床
 router.post('/single', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -43,7 +43,7 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
 
     if (result.success) {
       // 记录用户上传操作日志
-      console.log(`单文件上传成功 - 用户ID: ${req.user.id}, 文件名: ${req.file.originalname}`);
+      console.log(`单图片上传成功 - 用户ID: ${req.user.id}, 文件名: ${req.file.originalname}`);
 
       res.json({
         code: RESPONSE_CODES.SUCCESS,
@@ -58,12 +58,12 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
       res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: result.message || '图床上传失败' });
     }
   } catch (error) {
-    console.error('单文件上传失败:', error);
+    console.error('单图片上传失败:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });
 
-// 多文件上传到图床
+// 多图片上传到图床
 router.post('/multiple', authenticateToken, upload.array('files', 9), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -89,11 +89,11 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
     }
 
     if (uploadResults.length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '所有文件上传失败' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '所有图片上传失败' });
     }
 
     // 记录用户上传操作日志
-    console.log(`多文件上传成功 - 用户ID: ${req.user.id}, 文件数量: ${uploadResults.length}`);
+    console.log(`多图片上传成功 - 用户ID: ${req.user.id}, 文件数量: ${uploadResults.length}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,
@@ -101,7 +101,7 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
       data: uploadResults
     });
   } catch (error) {
-    console.error('多文件上传失败:', error);
+    console.error('多图片上传失败:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });
@@ -167,8 +167,8 @@ router.use((error, req, res, next) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: error.message });
   }
 
-  console.error('文件上传错误:', error);
-  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '文件上传失败' });
+  console.error('图片上传错误:', error);
+  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '图片上传失败' });
 });
 
 module.exports = router;

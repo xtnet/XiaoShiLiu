@@ -17,7 +17,7 @@ export const apiConfig = {
     maxPageSize: 100
   },
 
-  // 文件上传配置
+  // 图片上传配置
   upload: {
     maxFileSize: 10 * 1024 * 1024, // 10MB
     allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp'],

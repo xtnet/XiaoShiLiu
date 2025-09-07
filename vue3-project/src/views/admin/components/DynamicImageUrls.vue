@@ -5,13 +5,13 @@
         <div class="url-input-wrapper">
           <input type="text" :value="url" @input="updateUrl(index, $event.target.value)"
             :placeholder="`图片URL ${index + 1}`" class="url-input" :class="{ 'placeholder-input': isPlaceholder(url) }"
-            :readonly="isPlaceholder(url)" :title="isPlaceholder(url) ? '这是文件上传的占位符，提交表单后会自动获取真实URL' : ''" />
+            :readonly="isPlaceholder(url)" :title="isPlaceholder(url) ? '这是图片上传的占位符，提交表单后会自动获取真实URL' : ''" />
           <button type="button" @click="removeUrl(index)" class="remove-btn" :disabled="urls.length <= 1">
             <SvgIcon name="delete" />
           </button>
         </div>
         <div v-if="isPlaceholder(url)" class="placeholder-hint">
-          📁 此图片来自文件上传，提交后将自动获取URL
+          📁 此图片来自图片上传，提交后将自动获取URL
         </div>
       </div>
     </div>

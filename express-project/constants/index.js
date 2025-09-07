@@ -33,7 +33,7 @@ const ERROR_MESSAGES = {
   NOT_FOUND: '资源不存在',
   DUPLICATE_ENTRY: '数据已存在',
   DATABASE_ERROR: '数据库操作失败',
-  UPLOAD_FAILED: '文件上传失败',
+  UPLOAD_FAILED: '图片上传失败',
   INVALID_TOKEN: '无效的令牌',
   TOKEN_EXPIRED: '令牌已过期',
   INTERNAL_SERVER_ERROR: '服务器内部错误',

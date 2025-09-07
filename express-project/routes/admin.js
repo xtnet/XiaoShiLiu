@@ -62,7 +62,7 @@ const postsCrudConfig = {
       const allImages = []
       const base64Images = []
 
-      // 添加文件上传的图片
+      // 添加上传到图床的图片
       if (images && Array.isArray(images)) {
         for (const image of images) {
           if (typeof image === 'string') {
