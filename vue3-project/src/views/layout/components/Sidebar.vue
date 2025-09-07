@@ -89,7 +89,8 @@ onMounted(() => {
 
       <li v-for="item in menuItems.slice(1, 3)" :key="item.label"
         :class="{ 'notification-item': item.icon === 'notification' }">
-        <RouterLink :to="item.path" class="sidebar-link">
+        <RouterLink :to="item.path" class="sidebar-link"
+          :class="{ 'active-link': route.path === item.path }">
           <span v-if="item.icon" class="sidebar-icon">
             <SvgIcon :name="item.icon" width="24px" height="24px" :class="{ active: route.path === item.path }" />
           </span>
@@ -103,7 +104,8 @@ onMounted(() => {
 
 
       <li v-if="userStore.isLoggedIn">
-        <RouterLink :to="menuItems[3].path" class="sidebar-link">
+        <RouterLink :to="menuItems[3].path" class="sidebar-link"
+          :class="{ 'active-link': route.path === menuItems[3].path }">
           <span class="sidebar-icon">
             <img :src="userStore.userInfo?.avatar || defaultAvatar" :alt="userStore.userInfo?.nickname || '用户头像'"
               class="avatar-icon" @error="handleAvatarError" />
