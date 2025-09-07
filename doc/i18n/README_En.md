@@ -206,8 +206,11 @@ npm run preview
 [![Star History Chart](https://api.star-history.com/svg?repos=ZTMYO/XiaoShiLiu&type=Date)](https://www.star-history.com/#ZTMYO/XiaoShiLiu&Date)
 
 ---
+
 <div align="center">
+
 Copyright © 2025 - **XiaoShiLiu**\
 By ZTMYO\
 Made with ❤️ & ⌨️
+
 </div>
