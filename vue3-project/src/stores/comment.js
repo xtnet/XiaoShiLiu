@@ -6,16 +6,13 @@ import { formatTime } from '@/utils/timeFormat'
 export const useCommentStore = defineStore('comment', () => {
     // 存储笔记的评论数据 { postId: { comments: Array, loading: boolean, loaded: boolean, hasMore: boolean, currentPage: number } }
     const postComments = ref(new Map())
-
     // 获取笔记评论
     const fetchComments = async (postId, params = {}) => {
-        const { page = 1, limit = 5, loadMore = false, sort = 'desc', silentLoad = false } = params
-
+        let { page = 1, limit = 5, loadMore = false, sort = 'desc', silentLoad = false } = params
         // 如果已经在加载中，则不重复请求
         if (postComments.value.get(postId)?.loading) {
             return postComments.value.get(postId)?.comments || []
         }
-
         const currentData = postComments.value.get(postId) || { comments: [], hasMore: true, currentPage: 0, sort: 'desc' }
 
         // 检查排序方式是否改变，如果改变则重置分页状态
