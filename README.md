@@ -1,21 +1,24 @@
-
-
 <p align="center">
     <img alt="logo" src="./doc/imgs/小石榴.png" width="100" />
 </p>
-<h1 align="center" style="margin: 20px 0 30px; font-weight: bold;">XiaoShiLiu</h1>
+<h1 align="center" style="margin: 20px 30px 0px 30px; font-weight: bold;">XiaoShiLiu</h1>
+
+---
 <p align="center">
     <b>基于 Express + Vue 前后端分离仿小红书项目</b>
 </p>
 <p align="center">
     <i>一个高仿小红书的图文社区项目，支持图文发布、社交互动等核心功能，旨在提供从前端到后端的完整实践范本</i>
+<p align="center"><a href="https://www.shiliu.space">演示网站</a> · <a href="https://www.bilibili.com/video/BV1J4agztEBX/?spm_id_from=333.1387.homepage.video_card.click">视频介绍</a>
 </p>
+<p align="center"><a href="https://github.com/ZTMYO/XiaoShiLiu">简体中文</a> · <a href=".doc/i18n/README_En.md">English</a>  · <a href="./i18n/README_zh-Hant.md">繁體中文</a>
+
 <p align="center">
     <a href="https://github.com/ZTMYO/XiaoShiLiu/stargazers">
         <img src="https://img.shields.io/github/stars/ZTMYO/XiaoShiLiu?style=flat&logo=github&color=brightgreen&label=Stars">
     </a>
-    <a href="https://gitee.com/ZTMYO/XiaoShiLiu/stargazers">
-        <img src="https://gitee.com/ZTMYO/XiaoShiLiu/badge/star.svg?theme=dark">
+    <a href="https://github.com/ZTMYO/XiaoShiLiu/network/members">
+        <img src="https://img.shields.io/github/forks/ZTMYO/XiaoShiLiu?style=round-square&color=brightgreen&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2IiBmaWxsPSJub25lIj4KPHBhdGggZmlsbD0id2hpdGUiIGQ9Ik01IDUuMzcydi44NzhjMCAuNDE0LjMzNi43NS43NS43NWg0LjVhLjc1Ljc1IDAgMCAwIC43NS0uNzV2LS44NzhhMi4yNSAyLjI1IDAgMSAxIDEuNSAwdi44NzhhMi4yNSAyLjI1IDAgMCAxLTIuMjUgMi4yNWgtMS41djIuMTI4YTIuMjUxIDIuMjUxIDAgMSAxLTEuNSAwVjguNWgtMS41QTIuMjUgMi4yNSAwIDAgMSAzLjUgNi4yNXYtLjg3OGEyLjI1IDIuMjUgMCAxIDEgMS41IDBaTTUgMy4yNWEuNzUuNzUgMCAxIDAtMS41IDAgLjc1Ljc1IDAgMCAwIDEuNSAwWm02Ljc1Ljc1YS43NS43NSAwIDEgMCAwLTEuNS43NS43NSAwIDAgMCAwIDEuNVptLTMgOC43NWEuNzUuNzUgMCAxIDAtMS41IDAgLjc1Ljc1IDAgMCAwIDEuNSAwWiI+PC9wYXRoPgo8L3N2Zz4=">
     </a>
     <a href="https://github.com/ZTMYO/XiaoShiLiu">
         <img
@@ -33,20 +36,12 @@
 </p>
 
 
-
-
-
 > **声明**  
 > 本项目基于 [GPLv3 协议](./LICENSE)，免费开源，仅供学习交流，禁止转卖，谨防受骗。如需商用请保留版权信息，确保合法合规使用，运营风险自负，与作者无关。
 
 ---
 
 > 📁 **项目结构说明**：本项目包含完整的前后端代码，前端位于 `vue3-project/` 目录，后端位于 `express-project/` 目录。详细结构请查看 [项目结构文档](./doc/PROJECT_STRUCTURE.md)。
-## 演示站点
-
-🌐 **在线体验**: [www.shiliu.space](https://www.shiliu.space)
-
-🔗 **视频演示**: [www.bilibili.com](https://www.bilibili.com/video/BV1J4agztEBX/?spm_id_from=333.1387.homepage.video_card.click)
 
 ## 项目展示
 
@@ -155,13 +150,13 @@
 
 
 
-#### 第三方API
+## 第三方API
 - **图片存储：** 灌装的示例图片来自 [栗次元图床](https://t.alcy.cc/)，提供稳定的图片存储服务
 - **图片上传：** 用户上传图片使用了 [夏柔API](https://api.aa1.cn/doc/xinyew_jdtc.html)，确保图片上传的稳定性和速度
 - **属地查询：** IP属地查询服务使用 [保罗API](https://api.pearktrue.cn/dashboard/detail/290)，实现精准的IP属地定位功能
 
 
-### 环境要求
+## 环境要求
 
 | 组件 | 版本要求 |
 |------|----------|
@@ -207,8 +202,13 @@ npm run preview
 
 > ⚠️ **重要提醒**：前端项目需要配合后端服务使用，详细配置请查看 [部署指南](./doc/DEPLOYMENT.md)
 
-## 作者
+## Star历史
 
-**@ZTMYO**
-- GitHub: [https://github.com/ZTMYO](https://github.com/ZTMYO)
+[![Star History Chart](https://api.star-history.com/svg?repos=ZTMYO/XiaoShiLiu&type=Date)](https://www.star-history.com/#ZTMYO/XiaoShiLiu&Date)
 
+---
+<div align="center">
+Copyright © 2025 - **XiaoShiLiu**\
+By ZTMYO\
+Made with ❤️ & ⌨️
+</div>
