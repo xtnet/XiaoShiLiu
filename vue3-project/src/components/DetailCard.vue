@@ -2570,15 +2570,38 @@ const onViewerContainerClick = (event) => {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
-  transition: background-color 0.3s ease;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .comment-item.comment-highlight {
   background-color: var(--bg-color-secondary);
+  animation: highlightFadeIn 0.5s ease-out, highlightFadeOut 5s ease-out 0.5s forwards;
 }
 
 .reply-item.comment-highlight {
   background-color: var(--bg-color-secondary);
+  animation: highlightFadeIn 0.5s ease-out, highlightFadeOut 5s ease-out 0.5s forwards;
+}
+
+/* 高亮动画 */
+@keyframes highlightFadeIn {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: var(--bg-color-secondary);
+  }
+}
+
+@keyframes highlightFadeOut {
+  from {
+    background-color: var(--bg-color-secondary);
+  }
+  to {
+    background-color: transparent;
+  }
 }
 
 .comment-avatar {
@@ -2715,6 +2738,9 @@ const onViewerContainerClick = (event) => {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .reply-avatar {

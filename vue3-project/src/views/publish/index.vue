@@ -454,7 +454,20 @@ const loadDraftData = async (draftId) => {
       form.title = response.title || ''
       form.content = draft.content || ''
       form.images = draft.images || []
-      form.tags = draft.tags || []
+      
+      // 处理标签数据：确保转换为字符串数组
+      if (draft.tags && Array.isArray(draft.tags)) {
+        form.tags = draft.tags.map(tag => {
+          // 如果是对象格式，提取name字段
+          if (typeof tag === 'object' && tag.name) {
+            return tag.name
+          }
+          // 如果已经是字符串，直接返回
+          return String(tag)
+        })
+      } else {
+        form.tags = []
+      }
 
       // 根据分类名称找到分类ID
       if (response.category && categories.value.length > 0) {

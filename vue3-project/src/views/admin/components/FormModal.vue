@@ -395,7 +395,6 @@ const handleContentEditableMentionSelect = (user) => {
   // 关闭mention面板
   showMentionPanel.value = false
   currentMentionField.value = null
-  console.log('选择了用户:', user)
 }
 
 // ContentEditableInput的@符号输入处理
@@ -580,18 +579,12 @@ const sanitizeContent = (content) => {
 
 const handleSubmit = async () => {
   if (isSubmitting.value) {
-    console.log('正在提交中，请勿重复点击')
     return
   }
-
   isSubmitting.value = true
-
   try {
-    console.log('开始处理表单提交...')
-
     // 处理图片数据和内容安全过滤
     const processedData = { ...props.formData }
-
     // 对可能包含用户输入内容的字段进行安全过滤
     const contentFields = ['content', 'description', 'bio', 'introduction', 'summary']
     contentFields.forEach(field => {
@@ -660,9 +653,6 @@ const handleSubmit = async () => {
               }
             }
           })
-
-          console.log('合并后的图片列表（保持原有顺序）:', allImageUrls)
-
           // 更新对应的字段
           if (fieldKey === 'images') {
             processedData['images'] = allImageUrls
@@ -670,8 +660,6 @@ const handleSubmit = async () => {
           } else {
             processedData[fieldKey] = allImageUrls
           }
-
-          console.log('图片处理完成')
         } catch (error) {
           console.error(`${fieldKey} 获取图片数据失败:`, error)
           messageManager.error(`图片处理失败: ${error.message}`)
@@ -679,16 +667,6 @@ const handleSubmit = async () => {
         }
       }
     }
-
-    console.log('提交表单数据:', processedData)
-    console.log('提交表单数据类型检查:', {
-      images: typeof processedData.images,
-      image_urls: typeof processedData.image_urls,
-      tags: typeof processedData.tags,
-      imagesLength: Array.isArray(processedData.images) ? processedData.images.length : 'not array',
-      tagsLength: Array.isArray(processedData.tags) ? processedData.tags.length : 'not array',
-      tagsContent: processedData.tags
-    })
     emit('submit', processedData)
 
     // 如果有图片上传，在提交后触发异步更新
