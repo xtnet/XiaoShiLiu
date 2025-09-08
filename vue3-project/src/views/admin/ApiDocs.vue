@@ -9,8 +9,6 @@
       </div>
     </div>
 
-
-
     <div class="docs-content">
 
       <section class="docs-section">
@@ -49,7 +47,7 @@
       </section>
 
 
-      <div class="sticky-search" :class="{ hidden: scrollY < 1000 }">
+      <div class="sticky-search" :class="{ hidden: scrollY < 1000 && !searchQuery }">
         <div class="search-box">
           <input v-model="searchQuery" type="text" placeholder="搜索API接口（支持路径、标题、描述搜索）..." class="search-input"
             @input="handleSearch" />
@@ -64,6 +62,10 @@
       <section class="docs-section">
         <h3>API接口列表</h3>
         <div class="api-groups">
+          <div v-if="searchQuery && filteredApiGroups.length === 0" class="no-results">
+            <p>未找到匹配的API接口</p>
+            <p>请尝试其他关键词或清空搜索条件</p>
+          </div>
           <div v-for="group in filteredApiGroups" :key="group.name" class="api-group">
             <h4>{{ group.name }}</h4>
             <div class="api-list">
@@ -1960,8 +1962,18 @@ const filteredApiGroups = computed(() => {
 .no-results {
   text-align: center;
   color: var(--text-color-tertiary);
-  margin-top: 15px;
+  padding: 40px 20px;
   font-size: 14px;
+}
+
+.no-results p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.no-results p:first-child {
+  font-weight: 500;
+  color: var(--text-color-secondary);
 }
 
 .search-stats {
@@ -2269,7 +2281,6 @@ mark {
   }
 
   .sticky-search {
-    top: 60px;
     padding: 10px 15px;
   }
 
