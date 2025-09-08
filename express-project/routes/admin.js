@@ -1692,7 +1692,7 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
         avatar: comment.avatar,
         title: comment.post_title,
         content: comment.content, // 原始评论内容，用于CommentImage组件渲染
-        description: `${comment.nickname} 在《${comment.post_title}》中发表了评论：${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}`, // 描述性文本
+        description: `${comment.nickname} 在《${comment.post_title}》中发表了评论`, 
         target_id: comment.post_id,
         comment_id: comment.id, // 添加评论ID用于定位
         created_at: comment.created_at
