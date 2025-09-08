@@ -19,7 +19,8 @@
             </div>
             <div class="activity-content">
               <div class="activity-title">
-                <MentionText :text="activity.content" />
+                <CommentImage v-if="activity.type === 'comment_publish'" :content="activity.content" />
+                <MentionText v-else :content="activity.description || activity.content" />
               </div>
               <div class="activity-meta">
                 <span class="activity-type">{{ getActivityTypeText(activity.type) }}</span>
@@ -33,6 +34,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- DetailCard组件 -->
+    <DetailCard
+      v-if="showDetailCard && selectedPost"
+      :item="selectedPost"
+      :target-comment-id="targetCommentId"
+      @close="closeDetailCard"
+    />
   </div>
 </template>
 
@@ -40,13 +49,21 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminApi } from '@/api'
+import { getPostDetail } from '@/api/posts.js'
+import CommentImage from '@/components/commentImage/CommentImage.vue'
 import MentionText from '@/components/mention/MentionText.vue'
+import DetailCard from '@/components/DetailCard.vue'
 import defaultAvatar from '@/assets/imgs/avatar.png'
 
 const router = useRouter()
 const activities = ref([])
 // const loading = ref(false) // 已移除，使用AdminLayout的全局加载状态
 const error = ref('')
+
+// DetailCard相关状态
+const showDetailCard = ref(false)
+const selectedPost = ref(null)
+const targetCommentId = ref(null)
 
 const onAvatarError = (e) => {
   e.target.src = defaultAvatar
@@ -130,15 +147,70 @@ const formatTime = (timeStr) => {
 }
 
 // 处理活动点击
-const handleActivityClick = (activity) => {
+const handleActivityClick = async (activity) => {
   if (activity.type === 'user_register') {
     // 新窗口打开用户主页
     const url = `${window.location.origin}/user/${activity.user_id}`
     window.open(url, '_blank')
   } else if (activity.type === 'post_publish' || activity.type === 'comment_publish') {
-    // 新窗口打开笔记详情
-    const url = `${window.location.origin}/post?id=${activity.target_id}`
-    window.open(url, '_blank')
+    try {
+      // 获取笔记详情
+      const postDetail = await getPostDetail(activity.target_id)
+      
+      if (postDetail) {
+        selectedPost.value = postDetail
+        
+        // 如果是评论类型，传递评论ID用于定位
+        if (activity.type === 'comment_publish' && activity.comment_id) {
+          targetCommentId.value = activity.comment_id
+        } else {
+          targetCommentId.value = null
+        }
+        
+        showDetailCard.value = true
+        
+        // 修改页面标题
+        const originalTitle = document.title
+        document.title = postDetail.title || '笔记详情'
+        
+        // 使用History API添加历史记录并更新URL
+        const newUrl = `/post?id=${activity.target_id}`
+        window.history.pushState(
+          {
+            previousUrl: window.location.pathname + window.location.search,
+            showDetailCard: true,
+            postId: activity.target_id,
+            originalTitle: originalTitle
+          },
+          postDetail.title || '笔记详情',
+          newUrl
+        )
+      } else {
+        console.error('获取笔记详情失败: 笔记不存在')
+      }
+    } catch (error) {
+      console.error('获取笔记详情失败:', error)
+    }
+  }
+}
+
+// 关闭详情卡
+const closeDetailCard = () => {
+  showDetailCard.value = false
+  selectedPost.value = null
+  targetCommentId.value = null
+  
+  // 恢复原始页面标题
+  if (window.history.state && window.history.state.originalTitle) {
+    document.title = window.history.state.originalTitle
+  }
+  
+  // 恢复原URL状态
+  if (window.history.state && window.history.state.previousUrl) {
+    window.history.replaceState(window.history.state, '', window.history.state.previousUrl)
+  } else {
+    // 如果没有前一个URL，回到当前页面的原始状态
+    window.history.back()
   }
 }
 

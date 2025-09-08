@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         <div class="detail-content">
-          <pre><MentionText :text="content" /></pre>
+          <pre><CommentImage :content="content" /></pre>
         </div>
       </div>
     </div>
@@ -18,7 +18,7 @@
 
 <script setup>
 import SvgIcon from '@/components/SvgIcon.vue'
-import MentionText from '@/components/mention/MentionText.vue'
+import CommentImage from '@/components/commentImage/CommentImage.vue'
 
 const props = defineProps({
   visible: {
