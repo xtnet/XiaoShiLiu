@@ -16,7 +16,7 @@ const captchaStore = new Map();
 router.get('/captcha', (req, res) => {
   try {
     // 字体文件路径
-    const fontDir = path.join(__dirname, 'fonts');
+    const fontDir = path.join(__dirname, '..', 'fonts');
     
     // 自动读取字体文件夹中的所有.ttf文件
     let fontFiles = [];
