@@ -428,7 +428,7 @@ onMounted(() => {
 
   .close-btn {
     position: fixed;
-    top: 16px;
+    top: 40px;
     left: 16px;
     z-index: 2001;
     background: transparent;
@@ -450,10 +450,8 @@ onMounted(() => {
     z-index: 2000;
     height: calc(72px + constant(safe-area-inset-top));
     height: calc(72px + env(safe-area-inset-top));
-    padding: 24px 32px;
+    padding: 12px 16px;
     padding-left: 60px;
-    padding-top: constant(safe-area-inset-top);
-    padding-top: env(safe-area-inset-top);
     background: var(--bg-color-primary);
     border-bottom: 1px solid var(--border-color-primary);
     border-radius: 0;
@@ -480,7 +478,7 @@ onMounted(() => {
     flex-direction: row;
     padding-top: 12px;
     gap: 12px;
-    margin-bottom: -1px;
+    margin-bottom: -4px;
   }
 
   .about-title {
@@ -489,12 +487,6 @@ onMounted(() => {
 
   .features-list {
     grid-template-columns: 1fr;
-  }
-
-  .author-info {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
   }
 
   .contact-links {
