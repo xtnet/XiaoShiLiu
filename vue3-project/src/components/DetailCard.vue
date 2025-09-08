@@ -128,6 +128,7 @@
                 <div v-if="enhancedComments.length === 0" class="no-comments">
                   <span>暂无评论，快来抢沙发吧~</span>
                 </div>
+
                 <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item"
                   :data-comment-id="String(comment.id)">
                   <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
@@ -147,9 +148,9 @@
                         删除
                       </button>
                     </div>
-                    <p class="comment-text">
-                      <MentionText :text="comment.content" />
-                    </p>
+                    <div class="comment-text">
+                      <CommentImage :content="comment.content" />
+                    </div>
                     <span class="comment-time">{{ comment.time }} {{ comment.location }}</span>
                     <div class="comment-actions">
                       <div class="comment-like-container">
@@ -184,10 +185,10 @@
                               删除
                             </button>
                           </div>
-                          <p class="reply-text">
+                          <div class="reply-text">
                             回复 <span class="reply-to">{{ reply.replyTo }}</span>：
-                            <MentionText :text="reply.content" />
-                          </p>
+                            <CommentImage :content="reply.content" />
+                          </div>
                           <span class="reply-time">{{ reply.time }} {{ reply.location }}</span>
                           <div class="reply-actions">
                             <div class="reply-like-container">
@@ -242,7 +243,7 @@
                         回复 <span class="reply-username">{{ replyingTo.username }}</span>
                       </div>
                       <div class="reply-second-line">
-                        <MentionText :text="replyingTo.content" />
+                        <CommentImage :content="replyingTo.content" />
                       </div>
                     </div>
                   </div>
@@ -273,6 +274,17 @@
                 </div>
               </div>
 
+              <!-- 上传图片预览区域 -->
+              <div v-if="uploadedImages.length > 0" class="uploaded-images-section">
+                <div class="uploaded-images-grid">
+                  <div v-for="(image, index) in uploadedImages" :key="index" class="uploaded-image-item">
+                    <img :src="image.url || image.preview" :alt="`上传图片${index + 1}`" class="uploaded-image" />
+                    <button class="remove-image-btn" @click="removeUploadedImage(index)">
+                      <SvgIcon name="close" width="16" height="16" />
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <div class="focused-actions-section">
                 <div class="emoji-section">
@@ -282,13 +294,16 @@
                   <button class="emoji-btn" @click="toggleEmojiPanel">
                     <SvgIcon name="emoji" class="emoji-icon" width="24" height="24" />
                   </button>
+                  <button class="image-btn" @click="toggleImageUpload">
+                    <SvgIcon name="imgNote" class="image-icon" width="24" height="24" />
+                  </button>
                 </div>
                 <div class="send-cancel-buttons">
                   <button class="send-btn" @click="handleSendComment"
-                    :disabled="!commentInput || !commentInput.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() || isSendingComment">
+                    :disabled="(!commentInput || !commentInput.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()) && uploadedImages.length === 0 || !allImagesUploaded">
                     {{ replyingTo ? '回复' : '发送' }}
                   </button>
-                  <button class="cancel-btn" @click="handleCancelInput" :disabled="isSendingComment">
+                  <button class="cancel-btn" @click="handleCancelInput">
                     取消
                   </button>
                 </div>
@@ -311,6 +326,16 @@
     </div>
 
     <MentionModal :visible="showMentionPanel" @close="closeMentionPanel" @select="handleMentionSelect" />
+
+    <!-- 图片上传模态框 -->
+    <!-- 图片上传模态框 -->
+    <ImageUploadModal
+      :visible="showImageUpload"
+      :model-value="uploadedImages"
+      @close="closeImageUpload"
+      @confirm="handleImageUploadConfirm"
+      @update:model-value="handleImageUploadChange"
+    />
 
 
     <Transition name="image-viewer" appear>
@@ -363,7 +388,9 @@ import MessageToast from './MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import MentionText from './mention/MentionText.vue'
+import CommentImage from './commentImage/CommentImage.vue'
 import ContentEditableInput from './ContentEditableInput.vue'
+import ImageUploadModal from './commentImage/ImageUploadModal.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
 import { useLikeStore } from '@/stores/like.js'
@@ -372,7 +399,7 @@ import { useFollowStore } from '@/stores/follow.js'
 import { useAuthStore } from '@/stores/auth'
 import { useCommentStore } from '@/stores/comment'
 import { useCommentLikeStore } from '@/stores/commentLike'
-import { commentApi, userApi, postApi } from '@/api/index.js'
+import { commentApi, userApi, postApi, imageUploadApi } from '@/api/index.js'
 import { getPostDetail } from '@/api/posts.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { formatTime } from '@/utils/timeFormat'
@@ -437,7 +464,7 @@ const mentionUsers = ref([])
 const focusedInput = ref(null)
 const likeButtonRef = ref(null)
 const isAnimating = ref(true)
-const isSendingComment = ref(false)
+
 const showToast = ref(false)
 const toastMessage = ref('')
 const toastType = ref('success')
@@ -448,6 +475,13 @@ const expandedReplies = ref(new Set())
 
 const showEmojiPanel = ref(false)
 const showMentionPanel = ref(false)
+const showImageUpload = ref(false)
+const uploadedImages = ref([])
+
+
+
+// 默认头像
+const defaultAvatar = new URL('@/assets/imgs/avatar.png', import.meta.url).href
 
 // 评论排序相关
 const showSortMenu = ref(false)
@@ -1057,6 +1091,64 @@ const toggleMentionPanel = () => {
 
 const closeMentionPanel = () => {
   showMentionPanel.value = false
+}
+
+// 图片上传面板切换
+const toggleImageUpload = () => {
+  showImageUpload.value = !showImageUpload.value
+}
+
+const closeImageUpload = () => {
+  showImageUpload.value = false
+}
+
+// 处理图片上传确认
+const handleImageUploadConfirm = async (images) => {
+  // 先设置图片到uploadedImages
+  uploadedImages.value = images
+  showImageUpload.value = false
+  
+  // 只上传新添加的图片（没有uploaded标记或uploaded为false的图片）
+  const newImages = images.filter(img => !img.uploaded)
+  
+  if (newImages.length > 0) {
+    try {
+      const files = newImages.map(img => img.file)
+      const uploadResult = await imageUploadApi.uploadImages(files)
+      
+      if (uploadResult.success && uploadResult.data && uploadResult.data.uploaded) {
+        // 更新新上传图片的状态和URL
+        let uploadIndex = 0
+        uploadedImages.value.forEach((img, index) => {
+          if (!img.uploaded && uploadIndex < uploadResult.data.uploaded.length) {
+            uploadedImages.value[index].uploaded = true
+            uploadedImages.value[index].url = uploadResult.data.uploaded[uploadIndex].url
+            uploadIndex++
+          }
+        })
+        showMessage('图片上传成功', 'success')
+      } else {
+        throw new Error('图片上传失败')
+      }
+    } catch (error) {
+      console.error('图片上传失败:', error)
+      showMessage('图片上传失败，请重试', 'error')
+      // 上传失败时只移除新添加的图片，保留已上传的图片
+      uploadedImages.value = uploadedImages.value.filter(img => img.uploaded)
+    }
+  }
+}
+
+// 处理图片上传变化
+const handleImageUploadChange = (images) => {
+  uploadedImages.value = images
+}
+
+// 删除上传的图片
+const removeUploadedImage = (index) => {
+  uploadedImages.value.splice(index, 1)
+  // 不需要调用handleImageUploadChange，因为uploadedImages已经是响应式的
+  // ImageUploadModal会通过watch监听props.modelValue的变化自动同步
 }
 
 // 输入框键盘事件处理
@@ -1707,21 +1799,55 @@ const handleSendComment = async () => {
   const rawContent = commentInput.value || ''
   const sanitizedContent = sanitizeContent(rawContent)
 
-  if (!sanitizedContent) {
-    showMessage('请输入评论内容', 'error')
+  // 检查是否有内容或图片
+  if (!sanitizedContent.trim() && uploadedImages.value.length === 0) {
+    showMessage('请输入评论内容或上传图片', 'error')
     return
   }
 
-  if (isSendingComment.value) {
-    return
+  // 构建包含图片的评论内容
+  let contentToSend = sanitizedContent
+  if (uploadedImages.value.length > 0) {
+    const imageHtml = uploadedImages.value.map(img => `<img src="${img.url}" alt="评论图片" class="comment-image" />`).join('')
+    contentToSend = sanitizedContent.trim() ? `${sanitizedContent}${imageHtml}` : imageHtml
   }
+
+
+
+  // 立即反馈：折叠输入框
+  isInputFocused.value = false
+  
+  // 保存当前输入内容和回复状态，用于失败时恢复和骨架屏显示
+  const savedInput = commentInput.value
+  const savedReplyingTo = replyingTo.value
+  const savedUploadedImages = [...uploadedImages.value]
+
+  
+  // 清空输入状态
+  commentInput.value = ''
+  replyingTo.value = null
+  uploadedImages.value = []
+  showEmojiPanel.value = false
+  showMentionPanel.value = false
+  showImageUpload.value = false
 
   try {
-    isSendingComment.value = true
+
+    // 收集已上传的图片URL（从保存的数据中获取）
+    const imageUrls = savedUploadedImages
+      .filter(img => img.uploaded && img.url)
+      .map(img => img.url)
+
+    // 构建评论内容
+    let finalContent = savedInput.trim()
+    if (imageUrls.length > 0) {
+      const imageHtml = imageUrls.map(url => `<img src="${url}" alt="评论图片" class="comment-image" />`).join('')
+      finalContent = finalContent ? `${finalContent}${imageHtml}` : imageHtml
+    }
 
     const commentData = {
       post_id: props.item.id,
-      content: sanitizedContent, // 使用过滤后的内容
+      content: finalContent,
       parent_id: replyingTo.value ? replyingTo.value.commentId : null
     }
 
@@ -1729,29 +1855,65 @@ const handleSendComment = async () => {
 
     if (response.success) {
       showMessage(replyingTo.value ? '回复成功' : '评论成功', 'success')
+      
 
-      // 清空输入框和重置状态
-      handleCancelInput()
+
+      // 清理图片缓存
+      savedUploadedImages.forEach(img => {
+        if (img.url && img.url.startsWith('blob:')) {
+          URL.revokeObjectURL(img.url)
+        }
+      })
 
       // 重新获取评论列表
       await fetchComments()
     } else {
+      // 发送失败，清理图片缓存并恢复之前的状态
+      savedUploadedImages.forEach(img => {
+        if (img.url && img.url.startsWith('blob:')) {
+          URL.revokeObjectURL(img.url)
+        }
+      })
+      
+
+      commentInput.value = savedInput
+      replyingTo.value = savedReplyingTo
+      uploadedImages.value = savedUploadedImages
+      isInputFocused.value = true
       showMessage(response.message || '发送失败，请重试', 'error')
     }
   } catch (error) {
     console.error('发送评论失败:', error)
+    // 发送失败，清理图片缓存并恢复之前的状态
+    savedUploadedImages.forEach(img => {
+      if (img.url && img.url.startsWith('blob:')) {
+        URL.revokeObjectURL(img.url)
+      }
+    })
+    
+
+    commentInput.value = savedInput
+    replyingTo.value = savedReplyingTo
+    uploadedImages.value = savedUploadedImages
+    isInputFocused.value = true
     showMessage('发送失败，请重试', 'error')
-  } finally {
-    isSendingComment.value = false
   }
 }
+
+// 计算属性：判断所有图片是否都已上传
+const allImagesUploaded = computed(() => {
+  if (uploadedImages.value.length === 0) return true
+  return uploadedImages.value.every(img => img.uploaded && img.url)
+})
 
 const handleCancelInput = () => {
   commentInput.value = ''
   replyingTo.value = null
+  uploadedImages.value = []
   isInputFocused.value = false
   showEmojiPanel.value = false
   showMentionPanel.value = false
+  showImageUpload.value = false
   // 确保输入框失去焦点
   if (focusedInput.value) {
     focusedInput.value.blur()
@@ -3026,7 +3188,8 @@ const onViewerContainerClick = (event) => {
 }
 
 .emoji-btn,
-.mention-btn {
+.mention-btn,
+.image-btn {
   background: none;
   border: none;
   padding: 4px;
@@ -3039,19 +3202,72 @@ const onViewerContainerClick = (event) => {
 }
 
 .emoji-btn:hover,
-.mention-btn:hover {
+.mention-btn:hover,
+.image-btn:hover {
   background: var(--bg-color-secondary);
 }
 
 .emoji-icon,
-.mention-icon {
+.mention-icon,
+.image-icon {
   color: var(--text-color-secondary);
   transition: color 0.2s;
 }
 
 .emoji-btn:hover .emoji-icon,
-.mention-btn:hover .mention-icon {
+.mention-btn:hover .mention-icon,
+.image-btn:hover .image-icon {
   color: var(--text-color-primary);
+}
+
+/* 上传图片预览区域样式 */
+.uploaded-images-section {
+  padding: 0px 16px;
+  background: transparent;
+  margin: 8px 16px;
+}
+
+.uploaded-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.uploaded-image-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.uploaded-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .send-cancel-buttons {
@@ -3059,6 +3275,8 @@ const onViewerContainerClick = (event) => {
   align-items: center;
   gap: 12px;
 }
+
+
 
 .send-btn {
   background: var(--primary-color);
@@ -3176,6 +3394,8 @@ const onViewerContainerClick = (event) => {
     transform: scale(1);
   }
 }
+
+/* 图片上传模态框样式已移至独立组件 ImageUploadModal.vue */
 
 /* 默认隐藏移动端图片容器 */
 .mobile-image-container {
@@ -3754,4 +3974,6 @@ const onViewerContainerClick = (event) => {
   color: var(--text-color-secondary);
   font-size: 14px;
 }
+
+
 </style>

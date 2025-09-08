@@ -222,7 +222,7 @@ const loadFriends = async (forceReload = false) => {
       try {
         const userResponse = await authApi.getCurrentUser()
         if (userResponse.success && userResponse.data) {
-          currentUserId.value = userResponse.data.id
+          currentUserId.value = userResponse.data.user_id // 使用小石榴号而不是数字ID
         } else {
           // 如果获取失败，使用默认ID
           currentUserId.value = 1

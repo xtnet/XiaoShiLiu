@@ -6,6 +6,7 @@ import MessageToast from '@/components/MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import MentionText from '@/components/mention/MentionText.vue'
+import CommentImage from '@/components/commentImage/CommentImage.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import NotificationTab from './components/NotificationTab.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -1230,10 +1231,10 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       <span class="time">{{ item.time }}</span>
                     </div>
                     <div class="notification-text" @click.stop="onCommentClick(item)">
-                      <MentionText :text="item.content" />
+                      <CommentImage :content="item.content" />
 
                       <div v-if="item.isReplyComment && item.parentCommentContent" class="replied-comment">
-                        <MentionText :text="item.parentCommentContent" />
+                        <CommentImage :content="item.parentCommentContent" />
                       </div>
                     </div>
 
