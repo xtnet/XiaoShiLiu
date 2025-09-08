@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.1.0</span>
+        <span class="version">版本: v1.1.1</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-08</span>
+        <span class="update-time">更新时间: 2025-09-09</span>
       </div>
     </div>
 
@@ -626,6 +626,7 @@ const apiGroups = ref([
      {
        "id": 1,
        "name": "生活",
+       "category_title": "life",
        "created_at": "2025-08-30T00:00:00.000Z"
      }
    ]
@@ -633,34 +634,37 @@ const apiGroups = ref([
       },
       {
         method: 'POST',
-         path: '/api/categories',
-         title: '创建分类（管理员）',
+        path: '/api/categories',
+        title: '创建分类（管理员）',
         description: '管理员创建新分类',
         auth: true,
         expanded: false,
         params: [
-           { name: 'name', type: 'string', required: true, description: '分类名称' }
-         ],
+          { name: 'name', type: 'string', required: true, description: '分类名称' },
+          { name: 'category_title', type: 'string', required: true, description: '英文标题，用于URL路由' }
+        ],
         example: `{
   "code": 200,
   "message": "分类创建成功",
   "data": {
      "id": 3,
-     "name": "旅游"
+     "name": "旅游",
+     "category_title": "travel"
    }
 }`
       },
       {
         method: 'PUT',
-         path: '/api/categories/:id',
-         title: '更新分类（管理员）',
+        path: '/api/categories/:id',
+        title: '更新分类（管理员）',
         description: '管理员更新分类信息',
         auth: true,
         expanded: false,
         params: [
-           { name: 'id', type: 'int', required: true, description: '分类ID' },
-           { name: 'name', type: 'string', required: false, description: '分类名称' }
-         ],
+          { name: 'id', type: 'int', required: true, description: '分类ID' },
+          { name: 'name', type: 'string', required: false, description: '分类名称' },
+          { name: 'category_title', type: 'string', required: false, description: '英文标题，用于URL路由' }
+        ],
         example: `{
   "code": 200,
   "message": "分类更新成功",
@@ -669,8 +673,8 @@ const apiGroups = ref([
       },
       {
         method: 'DELETE',
-         path: '/api/categories/:id',
-         title: '删除分类（管理员）',
+        path: '/api/categories/:id',
+        title: '删除分类（管理员）',
         description: '管理员删除指定分类',
         auth: true,
         expanded: false,
@@ -1302,7 +1306,7 @@ const apiGroups = ref([
           { name: 'search', type: 'string', required: false, description: '搜索关键词（标题或内容）' },
           { name: 'user_display_id', type: 'string', required: false, description: '按作者小石榴号筛选' },
           { name: 'sortField', type: 'string', required: false, description: '排序字段（id, like_count, comment_count, created_at）' },
-           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1369,7 +1373,7 @@ const apiGroups = ref([
           { name: 'user_display_id', type: 'string', required: false, description: '按评论者小石榴号筛选' },
           { name: 'post_id', type: 'int', required: false, description: '按笔记ID筛选' },
           { name: 'sortField', type: 'string', required: false, description: '排序字段（id, like_count, created_at）' },
-           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1432,7 +1436,7 @@ const apiGroups = ref([
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（标签名称）' },
           { name: 'sortField', type: 'string', required: false, description: '排序字段（id, use_count, created_at）' },
-           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1493,7 +1497,7 @@ const apiGroups = ref([
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名）' },
           { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
           { name: 'sortField', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
-           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1544,7 +1548,7 @@ const apiGroups = ref([
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名或笔记标题）' },
           { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
           { name: 'sortField', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
-           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {

@@ -56,14 +56,15 @@ router.get('/', async (req, res) => {
       SELECT 
         c.id, 
         c.name, 
+        c.category_title,
         c.created_at,
         COUNT(p.id) as post_count
       FROM categories c
       LEFT JOIN posts p ON c.id = p.category_id
       ${whereClause}
-      GROUP BY c.id, c.name, c.created_at
+      GROUP BY c.id, c.name, c.category_title, c.created_at
       ORDER BY ${validSortField} ${validSortOrder}
-    `, queryParams);
+    `, queryParams)
 
     success(res, categories, '获取成功');
   } catch (err) {
@@ -90,31 +91,46 @@ router.get('/', async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, category_title } = req.body;
 
     if (!name || name.trim() === '') {
       return error(res, '分类名称不能为空', HTTP_STATUS.BAD_REQUEST);
     }
 
-    // 检查分类是否已存在
-    const [existing] = await pool.execute(
+    if (!category_title || category_title.trim() === '') {
+      return error(res, '分类英文标题不能为空', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 检查分类名称是否已存在
+    const [existingName] = await pool.execute(
       'SELECT id FROM categories WHERE name = ?',
       [name.trim()]
     );
 
-    if (existing.length > 0) {
-      return error(res, '分类已存在', HTTP_STATUS.BAD_REQUEST);
+    if (existingName.length > 0) {
+      return error(res, '分类名称已存在', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 检查分类英文标题是否已存在
+    const [existingTitle] = await pool.execute(
+      'SELECT id FROM categories WHERE category_title = ?',
+      [category_title.trim()]
+    );
+
+    if (existingTitle.length > 0) {
+      return error(res, '分类英文标题已存在', HTTP_STATUS.BAD_REQUEST);
     }
 
     // 创建分类
     const [result] = await pool.execute(
-      'INSERT INTO categories (name) VALUES (?)',
-      [name.trim()]
+      'INSERT INTO categories (name, category_title) VALUES (?, ?)',
+      [name.trim(), category_title.trim()]
     );
 
     const newCategory = {
       id: result.insertId,
-      name: name.trim()
+      name: name.trim(),
+      category_title: category_title.trim()
     };
 
     success(res, newCategory, '创建成功');
@@ -122,7 +138,7 @@ router.post('/', authenticateToken, async (req, res) => {
     console.error('创建分类失败:', err);
     error(res, '创建分类失败');
   }
-});
+})
 
 /**
  * @api {put} /api/categories/:id 更新分类
@@ -141,10 +157,14 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, category_title } = req.body;
 
     if (!name || name.trim() === '') {
       return error(res, '分类名称不能为空', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!category_title || category_title.trim() === '') {
+      return error(res, '分类英文标题不能为空', HTTP_STATUS.BAD_REQUEST);
     }
 
     // 检查分类是否存在
@@ -158,19 +178,29 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     // 检查新名称是否已被其他分类使用
-    const [duplicate] = await pool.execute(
+    const [duplicateName] = await pool.execute(
       'SELECT id FROM categories WHERE name = ? AND id != ?',
       [name.trim(), id]
     );
 
-    if (duplicate.length > 0) {
+    if (duplicateName.length > 0) {
       return error(res, '分类名称已存在', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 检查新英文标题是否已被其他分类使用
+    const [duplicateTitle] = await pool.execute(
+      'SELECT id FROM categories WHERE category_title = ? AND id != ?',
+      [category_title.trim(), id]
+    );
+
+    if (duplicateTitle.length > 0) {
+      return error(res, '分类英文标题已存在', HTTP_STATUS.BAD_REQUEST);
     }
 
     // 更新分类
     await pool.execute(
-      'UPDATE categories SET name = ? WHERE id = ?',
-      [name.trim(), id]
+      'UPDATE categories SET name = ?, category_title = ? WHERE id = ?',
+      [name.trim(), category_title.trim(), id]
     );
 
     success(res, null, '更新成功');
@@ -178,7 +208,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     console.error('更新分类失败:', err);
     error(res, '更新分类失败');
   }
-});
+})
 
 /**
  * @api {delete} /api/categories/:id 删除分类

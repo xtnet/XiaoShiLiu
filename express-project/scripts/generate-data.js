@@ -289,7 +289,7 @@ class DataGenerator {
     const tables = [
       'user_sessions', 'notifications', 'comments', 'collections',
       'likes', 'post_tags', 'follows', 'post_images', 'posts',
-      'tags', 'users', 'admin'
+      'tags', 'users', 'admin','categories'
     ];
 
     for (const table of tables) {
@@ -1224,8 +1224,23 @@ class DataGenerator {
 
   // 生成分类数据
   generateCategories() {
+    // 分类中英文对照
+    const categoryMapping = {
+      '学习': 'study',
+      '校园': 'campus',
+      '情感': 'emotion',
+      '兴趣': 'interest',
+      '生活': 'life',
+      '社交': 'social',
+      '求助': 'help',
+      '观点': 'opinion',
+      '毕业': 'graduation',
+      '职场': 'career'
+    };
+    
     return this.categories.map(name => ({
-      name: name
+      name: name,
+      category_title: categoryMapping[name]
     }));
   }
 
@@ -1233,8 +1248,8 @@ class DataGenerator {
   async insertCategories(connection, categories) {
     for (const category of categories) {
       await connection.execute(
-        'INSERT IGNORE INTO categories (name) VALUES (?)',
-        [category.name]
+        'INSERT IGNORE INTO categories (name, category_title) VALUES (?, ?)',
+        [category.name, category.category_title]
       );
     }
     console.log(`     已插入 ${categories.length} 个分类`);

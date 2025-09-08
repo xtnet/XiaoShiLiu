@@ -240,7 +240,7 @@ const handleSave = async (processedData) => {
     const postData = {
       title: processedData.title.trim(),
       content: processedData.content.trim(),
-      category: processedData.category,
+      category_id: processedData.category,
       tags: processedData.tags,
       images: processedData.image_urls || []
     }

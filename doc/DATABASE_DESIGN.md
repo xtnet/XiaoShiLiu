@@ -43,24 +43,27 @@
 |--------|------|------|------|
 | id | INT | 分类ID | 主键，自增 |
 | name | VARCHAR(50) | 分类名称 | 唯一，如：学习、校园、情感等 |
+| category_title | VARCHAR(50) | 分类英文标题 | 唯一，用于URL生成，如：study、campus、emotion等 |
 | created_at | TIMESTAMP | 创建时间 | 分类创建时间 |
 
 **索引：**
 - PRIMARY KEY (`id`)
 - UNIQUE KEY `name` (`name`)
+- UNIQUE KEY `category_title` (`category_title`)
 - KEY `idx_name` (`name`)
+- KEY `idx_category_title` (`category_title`)
 
 **初始数据：**
-- 学习
-- 校园
-- 情感
-- 兴趣
-- 生活
-- 社交
-- 帮助
-- 观点
-- 毕业
-- 职场
+- 学习 (study)
+- 校园 (campus)
+- 情感 (emotion)
+- 兴趣 (interest)
+- 生活 (life)
+- 社交 (social)
+- 求助 (help)
+- 观点 (opinion)
+- 毕业 (graduation)
+- 职场 (career)
 
 ### 3. 笔记表 (posts)
 

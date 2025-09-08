@@ -16,7 +16,7 @@ export const loadChannelsFromAPI = async () => {
       const categoryChannels = response.data.map(category => ({
         id: category.id,
         label: category.name,
-        path: `/${category.name}`
+        path: `/${category.category_title}` // 使用英文标题作为路径
       }))
       
       // 合并默认频道和分类频道

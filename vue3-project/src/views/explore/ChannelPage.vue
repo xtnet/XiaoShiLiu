@@ -21,14 +21,14 @@ const channelConfig = computed(() => {
         'recommend': { category: 'recommend', title: '推荐' }
     }
     
-    // 根据分类数据动态生成配置，使用分类ID作为key和category值
     categories.value.forEach(category => {
-        config[category.id] = {
+        // 使用英文标题作为路由参数的key
+        config[category.category_title] = {
             category: category.id, // 使用分类ID
             title: category.name
         }
-        // 为了兼容性，也保留分类名称作为key的映射
-        config[category.name] = {
+        // 为了兼容性，也保留分类ID作为key的映射
+        config[category.id] = {
             category: category.id,
             title: category.name
         }

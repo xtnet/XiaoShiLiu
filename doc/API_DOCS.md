@@ -2,10 +2,10 @@
 
 ## 项目信息
 - **项目名称**: 小石榴图文社区
-- **版本**: v1.1.0
+- **版本**: v1.1.1
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-08
+- **更新时间**: 2025-09-09
 
 ## 通用说明
 
@@ -701,16 +701,19 @@ Authorization: Bearer <your_jwt_token>
     {
       "id": 1,
       "name": "学习",
+      "category_title": "study",
       "created_at": "2025-01-01T00:00:00.000Z"
     },
     {
       "id": 2,
       "name": "校园",
+      "category_title": "campus",
       "created_at": "2025-01-01T00:00:00.000Z"
     },
     {
       "id": 3,
       "name": "情感",
+      "category_title": "emotion",
       "created_at": "2025-01-01T00:00:00.000Z"
     }
   ]
@@ -725,6 +728,7 @@ Authorization: Bearer <your_jwt_token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | name | string | 是 | 分类名称 |
+| category_title | string | 是 | 英文标题，用于URL路由 |
 
 **响应示例**:
 ```json
@@ -734,6 +738,7 @@ Authorization: Bearer <your_jwt_token>
   "data": {
     "id": 11,
     "name": "新分类",
+    "category_title": "new_category",
     "created_at": "2025-01-02T00:00:00.000Z"
   }
 }
@@ -751,7 +756,8 @@ Authorization: Bearer <your_jwt_token>
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| name | string | 是 | 分类名称 |
+| name | string | 否 | 分类名称 |
+| category_title | string | 否 | 英文标题，用于URL路由 |
 
 **响应示例**:
 ```json
@@ -761,6 +767,7 @@ Authorization: Bearer <your_jwt_token>
   "data": {
     "id": 1,
     "name": "更新后的分类名",
+    "category_title": "updated_category",
     "created_at": "2025-01-01T00:00:00.000Z"
   }
 }

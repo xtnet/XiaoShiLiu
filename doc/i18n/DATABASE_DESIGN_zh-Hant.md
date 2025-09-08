@@ -43,6 +43,7 @@
 |--------|------|------|------|
 | id | INT | 分類ID | 主鍵，自增 |
 | name | VARCHAR(50) | 分類名稱 | 唯一，如：學習、校園、情感等 |
+| category_title | VARCHAR(50) | 英文標題 | 唯一，用於URL路由，如：study、campus、emotion等 |
 | created_at | TIMESTAMP | 建立時間 | 分類建立時間 |
 
 **索引：**
