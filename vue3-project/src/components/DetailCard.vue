@@ -49,8 +49,8 @@
             <div class="author-info">
               <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
                 @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
-              <span class="author-name" @click="onUserClick(authorData.id)"
-                v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
+              <span class="author-name" @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()">{{
+                authorData.name }}</span>
             </div>
             <FollowButton v-if="!isCurrentUserPost" :is-following="authorData.isFollowing" :user-id="authorData.id"
               @follow="handleFollow" @unfollow="handleUnfollow" />
@@ -128,9 +128,10 @@
                 <div v-if="enhancedComments.length === 0" class="no-comments">
                   <span>暂无评论，快来抢沙发吧~</span>
                 </div>
-                <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item">
+                <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item"
+                  :data-comment-id="String(comment.id)">
                   <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
-                    @click="onUserClick(comment.user_id)" @error="handleAvatarError" 
+                    @click="onUserClick(comment.user_id)" @error="handleAvatarError"
                     v-user-hover="getCommentUserHoverConfig(comment)" />
                   <div class="comment-content">
                     <div class="comment-header">
@@ -165,9 +166,9 @@
 
                     <div v-if="comment.replies && comment.replies.length > 0" class="replies-list">
                       <div v-for="reply in getDisplayedReplies(comment.replies, comment.id)" :key="reply.id"
-                        class="reply-item">
+                        class="reply-item" :data-comment-id="String(reply.id)">
                         <img :src="reply.avatar" :alt="reply.username" class="reply-avatar "
-                          @click="onUserClick(reply.user_id)" @error="handleAvatarError" 
+                          @click="onUserClick(reply.user_id)" @error="handleAvatarError"
                           v-user-hover="getCommentUserHoverConfig(reply)" />
                         <div class="reply-content">
                           <div class="reply-header">
@@ -394,6 +395,10 @@ const props = defineProps({
   pageMode: {
     type: Boolean,
     default: false
+  },
+  targetCommentId: {
+    type: [String, Number],
+    default: null
   }
 })
 
@@ -639,6 +644,96 @@ const loadMoreComments = async () => {
     })
   } catch (error) {
     console.error('加载更多评论失败:', error)
+  }
+}
+
+// 定位目标评论
+const locateTargetComment = async () => {
+  console.log('locateTargetComment被调用，targetCommentId:', props.targetCommentId)
+  if (!props.targetCommentId) {
+    console.log('targetCommentId为空，退出定位')
+    return
+  }
+
+  // 首先在当前已加载的评论中查找（支持递归搜索子评论）
+  const findCommentInCurrent = () => {
+    const currentComments = comments.value || []
+
+    // 递归搜索函数，同时检查是否需要展开回复
+    const searchComments = (commentList, parentCommentId = null) => {
+      for (const comment of commentList) {
+        // 检查当前评论是否为目标
+        if (comment.id == props.targetCommentId) {
+          // 如果目标评论是回复，且父评论有折叠的回复，需要展开
+          if (parentCommentId && comment.replies && comment.replies.length > 2) {
+            expandedReplies.value.add(parentCommentId)
+          }
+          return comment
+        }
+        // 检查子评论（如果有）
+        if (comment.replies && comment.replies.length > 0) {
+          const foundInReplies = searchComments(comment.replies, comment.id)
+          if (foundInReplies) {
+            // 如果在子评论中找到目标，且该评论有超过2个回复，需要展开
+            if (comment.replies.length > 2) {
+              expandedReplies.value.add(comment.id)
+            }
+            return foundInReplies
+          }
+        }
+      }
+      return null
+    }
+
+    return searchComments(currentComments)
+  }
+
+  let targetComment = findCommentInCurrent()
+
+  // 如果在当前评论中没找到，需要加载更多评论
+  if (!targetComment && hasMoreCommentsToShow.value) {
+    let maxAttempts = 10 // 最多尝试加载10页
+    let attempts = 0
+
+    while (!targetComment && hasMoreCommentsToShow.value && attempts < maxAttempts) {
+      await loadMoreComments()
+      await nextTick()
+      targetComment = findCommentInCurrent()
+      attempts++
+    }
+  }
+
+  // 如果找到了目标评论，进行定位和高亮
+  if (targetComment) {
+    await nextTick()
+
+    // 优化选择器，支持子评论定位
+    const targetId = String(props.targetCommentId)
+    let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
+
+    // 如果没找到，尝试在子评论中查找
+    if (!commentElement) {
+      commentElement = document.querySelector(`.reply-item [data-comment-id="${targetId}"]`)
+    }
+
+    console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
+    if (commentElement) {
+      // 添加高亮样式
+      commentElement.classList.add('comment-highlight')
+
+      // 滚动到目标评论
+      commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // 3秒后移除高亮样式
+      setTimeout(() => {
+        commentElement.classList.remove('comment-highlight')
+      }, 3000)
+      console.log('评论定位成功')
+    } else {
+      console.log('未找到评论元素')
+    }
+  } else {
+    console.log('未找到目标评论')
   }
 }
 
@@ -1066,18 +1161,18 @@ const onUserClick = (userId) => {
 // 获取评论用户悬停配置
 const getCommentUserHoverConfig = (comment) => {
   if (!comment) return null
-  
+
   return {
     getUserInfo: async () => {
       const userId = comment.user_id
-      
+
       // 获取用户统计数据
       let userStats = {
         follow_count: 0,
         fans_count: 0,
         likes_and_collects: 0
       }
-      
+
       try {
         const statsResponse = await userApi.getUserStats(userId)
         if (statsResponse.success) {
@@ -1086,14 +1181,14 @@ const getCommentUserHoverConfig = (comment) => {
       } catch (error) {
         console.error('获取用户统计失败:', error)
       }
-      
+
       // 获取关注状态 - 使用followStore保持状态一致性
       let followStatus = {
         followed: false,
         isMutual: false,
         buttonType: 'follow'
       }
-      
+
       if (userStore.isLoggedIn) {
         // 优先使用followStore中的状态
         const storeState = followStore.getUserFollowState(userId)
@@ -1122,12 +1217,12 @@ const getCommentUserHoverConfig = (comment) => {
           }
         }
       }
-      
+
       // 获取用户的前三个笔记封面图
       let userImages = []
       try {
         const postsResponse = await postApi.getUserPosts(userId, { page: 1, limit: 3 })
-        
+
         if (postsResponse && postsResponse.data && postsResponse.data.posts) {
           // 收集每个笔记的第一张图片作为封面
           const coverImages = []
@@ -1143,14 +1238,14 @@ const getCommentUserHoverConfig = (comment) => {
       } catch (error) {
         console.error('获取用户笔记封面失败:', error)
       }
-      
+
       // 获取完整的用户信息
       let userInfo = {
         avatar: comment.avatar || '',
         nickname: comment.username || `用户${userId}`,
         bio: '还没有简介'
       }
-      
+
       try {
         const userInfoResponse = await userApi.getUserInfo(userId)
         if (userInfoResponse.success && userInfoResponse.data) {
@@ -1163,7 +1258,7 @@ const getCommentUserHoverConfig = (comment) => {
       } catch (error) {
         console.error('获取用户详细信息失败:', error)
       }
-      
+
       return {
         id: userId,
         avatar: userInfo.avatar,
@@ -1229,18 +1324,18 @@ const getCommentUserHoverConfig = (comment) => {
 // 获取作者用户悬停配置
 const getAuthorUserHoverConfig = () => {
   if (!authorData.value) return null
-  
+
   return {
     getUserInfo: async () => {
       const userId = authorData.value.id
-      
+
       // 获取用户统计数据
       let userStats = {
         follow_count: 0,
         fans_count: 0,
         likes_and_collects: 0
       }
-      
+
       try {
         const statsResponse = await userApi.getUserStats(userId)
         if (statsResponse.success) {
@@ -1249,7 +1344,7 @@ const getAuthorUserHoverConfig = () => {
       } catch (error) {
         console.error('获取用户统计失败:', error)
       }
-      
+
       // 优先使用followStore中的关注状态
       const storeState = followStore.getUserFollowState(userId)
       let followStatus = {
@@ -1257,7 +1352,7 @@ const getAuthorUserHoverConfig = () => {
         isMutual: storeState.isMutual,
         buttonType: storeState.buttonType
       }
-      
+
       // 如果store中没有状态且用户已登录，则从API获取并更新store
       if (!storeState.hasState && userStore.isLoggedIn) {
         try {
@@ -1276,12 +1371,12 @@ const getAuthorUserHoverConfig = () => {
           console.error('获取关注状态失败:', error)
         }
       }
-      
+
       // 获取用户的前三个笔记封面图
       let userImages = []
       try {
         const postsResponse = await postApi.getUserPosts(userId, { page: 1, limit: 3 })
-        
+
         if (postsResponse && postsResponse.data && postsResponse.data.posts) {
           // 收集每个笔记的第一张图片作为封面
           const coverImages = []
@@ -1297,14 +1392,14 @@ const getAuthorUserHoverConfig = () => {
       } catch (error) {
         console.error('获取用户笔记封面失败:', error)
       }
-      
+
       // 获取完整的用户信息
       let userInfo = {
         avatar: authorData.value.avatar || '',
         nickname: authorData.value.name || `用户${userId}`,
         bio: '还没有简介'
       }
-      
+
       try {
         const userInfoResponse = await userApi.getUserInfo(userId)
         if (userInfoResponse.success && userInfoResponse.data) {
@@ -1317,7 +1412,7 @@ const getAuthorUserHoverConfig = () => {
       } catch (error) {
         console.error('获取用户详细信息失败:', error)
       }
-      
+
       return {
         id: userId,
         avatar: userInfo.avatar,
@@ -1759,7 +1854,7 @@ const handleKeydown = (event) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   lock()
 
   window.addEventListener('resize', handleResize)
@@ -1779,8 +1874,21 @@ onMounted(() => {
     fetchPostDetail()
   }
 
-  fetchComments()
+  // 检查是否已有评论数据（预加载场景）
+  const existingComments = commentStore.getComments(props.item.id)
+  const hasPreloadedComments = existingComments && existingComments.comments && existingComments.comments.length > 0
 
+  if (!hasPreloadedComments) {
+    // 如果没有预加载数据，才进行评论加载
+    await fetchComments()
+  }
+
+  // 如果有目标评论ID，进行定位
+  if (props.targetCommentId) {
+    nextTick(() => {
+      locateTargetComment()
+    })
+  }
 
 })
 
@@ -2462,6 +2570,15 @@ const onViewerContainerClick = (event) => {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.comment-item.comment-highlight {
+  background-color: var(--bg-color-secondary);
+}
+
+.reply-item.comment-highlight {
+  background-color: var(--bg-color-secondary);
 }
 
 .comment-avatar {

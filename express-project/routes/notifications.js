@@ -85,7 +85,16 @@ router.get('/likes', authenticateToken, async (req, res) => {
              u.avatar as from_avatar, 
              u.user_id as from_user_id,
              p.title as post_title,
-             (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image
+             (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image,
+             CASE 
+               WHEN n.type = 1 THEN 1
+               WHEN n.type = 2 THEN 2
+               ELSE 1
+             END as target_type,
+             CASE 
+               WHEN n.type = 2 THEN n.comment_id
+               ELSE NULL
+             END as comment_id
       FROM notifications n
       LEFT JOIN users u ON n.sender_id = u.id
       LEFT JOIN posts p ON n.target_id = p.id
