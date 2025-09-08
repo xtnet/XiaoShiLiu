@@ -265,9 +265,9 @@ function createCrudHandlers(config) {
 
       // 排序处理
       let orderBy = defaultOrderBy
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = config.allowedSortFields || ['id', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {

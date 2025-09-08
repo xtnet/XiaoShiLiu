@@ -25,7 +25,7 @@ const formFields = [
 
 const searchFields = [
   { key: 'post_id', label: '笔记ID', placeholder: '搜索笔记ID' },
-  { key: 'user_id', label: '用户ID', placeholder: '搜索用户ID' },
+  { key: 'user_display_id', label: '小石榴号', placeholder: '搜索用户小石榴号' },
   { key: 'content', label: '内容', placeholder: '搜索评论内容' }
 ]
 </script>

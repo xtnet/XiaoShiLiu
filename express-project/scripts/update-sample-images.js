@@ -38,7 +38,7 @@ class ImageUpdater {
   getRandomImageUrl(imageType = 'post') {
     const links = imageType === 'avatar' ? this.newAvatarLinks : this.newImageLinks;
     if (links.length === 0) {
-      console.warn(`没有可用的${imageType === 'avatar' ? '头像' : '帖子'}图片链接`);
+      console.warn(`没有可用的${imageType === 'avatar' ? '头像' : '笔记'}图片链接`);
       return null;
     }
     const randomIndex = Math.floor(Math.random() * links.length);
@@ -83,17 +83,17 @@ class ImageUpdater {
     }
   }
 
-  // 更新帖子图片
+  // 更新笔记图片
   async updatePostImages(connection) {
-    console.log('开始更新帖子图片...');
+    console.log('开始更新笔记图片...');
 
     try {
-      // 查询所有使用tc.alcy.cc图床的帖子图片
+      // 查询所有使用tc.alcy.cc图床的笔记图片
       const [images] = await connection.execute(
         'SELECT id, image_url FROM post_images WHERE image_url LIKE "%tc.alcy.cc%"'
       );
 
-      console.log(`找到 ${images.length} 个需要更新的帖子图片`);
+      console.log(`找到 ${images.length} 个需要更新的笔记图片`);
 
       let updatedCount = 0;
       for (const image of images) {
@@ -109,9 +109,9 @@ class ImageUpdater {
         }
       }
 
-      console.log(`帖子图片更新完成，共更新 ${updatedCount} 个图片`);
+      console.log(`笔记图片更新完成，共更新 ${updatedCount} 个图片`);
     } catch (error) {
-      console.error('❌ 更新帖子图片失败:', error);
+      console.error('❌ 更新笔记图片失败:', error);
       throw error;
     }
   }
@@ -126,13 +126,13 @@ class ImageUpdater {
         'SELECT COUNT(*) as total, SUM(CASE WHEN avatar LIKE "%tc.alcy.cc%" THEN 1 ELSE 0 END) as tc_alcy_count FROM users WHERE avatar IS NOT NULL'
       );
 
-      // 统计帖子图片
+      // 统计笔记图片
       const [imageStats] = await connection.execute(
         'SELECT COUNT(*) as total, SUM(CASE WHEN image_url LIKE "%tc.alcy.cc%" THEN 1 ELSE 0 END) as tc_alcy_count FROM post_images'
       );
 
       console.log(`用户头像: 总计 ${avatarStats[0].total} 个，其中 ${avatarStats[0].tc_alcy_count} 个来自 tc.alcy.cc`);
-      console.log(`帖子图片: 总计 ${imageStats[0].total} 个，其中 ${imageStats[0].tc_alcy_count} 个来自 tc.alcy.cc`);
+      console.log(`笔记图片: 总计 ${imageStats[0].total} 个，其中 ${imageStats[0].tc_alcy_count} 个来自 tc.alcy.cc`);
     } catch (error) {
       console.error('❌ 获取统计信息失败:', error);
     }
@@ -167,7 +167,7 @@ class ImageUpdater {
       const avatarLinks = await this.fetchImageLinks('https://t.alcy.cc/tx/?json&quantity=50');
       const avatarFilePath = path.join(__dirname, '../imgLinks/avatar_link.txt');
       fs.writeFileSync(avatarFilePath, avatarLinks.join('\n'), 'utf8');
-      // 清空并获取帖子图片链接
+      // 清空并获取笔记图片链接
       const postLinks1 = await this.fetchImageLinks('https://t.alcy.cc/moemp/?json&quantity=100');
       const postLinks2 = await this.fetchImageLinks('https://t.alcy.cc/mp/?json&quantity=200');
       const allPostLinks = [...postLinks1, ...postLinks2];
@@ -176,7 +176,7 @@ class ImageUpdater {
       // 更新内存中的链接数组
       this.newAvatarLinks = avatarLinks;
       this.newImageLinks = allPostLinks;
-      
+
       console.log('图片链接文件更新完成\n');
     } catch (error) {
       console.error('❌ 更新图片链接文件失败:', error);
@@ -189,7 +189,7 @@ class ImageUpdater {
     // 首先更新图片链接文件
     await this.updateImageLinkFiles();
     console.log(`可用头像链接: ${this.newAvatarLinks.length} 个`);
-    console.log(`可用帖子图片链接: ${this.newImageLinks.length} 个\n`);
+    console.log(`可用笔记图片链接: ${this.newImageLinks.length} 个\n`);
 
     if (this.newAvatarLinks.length === 0 && this.newImageLinks.length === 0) {
       console.error('❌ 没有可用的图片链接，请检查图片链接文件');
@@ -215,12 +215,12 @@ class ImageUpdater {
         console.log('⚠️ 跳过用户头像更新（没有可用的头像链接）\n');
       }
 
-      // 更新帖子图片
+      // 更新笔记图片
       if (this.newImageLinks.length > 0) {
         await this.updatePostImages(connection);
         console.log('');
       } else {
-        console.log('⚠️ 跳过帖子图片更新（没有可用的帖子图片链接）\n');
+        console.log('⚠️ 跳过笔记图片更新（没有可用的笔记图片链接）\n');
       }
 
       // 显示更新后的统计信息

@@ -37,7 +37,7 @@ const formFields = [
 ]
 
 const searchFields = [
-  { key: 'user_id', label: '用户ID', placeholder: '搜索用户ID' },
+  { key: 'user_display_id', label: '小石榴号', placeholder: '搜索用户小石榴号' },
   {
     key: 'target_type',
     label: '目标类型',

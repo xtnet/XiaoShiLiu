@@ -49,7 +49,7 @@ const goBack = () => {
   router.push('/explore')
 }
 
-// 获取帖子详情
+// 获取笔记详情
 const fetchPostDetail = async (postId) => {
   try {
     loading.value = true
@@ -58,13 +58,13 @@ const fetchPostDetail = async (postId) => {
     if (response) {
       postData.value = response
       // 设置页面标题
-      document.title = response.title || '帖子详情'
+      document.title = response.title || '笔记详情'
     } else {
       router.replace({ name: 'not_found' })
       return
     }
   } catch (error) {
-    console.error('获取帖子详情出错:', error)
+    console.error('获取笔记详情出错:', error)
     router.replace({ name: 'not_found' })
     return
   } finally {
@@ -76,7 +76,7 @@ const fetchPostDetail = async (postId) => {
 
 
 
-// 组件挂载时获取帖子详情
+// 组件挂载时获取笔记详情
 onMounted(() => {
   // 保存原始页面标题
   originalTitle.value = document.title

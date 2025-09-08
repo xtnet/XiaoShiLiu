@@ -14,7 +14,7 @@ class DatabaseInitializer {
 
   async createDatabase() {
     const connection = await mysql.createConnection(this.dbConfig);
-    
+
     try {
       console.log('创建数据库...');
       await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${config.database.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
@@ -35,48 +35,48 @@ class DatabaseInitializer {
 
     try {
       console.log('开始创建数据表...');
-      
+
       // 创建用户表
       await this.createUsersTable(connection);
-      
+
       // 创建管理员表
       await this.createAdminTable(connection);
-      
+
       // 创建分类表
       await this.createCategoriesTable(connection);
-      
-      // 创建帖子表
+
+      // 创建笔记表
       await this.createPostsTable(connection);
-      
-      // 创建帖子图片表
+
+      // 创建笔记图片表
       await this.createPostImagesTable(connection);
-      
+
       // 创建标签表
       await this.createTagsTable(connection);
-      
-      // 创建帖子标签关联表
+
+      // 创建笔记标签关联表
       await this.createPostTagsTable(connection);
-      
+
       // 创建关注关系表
       await this.createFollowsTable(connection);
-      
+
       // 创建点赞表
       await this.createLikesTable(connection);
-      
+
       // 创建收藏表
       await this.createCollectionsTable(connection);
-      
+
       // 创建评论表
       await this.createCommentsTable(connection);
-      
+
       // 创建通知表
       await this.createNotificationsTable(connection);
-      
+
       // 创建用户会话表
       await this.createUserSessionsTable(connection);
-      
+
       console.log('所有数据表创建完成!');
-      
+
     } catch (error) {
       console.error('创建数据表失败:', error.message);
       throw error;
@@ -151,7 +151,7 @@ class DatabaseInitializer {
   async createPostsTable(connection) {
     const sql = `
       CREATE TABLE IF NOT EXISTS \`posts\` (
-        \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '笔记ID',
         \`user_id\` bigint(20) NOT NULL COMMENT '发布用户ID',
         \`title\` varchar(200) NOT NULL COMMENT '标题',
         \`content\` text NOT NULL COMMENT '内容',
@@ -170,7 +170,7 @@ class DatabaseInitializer {
         KEY \`idx_category_id_created_at\` (\`category_id\`, \`created_at\`),
         CONSTRAINT \`posts_ibfk_1\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE,
         CONSTRAINT \`fk_posts_category\` FOREIGN KEY (\`category_id\`) REFERENCES \`categories\` (\`id\`) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记表';
     `;
     await connection.execute(sql);
     console.log('✓ posts 表创建成功');
@@ -180,12 +180,12 @@ class DatabaseInitializer {
     const sql = `
       CREATE TABLE IF NOT EXISTS \`post_images\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '图片ID',
-        \`post_id\` bigint(20) NOT NULL COMMENT '帖子ID',
+        \`post_id\` bigint(20) NOT NULL COMMENT '笔记ID',
         \`image_url\` varchar(500) NOT NULL COMMENT '图片URL',
         PRIMARY KEY (\`id\`),
         KEY \`idx_post_id\` (\`post_id\`),
         CONSTRAINT \`post_images_ibfk_1\` FOREIGN KEY (\`post_id\`) REFERENCES \`posts\` (\`id\`) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子图片表';
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记图片表';
     `;
     await connection.execute(sql);
     console.log('✓ post_images 表创建成功');
@@ -212,7 +212,7 @@ class DatabaseInitializer {
     const sql = `
       CREATE TABLE IF NOT EXISTS \`post_tags\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关联ID',
-        \`post_id\` bigint(20) NOT NULL COMMENT '帖子ID',
+        \`post_id\` bigint(20) NOT NULL COMMENT '笔记ID',
         \`tag_id\` int(11) NOT NULL COMMENT '标签ID',
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
         PRIMARY KEY (\`id\`),
@@ -221,7 +221,7 @@ class DatabaseInitializer {
         KEY \`idx_tag_id\` (\`tag_id\`),
         CONSTRAINT \`post_tags_ibfk_1\` FOREIGN KEY (\`post_id\`) REFERENCES \`posts\` (\`id\`) ON DELETE CASCADE,
         CONSTRAINT \`post_tags_ibfk_2\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\` (\`id\`) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子标签关联表';
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记标签关联表';
     `;
     await connection.execute(sql);
     console.log('✓ post_tags 表创建成功');
@@ -252,7 +252,7 @@ class DatabaseInitializer {
       CREATE TABLE IF NOT EXISTS \`likes\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '点赞ID',
         \`user_id\` bigint(20) NOT NULL COMMENT '用户ID',
-        \`target_type\` tinyint(4) NOT NULL COMMENT '目标类型: 1-帖子, 2-评论',
+        \`target_type\` tinyint(4) NOT NULL COMMENT '目标类型: 1-笔记, 2-评论',
         \`target_id\` bigint(20) NOT NULL COMMENT '目标ID',
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
         PRIMARY KEY (\`id\`),
@@ -272,7 +272,7 @@ class DatabaseInitializer {
       CREATE TABLE IF NOT EXISTS \`collections\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
         \`user_id\` bigint(20) NOT NULL COMMENT '用户ID',
-        \`post_id\` bigint(20) NOT NULL COMMENT '帖子ID',
+        \`post_id\` bigint(20) NOT NULL COMMENT '笔记ID',
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`uk_user_post\` (\`user_id\`, \`post_id\`),
@@ -290,7 +290,7 @@ class DatabaseInitializer {
     const sql = `
       CREATE TABLE IF NOT EXISTS \`comments\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '评论ID',
-        \`post_id\` bigint(20) NOT NULL COMMENT '帖子ID',
+        \`post_id\` bigint(20) NOT NULL COMMENT '笔记ID',
         \`user_id\` bigint(20) NOT NULL COMMENT '评论用户ID',
         \`parent_id\` bigint(20) DEFAULT NULL COMMENT '父评论ID',
         \`content\` text NOT NULL COMMENT '评论内容',
@@ -366,19 +366,19 @@ class DatabaseInitializer {
   async run() {
     try {
       console.log('=== 小石榴图文社区数据库初始化 ===\n');
-      
+
       // 创建数据库
       await this.createDatabase();
-      
+
       // 创建表结构
       await this.initializeTables();
-      
+
       console.log('\n=== 数据库初始化完成 ===');
       console.log('数据库名称:', config.database.database);
       console.log('字符集: utf8mb4');
       console.log('排序规则: utf8mb4_unicode_ci');
       console.log('存储引擎: InnoDB');
-      
+
     } catch (error) {
       console.error('\n=== 数据库初始化失败 ===');
       console.error('错误信息:', error.message);

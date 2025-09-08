@@ -534,7 +534,7 @@ router.get('/admin/admins', authenticateToken, async (req, res) => {
 
     // 验证排序字段
     const allowedSortFields = ['username', 'created_at'];
-    const sortField = allowedSortFields.includes(req.query.sortBy) ? req.query.sortBy : 'created_at';
+    const sortField = allowedSortFields.includes(req.query.sortField) ? req.query.sortField : 'created_at';
     const sortOrder = req.query.sortOrder && req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     // 获取总数

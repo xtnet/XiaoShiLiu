@@ -11,7 +11,7 @@ const columns = [
   { key: 'user_id', label: '用户ID', sortable: false },
   { key: 'user_display_id', label: '用户小石榴号', type: 'user-link', sortable: false },
   { key: 'user_agent', label: '用户代理', type: 'content', sortable: false },
-  { key: 'is_active', label: '活跃状态', type: 'boolean', sortable: true },
+  { key: 'is_active', label: '活跃状态', type: 'boolean' },
   { key: 'expires_at', label: '过期时间', type: 'date', sortable: true },
   { key: 'created_at', label: '创建时间', type: 'date', sortable: true }
 ]
@@ -23,7 +23,7 @@ const formFields = [
 ]
 
 const searchFields = [
-  { key: 'user_id', label: '用户ID', placeholder: '搜索用户ID' },
+  { key: 'user_display_id', label: '小石榴号', placeholder: '搜索用户小石榴号' },
   {
     key: 'is_active',
     label: '活跃状态',

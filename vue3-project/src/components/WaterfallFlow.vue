@@ -18,7 +18,7 @@ const props = defineProps({
         default: 0
     },
     category: {
-        type: String,
+        type: [String, Number],
         default: null
     },
     searchKeyword: {
@@ -734,7 +734,7 @@ function onCardClick(item, event) {
 
     // 修改页面标题
     const originalTitle = document.title
-    document.title = item.title || '帖子详情'
+    document.title = item.title || '笔记详情'
 
     // 使用History API添加历史记录并更新URL
     const newUrl = `/post?id=${item.id}`
@@ -745,7 +745,7 @@ function onCardClick(item, event) {
             postId: item.id,
             originalTitle: originalTitle
         },
-        item.title || '帖子详情',
+        item.title || '笔记详情',
         newUrl
     )
 }

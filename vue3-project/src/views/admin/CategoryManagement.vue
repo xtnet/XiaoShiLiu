@@ -1,17 +1,8 @@
 <template>
   <div class="category-management">
-    <CrudTable
-      title="分类管理"
-      :columns="columns"
-      :form-fields="formFields"
-      :search-fields="searchFields"
-      :api-endpoint="apiEndpoints.list"
-      entity-name="分类"
-      :show-create="true"
-      :show-edit="true"
-      :show-delete="true"
-      :show-detail="false"
-    />
+    <CrudTable title="分类管理" :columns="columns" :form-fields="formFields" :search-fields="searchFields"
+      :api-endpoint="apiEndpoints.list" entity-name="分类" :show-create="true" :show-edit="true" :show-delete="true"
+      :show-detail="false" />
   </div>
 </template>
 
@@ -20,7 +11,8 @@ import CrudTable from '@/views/admin/components/CrudTable.vue'
 
 const columns = [
   { key: 'id', label: 'ID', sortable: true },
-  { key: 'name', label: '分类名称', sortable: true },
+  { key: 'name', label: '分类名称', sortable: false },
+  { key: 'post_count', label: '笔记数量', sortable: true },
   { key: 'created_at', label: '创建时间', sortable: true, type: 'date' }
 ]
 

@@ -85,6 +85,6 @@ const searchFields = computed(() => [
       { value: '1', label: '草稿' }
     ]
   },
-  { key: 'user_id', label: '作者ID', placeholder: '搜索作者ID' }
+  { key: 'user_display_id', label: '作者小石榴号', placeholder: '搜索作者小石榴号' }
 ])
 </script>

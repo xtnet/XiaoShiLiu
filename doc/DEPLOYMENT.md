@@ -432,13 +432,13 @@ UPLOAD_MAX_SIZE=50mb
 
 #### 2. 测试数据生成脚本
 - **文件位置**：`scripts/generate-data.js`
-- **功能**：生成模拟的用户、帖子、评论等测试数据
+- **功能**：生成模拟的用户、笔记、评论等测试数据
 - **使用方法**：
   ```bash
   cd express-project
   node scripts/generate-data.js
   ```
-- **说明**：可选运行，用于快速填充测试数据，包含50个用户、200个帖子、800条评论等
+- **说明**：可选运行，用于快速填充测试数据，包含50个用户、200个笔记、800条评论等
 
 #### 3. SQL初始化文件
 - **文件位置**：`scripts/init-database.sql`
@@ -457,8 +457,8 @@ UPLOAD_MAX_SIZE=50mb
 - **说明**：
   - 自动从栗次元API获取最新的图片链接
   - 更新 `imgLinks/avatar_link.txt`（50个头像链接）
-  - 更新 `imgLinks/post_img_link.txt`（300个帖子图片链接）
-  - 批量更新数据库中的用户头像和帖子图片
+  - 更新 `imgLinks/post_img_link.txt`（300个笔记图片链接）
+  - 批量更新数据库中的用户头像和笔记图片
   - 支持统计显示更新前后的图片数量
 
 ## 开发环境启动流程

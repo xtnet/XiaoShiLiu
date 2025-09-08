@@ -68,7 +68,7 @@ express-project/
 ├── routes/               # 路由文件目录
 │   ├── auth.js          # 认证路由
 │   ├── users.js         # 用户路由
-│   ├── posts.js         # 帖子路由
+│   ├── posts.js         # 笔记路由
 │   ├── comments.js      # 评论路由
 │   └── ...              # 其他路由文件
 ├── middleware/           # 中间件目录
@@ -102,7 +102,7 @@ express-project/
 |----------|------|----------|
 | `auth.js` | 用户认证 | 登录、注册、token验证 |
 | `users.js` | 用户管理 | 用户信息CRUD、关注关系 |
-| `posts.js` | 帖子管理 | 帖子发布、编辑、删除、查询 |
+| `posts.js` | 笔记管理 | 笔记发布、编辑、删除、查询 |
 | `comments.js` | 评论管理 | 评论发布、删除、查询 |
 
 ### 脚本文件说明

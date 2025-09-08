@@ -49,9 +49,9 @@ CREATE TABLE categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
 
--- 4. 帖子表
+-- 4. 笔记表
 CREATE TABLE IF NOT EXISTS `posts` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '笔记ID',
   `user_id` bigint(20) NOT NULL COMMENT '发布用户ID',
   `title` varchar(200) NOT NULL COMMENT '标题',
   `content` text NOT NULL COMMENT '内容',
@@ -70,17 +70,17 @@ CREATE TABLE IF NOT EXISTS `posts` (
   KEY `idx_category_id_created_at` (`category_id`, `created_at`),
   CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_posts_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记表';
 
--- 5. 帖子图片表
+-- 5. 笔记图片表
 CREATE TABLE IF NOT EXISTS `post_images` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '图片ID',
-  `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
+  `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
   `image_url` varchar(500) NOT NULL COMMENT '图片URL',
   PRIMARY KEY (`id`),
   KEY `idx_post_id` (`post_id`),
   CONSTRAINT `post_images_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子图片表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记图片表';
 
 -- 6. 标签表
 CREATE TABLE IF NOT EXISTS `tags` (
@@ -94,10 +94,10 @@ CREATE TABLE IF NOT EXISTS `tags` (
   KEY `idx_use_count` (`use_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
 
--- 7. 帖子标签关联表
+-- 7. 笔记标签关联表
 CREATE TABLE IF NOT EXISTS `post_tags` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关联ID',
-  `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
+  `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
   `tag_id` int(11) NOT NULL COMMENT '标签ID',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `post_tags` (
   KEY `idx_tag_id` (`tag_id`),
   CONSTRAINT `post_tags_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
   CONSTRAINT `post_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子标签关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记标签关联表';
 
 -- 8. 关注关系表
 CREATE TABLE IF NOT EXISTS `follows` (
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `follows` (
 CREATE TABLE IF NOT EXISTS `likes` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '点赞ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
-  `target_type` tinyint(4) NOT NULL COMMENT '目标类型: 1-帖子, 2-评论',
+  `target_type` tinyint(4) NOT NULL COMMENT '目标类型: 1-笔记, 2-评论',
   `target_id` bigint(20) NOT NULL COMMENT '目标ID',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
   PRIMARY KEY (`id`),
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS `likes` (
 CREATE TABLE IF NOT EXISTS `collections` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
-  `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
+  `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_post` (`user_id`, `post_id`),
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `collections` (
 -- 11. 评论表
 CREATE TABLE IF NOT EXISTS `comments` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '评论ID',
-  `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
+  `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
   `user_id` bigint(20) NOT NULL COMMENT '评论用户ID',
   `parent_id` bigint(20) DEFAULT NULL COMMENT '父评论ID',
   `content` text NOT NULL COMMENT '评论内容',

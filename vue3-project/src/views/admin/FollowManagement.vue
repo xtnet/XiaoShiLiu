@@ -23,7 +23,7 @@ const formFields = [
 ]
 
 const searchFields = [
-  { key: 'follower_id', label: '关注者ID', placeholder: '搜索关注者ID' },
-  { key: 'following_id', label: '被关注者ID', placeholder: '搜索被关注者ID' }
+  { key: 'follower_display_id', label: '关注者小石榴号', placeholder: '搜索关注者小石榴号' },
+  { key: 'following_display_id', label: '被关注者小石榴号', placeholder: '搜索被关注者小石榴号' }
 ]
 </script>

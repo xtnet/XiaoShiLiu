@@ -489,7 +489,7 @@ const loadData = async (targetPage = null, useCache = true) => {
 
     // 添加排序参数
     if (sortField.value && sortOrder.value) {
-      params.append('sortBy', sortField.value)
+      params.append('sortField', sortField.value)
       params.append('sortOrder', sortOrder.value)
     }
 

@@ -554,7 +554,7 @@ const onImageClick = async (notification) => {
 
         // 修改页面标题
         const originalTitle = document.title
-        document.title = postDetail.title || '帖子详情'
+        document.title = postDetail.title || '笔记详情'
 
         // 使用History API添加历史记录并更新URL
         const newUrl = `/post?id=${notification.target_id}`
@@ -565,7 +565,7 @@ const onImageClick = async (notification) => {
             postId: notification.target_id,
             originalTitle: originalTitle
           },
-          postDetail.title || '帖子详情',
+          postDetail.title || '笔记详情',
           newUrl
         )
       } else {
@@ -626,11 +626,11 @@ const prepareDetailCard = async (post, commentId) => {
       })
 
       hasMore = result.hasMore
-      
+
       // 重新获取评论列表并查找目标评论
       comments = commentStore.getComments(post.id).comments || []
       targetComment = findCommentInList(comments, commentId)
-      
+
       // 找到目标评论后立即停止加载
       if (targetComment) {
         console.log('找到目标评论，停止加载更多评论')
@@ -676,7 +676,7 @@ const onCommentClick = async (notification) => {
           if (success) {
             // 修改页面标题
             const originalTitle = document.title
-            document.title = postDetail.title || '帖子详情'
+            document.title = postDetail.title || '笔记详情'
 
             // 使用History API添加历史记录并更新URL
             const newUrl = `/post?id=${notification.target_id}`
@@ -687,7 +687,7 @@ const onCommentClick = async (notification) => {
                 postId: notification.target_id,
                 originalTitle: originalTitle
               },
-              postDetail.title || '帖子详情',
+              postDetail.title || '笔记详情',
               newUrl
             )
           }
@@ -699,7 +699,7 @@ const onCommentClick = async (notification) => {
 
           // 修改页面标题
           const originalTitle = document.title
-          document.title = postDetail.title || '帖子详情'
+          document.title = postDetail.title || '笔记详情'
 
           // 使用History API添加历史记录并更新URL
           const newUrl = `/post?id=${notification.target_id}`
@@ -710,7 +710,7 @@ const onCommentClick = async (notification) => {
               postId: notification.target_id,
               originalTitle: originalTitle
             },
-            postDetail.title || '帖子详情',
+            postDetail.title || '笔记详情',
             newUrl
           )
         }
@@ -1411,9 +1411,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       <span class="action">{{ item.action }}</span>
                       <span class="time">{{ item.time }}</span>
                     </div>
-                    <div class="notification-text" @click.stop="item.target_type === 2 ? onCommentClick(item) : onImageClick(item)">点击查看详情</div>
+                    <div class="notification-text"
+                      @click.stop="item.target_type === 2 ? onCommentClick(item) : onImageClick(item)">点击查看详情</div>
                   </div>
-                  <div class="post-thumbnail" @click="item.target_type === 2 ? onCommentClick(item) : onImageClick(item)">
+                  <div class="post-thumbnail"
+                    @click="item.target_type === 2 ? onCommentClick(item) : onImageClick(item)">
                     <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" />
                   </div>
                 </div>

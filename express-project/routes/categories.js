@@ -36,9 +36,34 @@ const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
  */
 router.get('/', async (req, res) => {
   try {
-    const [categories] = await pool.execute(
-      'SELECT id, name, created_at FROM categories ORDER BY id ASC'
-    );
+    const { sortField = 'id', sortOrder = 'asc', name } = req.query;
+    
+    // 验证排序字段
+    const allowedSortFields = ['id', 'name', 'created_at', 'post_count'];
+    const validSortField = allowedSortFields.includes(sortField) ? sortField : 'id';
+    const validSortOrder = ['asc', 'desc'].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
+    
+    // 构建WHERE条件
+    let whereClause = '';
+    const queryParams = [];
+    
+    if (name && name.trim()) {
+      whereClause = 'WHERE c.name LIKE ?';
+      queryParams.push(`%${name.trim()}%`);
+    }
+    
+    const [categories] = await pool.execute(`
+      SELECT 
+        c.id, 
+        c.name, 
+        c.created_at,
+        COUNT(p.id) as post_count
+      FROM categories c
+      LEFT JOIN posts p ON c.id = p.category_id
+      ${whereClause}
+      GROUP BY c.id, c.name, c.created_at
+      ORDER BY ${validSortField} ${validSortOrder}
+    `, queryParams);
 
     success(res, categories, '获取成功');
   } catch (err) {

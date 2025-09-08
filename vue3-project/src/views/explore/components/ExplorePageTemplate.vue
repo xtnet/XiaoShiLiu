@@ -5,7 +5,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
     category: {
-        type: String,
+        type: [String, Number],
         default: 'general'
     }
 })

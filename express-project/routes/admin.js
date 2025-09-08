@@ -27,7 +27,7 @@ const postsCrudConfig = {
   ],
   searchFields: {
     title: { operator: 'LIKE' },
-    user_id: { operator: '=' },
+    user_display_id: { operator: '=' },
     category_id: { operator: '=' },
     is_draft: { operator: '=' }
   },
@@ -445,9 +445,9 @@ const postsCrudConfig = {
         params.push(`%${req.query.title}%`)
       }
 
-      if (req.query.user_id) {
+      if (req.query.user_display_id) {
         whereClause += whereClause ? ' AND u.user_id LIKE ?' : ' WHERE u.user_id LIKE ?'
-        params.push(`%${req.query.user_id}%`)
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.category_id) {
@@ -477,9 +477,9 @@ const postsCrudConfig = {
 
       // 排序处理
       let orderClause = 'ORDER BY p.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'view_count', 'like_count', 'collect_count', 'comment_count', 'created_at']
-        const sortField = req.query.sortBy
+      if (req.query.sortField && req.query.sortOrder) {
+        const allowedSortFields = ['id', 'title', 'view_count', 'like_count', 'collect_count', 'comment_count', 'created_at', 'nickname']
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -591,7 +591,7 @@ const commentsCrudConfig = {
   ],
   searchFields: {
     post_id: { operator: '=' },
-    user_id: { operator: '=' },
+    user_display_id: { operator: '=' },
     content: { operator: 'LIKE' }
   },
   allowedSortFields: ['id', 'like_count', 'created_at'],
@@ -640,9 +640,9 @@ const commentsCrudConfig = {
         params.push(req.query.post_id)
       }
 
-      if (req.query.user_id) {
+      if (req.query.user_display_id) {
         whereClause += whereClause ? ' AND u.user_id LIKE ?' : ' WHERE u.user_id LIKE ?'
-        params.push(`%${req.query.user_id}%`)
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.content) {
@@ -663,9 +663,9 @@ const commentsCrudConfig = {
 
       // 排序处理
       let orderClause = 'ORDER BY c.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'like_count', 'created_at']
-        const sortField = req.query.sortBy
+      if (req.query.sortField && req.query.sortOrder) {
+        const allowedSortFields = ['id', 'content', 'like_count', 'created_at', 'nickname']
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -808,9 +808,9 @@ const likesCrudConfig = {
       let whereClause = ''
       const params = []
 
-      if (req.query.user_id) {
-        whereClause += whereClause ? ' AND l.user_id = ?' : 'WHERE l.user_id = ?'
-        params.push(req.query.user_id)
+      if (req.query.user_display_id) {
+        whereClause += whereClause ? ' AND u.user_id LIKE ?' : 'WHERE u.user_id LIKE ?'
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.target_type) {
@@ -824,15 +824,15 @@ const likesCrudConfig = {
       }
 
       // 获取总数
-      const countQuery = `SELECT COUNT(*) as total FROM likes l ${whereClause}`
+      const countQuery = `SELECT COUNT(*) as total FROM likes l LEFT JOIN users u ON l.user_id = u.id ${whereClause}`
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
       // 排序处理
       let orderClause = 'ORDER BY l.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = ['id', 'user_id', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -985,9 +985,9 @@ const collectionsCrudConfig = {
       let whereClause = ''
       const params = []
 
-      if (req.query.user_id) {
-        whereClause += whereClause ? ' AND c.user_id = ?' : 'WHERE c.user_id = ?'
-        params.push(req.query.user_id)
+      if (req.query.user_display_id) {
+        whereClause += whereClause ? ' AND u.user_id LIKE ?' : 'WHERE u.user_id LIKE ?'
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.post_id) {
@@ -996,15 +996,15 @@ const collectionsCrudConfig = {
       }
 
       // 获取总数
-      const countQuery = `SELECT COUNT(*) as total FROM collections c ${whereClause}`
+      const countQuery = `SELECT COUNT(*) as total FROM collections c LEFT JOIN users u ON c.user_id = u.id ${whereClause}`
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
       // 排序处理
       let orderClause = 'ORDER BY c.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = ['id', 'user_id', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -1139,14 +1139,46 @@ const followsCrudConfig = {
       let whereClause = ''
       const params = []
 
-      if (req.query.follower_id) {
-        whereClause += whereClause ? ' AND f.follower_id = ?' : 'WHERE f.follower_id = ?'
-        params.push(req.query.follower_id)
+      if (req.query.follower_display_id) {
+        // 根据关注者小石榴号查找用户ID
+        const userQuery = 'SELECT id FROM users WHERE COALESCE(user_id, CONCAT(\'user\', LPAD(id, 3, \'0\'))) = ?'
+        const [userResult] = await pool.execute(userQuery, [req.query.follower_display_id])
+        if (userResult.length > 0) {
+          whereClause += whereClause ? ' AND f.follower_id = ?' : 'WHERE f.follower_id = ?'
+          params.push(userResult[0].id)
+        } else {
+          // 如果找不到用户，返回空结果
+          return {
+            data: [],
+            pagination: {
+              page: parseInt(req.query.page) || 1,
+              limit: parseInt(req.query.limit) || 20,
+              total: 0,
+              pages: 0
+            }
+          }
+        }
       }
 
-      if (req.query.following_id) {
-        whereClause += whereClause ? ' AND f.following_id = ?' : 'WHERE f.following_id = ?'
-        params.push(req.query.following_id)
+      if (req.query.following_display_id) {
+        // 根据被关注者小石榴号查找用户ID
+        const userQuery = 'SELECT id FROM users WHERE COALESCE(user_id, CONCAT(\'user\', LPAD(id, 3, \'0\'))) = ?'
+        const [userResult] = await pool.execute(userQuery, [req.query.following_display_id])
+        if (userResult.length > 0) {
+          whereClause += whereClause ? ' AND f.following_id = ?' : 'WHERE f.following_id = ?'
+          params.push(userResult[0].id)
+        } else {
+          // 如果找不到用户，返回空结果
+          return {
+            data: [],
+            pagination: {
+              page: parseInt(req.query.page) || 1,
+              limit: parseInt(req.query.limit) || 20,
+              total: 0,
+              pages: 0
+            }
+          }
+        }
       }
 
       // 获取总数
@@ -1156,9 +1188,9 @@ const followsCrudConfig = {
 
       // 排序处理
       let orderClause = 'ORDER BY f.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = ['id', 'follower_id', 'following_id', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -1248,9 +1280,9 @@ const notificationsCrudConfig = {
       let whereClause = ''
       const params = []
 
-      if (req.query.user_id) {
-        whereClause += whereClause ? ' AND n.user_id = ?' : 'WHERE n.user_id = ?'
-        params.push(req.query.user_id)
+      if (req.query.user_display_id) {
+        whereClause += whereClause ? ' AND u1.user_id LIKE ?' : 'WHERE u1.user_id LIKE ?'
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.type) {
@@ -1264,15 +1296,15 @@ const notificationsCrudConfig = {
       }
 
       // 获取总数
-      const countQuery = `SELECT COUNT(*) as total FROM notifications n ${whereClause}`
+      const countQuery = `SELECT COUNT(*) as total FROM notifications n LEFT JOIN users u1 ON n.user_id = u1.id ${whereClause}`
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
       // 排序处理
       let orderClause = 'ORDER BY n.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = ['id', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {
@@ -1379,9 +1411,9 @@ const sessionsCrudConfig = {
       let whereClause = ''
       const params = []
 
-      if (req.query.user_id) {
-        whereClause += whereClause ? ' AND s.user_id = ?' : 'WHERE s.user_id = ?'
-        params.push(String(req.query.user_id))
+      if (req.query.user_display_id) {
+        whereClause += whereClause ? ' AND u.user_id LIKE ?' : 'WHERE u.user_id LIKE ?'
+        params.push(`%${req.query.user_display_id}%`)
       }
 
       if (req.query.is_active !== undefined) {
@@ -1392,15 +1424,15 @@ const sessionsCrudConfig = {
 
 
       // 获取总数
-      const countQuery = `SELECT COUNT(*) as total FROM user_sessions s ${whereClause}`
+      const countQuery = `SELECT COUNT(*) as total FROM user_sessions s LEFT JOIN users u ON s.user_id = u.id ${whereClause}`
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
       // 排序处理
       let orderClause = 'ORDER BY s.created_at DESC'
-      if (req.query.sortBy && req.query.sortOrder) {
+      if (req.query.sortField && req.query.sortOrder) {
         const allowedSortFields = ['id', 'is_active', 'expires_at', 'created_at']
-        const sortField = req.query.sortBy
+        const sortField = req.query.sortField
         const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
         if (allowedSortFields.includes(sortField)) {

@@ -8,7 +8,7 @@ const props = defineProps({
         default: () => []
     },
     activeTab: {
-        type: String,
+        type: [String, Number],
         default: ''
     },
     enableDrag: {

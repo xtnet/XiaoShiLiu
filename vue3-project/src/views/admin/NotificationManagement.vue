@@ -32,7 +32,7 @@ const columns = [
 ]
 
 const formFields = [
-  { key: 'user_id', label: '接收者ID', type: 'number', required: true, placeholder: '请输入接收者ID' },
+  { key: 'user_id', label: '接收者小石榴号', type: 'number', required: true, placeholder: '请输入接收者小石榴号' },
   { key: 'sender_id', label: '发送者ID', type: 'number', required: true, placeholder: '请输入发送者ID' },
   {
     key: 'type',
@@ -55,7 +55,7 @@ const formFields = [
 ]
 
 const searchFields = [
-  { key: 'user_id', label: '接收者ID', placeholder: '搜索接收者ID' },
+  { key: 'user_display_id', label: '接收者小石榴号', placeholder: '搜索接收者小石榴号' },
   {
     key: 'type',
     label: '通知类型',

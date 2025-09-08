@@ -228,7 +228,7 @@ const apiGroups = ref([
         description: '用户登录接口，返回JWT令牌',
         expanded: false,
         params: [
-          { name: 'user_id', type: 'string', required: true, description: '小石榴号' },
+          { name: 'user_display_id', type: 'string', required: true, description: '小石榴号' },
           { name: 'password', type: 'string', required: true, description: '密码' }
         ],
         example: `{
@@ -1231,8 +1231,9 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名或昵称）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, fans_count, like_count, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'user_display_id', type: 'string', required: false, description: '按小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, fans_count, like_count, created_at）' },
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1299,8 +1300,9 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（标题或内容）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, like_count, comment_count, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'user_display_id', type: 'string', required: false, description: '按作者小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, like_count, comment_count, created_at）' },
+           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1314,7 +1316,7 @@ const apiGroups = ref([
           { name: 'title', type: 'string', required: true, description: '笔记标题' },
           { name: 'content', type: 'string', required: true, description: '笔记内容' },
           { name: 'category_id', type: 'int', required: false, description: '分类ID' },
-          { name: 'user_id', type: 'int', required: true, description: '发布用户ID' }
+          { name: 'user_display_id', type: 'string', required: true, description: '发布用户小石榴号' }
         ]
       },
       {
@@ -1364,8 +1366,10 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（评论内容）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, like_count, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'user_display_id', type: 'string', required: false, description: '按评论者小石榴号筛选' },
+          { name: 'post_id', type: 'int', required: false, description: '按笔记ID筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, like_count, created_at）' },
+           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1427,8 +1431,8 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（标签名称）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, use_count, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, use_count, created_at）' },
+           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1487,8 +1491,9 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
+           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1499,7 +1504,7 @@ const apiGroups = ref([
         auth: true,
         expanded: false,
         params: [
-          { name: 'user_id', type: 'int', required: true, description: '用户ID' },
+          { name: 'user_display_id', type: 'string', required: true, description: '用户小石榴号' },
           { name: 'target_type', type: 'int', required: true, description: '目标类型（1-笔记, 2-评论）' },
           { name: 'target_id', type: 'int', required: true, description: '目标ID' }
         ]
@@ -1537,8 +1542,9 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名或笔记标题）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
-          { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, user_id, created_at）' },
+           { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
       {
@@ -1549,7 +1555,7 @@ const apiGroups = ref([
         auth: true,
         expanded: false,
         params: [
-          { name: 'user_id', type: 'int', required: true, description: '用户ID' },
+          { name: 'user_display_id', type: 'string', required: true, description: '用户小石榴号' },
           { name: 'post_id', type: 'int', required: true, description: '笔记ID' }
         ]
       },
@@ -1586,7 +1592,8 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, follower_id, following_id, created_at）' },
+          { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, follower_id, following_id, created_at）' },
           { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
@@ -1647,7 +1654,8 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（通知内容）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（username, created_at）' },
+          { name: 'user_display_id', type: 'string', required: false, description: '按接收用户小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（username, created_at）' },
           { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
@@ -1659,7 +1667,7 @@ const apiGroups = ref([
         auth: true,
         expanded: false,
         params: [
-          { name: 'user_id', type: 'int', required: true, description: '接收用户ID' },
+          { name: 'user_display_id', type: 'string', required: true, description: '接收用户小石榴号' },
           { name: 'type', type: 'string', required: true, description: '通知类型' },
           { name: 'content', type: 'string', required: true, description: '通知内容' }
         ]
@@ -1710,7 +1718,8 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名或IP）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, created_at, last_activity）' },
+          { name: 'user_display_id', type: 'string', required: false, description: '按用户小石榴号筛选' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, created_at, last_activity）' },
           { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },
@@ -1722,7 +1731,7 @@ const apiGroups = ref([
         auth: true,
         expanded: false,
         params: [
-          { name: 'user_id', type: 'int', required: true, description: '用户ID' },
+          { name: 'user_display_id', type: 'string', required: true, description: '用户小石榴号' },
           { name: 'user_agent', type: 'string', required: false, description: '用户代理' }
         ]
       },
@@ -1771,7 +1780,7 @@ const apiGroups = ref([
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
           { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名）' },
-          { name: 'sort', type: 'string', required: false, description: '排序字段（id, created_at）' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, created_at）' },
           { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
         ]
       },

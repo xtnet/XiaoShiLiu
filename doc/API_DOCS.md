@@ -455,7 +455,7 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 10. 获取用户发布的帖子
+### 10. 获取用户发布的笔记
 **接口地址**: `GET /api/users/:id/posts`
 
 **路径参数**:
@@ -508,7 +508,7 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 11. 获取用户点赞的帖子
+### 11. 获取用户点赞的笔记
 **接口地址**: `GET /api/users/:id/likes`
 
 **路径参数**:
@@ -2411,10 +2411,10 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
-| user_id | string | 否 | 用户ID搜索 |
+| user_display_id | string | 否 | 小石榴号搜索 |
 | nickname | string | 否 | 昵称搜索 |
 | status | int | 否 | 状态筛选（1=活跃，0=禁用） |
-| sortBy | string | 否 | 排序字段（id, fans_count, like_count, created_at） |
+| sortField | string | 否 | 排序字段（id, fans_count, like_count, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 3.2 创建用户
@@ -2460,8 +2460,9 @@ async function example() {
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 | title | string | 否 | 标题搜索 |
+| user_display_id | string | 否 | 作者小石榴号筛选 |
 | category_id | int | 否 | 分类ID筛选 |
-| sortBy | string | 否 | 排序字段（id, view_count, like_count, collect_count, comment_count, created_at） |
+| sortField | string | 否 | 排序字段（id, view_count, like_count, collect_count, comment_count, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 4.2 创建笔记
@@ -2492,7 +2493,9 @@ async function example() {
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 | content | string | 否 | 内容搜索 |
-| sortBy | string | 否 | 排序字段（id, like_count, created_at） |
+| user_display_id | string | 否 | 评论者小石榴号筛选 |
+| post_id | int | 否 | 笔记ID筛选 |
+| sortField | string | 否 | 排序字段（id, like_count, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 5.2 创建评论
@@ -2545,7 +2548,7 @@ async function example() {
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 | name | string | 否 | 标签名搜索 |
-| sortBy | string | 否 | 排序字段（id, use_count, created_at） |
+| sortField | string | 否 | 排序字段（id, use_count, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 6.2 创建标签
@@ -2596,8 +2599,9 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
+| user_display_id | string | 否 | 用户小石榴号筛选 |
 | target_type | int | 否 | 目标类型（1=笔记，2=评论） |
-| sortBy | string | 否 | 排序字段（id, user_id, created_at） |
+| sortField | string | 否 | 排序字段（id, user_id, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 7.2 创建点赞
@@ -2648,6 +2652,7 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
+| user_display_id | string | 否 | 用户小石榴号筛选 |
 | sortBy | string | 否 | 排序字段（id, user_id, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
@@ -2674,7 +2679,8 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
-| sortBy | string | 否 | 排序字段（id, follower_id, following_id, created_at） |
+| user_display_id | string | 否 | 用户小石榴号筛选 |
+| sortField | string | 否 | 排序字段（id, follower_id, following_id, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 9.2 创建关注关系
@@ -2700,9 +2706,10 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
+| user_display_id | string | 否 | 用户小石榴号筛选 |
 | type | string | 否 | 通知类型筛选 |
 | is_read | int | 否 | 已读状态（0=未读，1=已读） |
-| sortBy | string | 否 | 排序字段（id, created_at） |
+| sortField | string | 否 | 排序字段（id, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 10.2 创建通知
@@ -2732,8 +2739,9 @@ async function example() {
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
+| user_display_id | string | 否 | 用户小石榴号筛选 |
 | is_active | int | 否 | 活跃状态（0=非活跃，1=活跃） |
-| sortBy | string | 否 | 排序字段（id, is_active, expires_at, created_at） |
+| sortField | string | 否 | 排序字段（id, is_active, expires_at, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 11.2 创建会话
@@ -2784,7 +2792,7 @@ async function example() {
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 | username | string | 否 | 用户名搜索 |
-| sortBy | string | 否 | 排序字段（username, created_at） |
+| sortField | string | 否 | 排序字段（username, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 
 #### 12.2 创建管理员
