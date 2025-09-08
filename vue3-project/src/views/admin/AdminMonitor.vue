@@ -26,10 +26,8 @@
                 <MentionText v-else :text="activity.description || activity.content" />
               </div>
               <div class="activity-meta">
-                <template v-if="activity.type !== 'comment_publish'">
-                  <span class="activity-type">{{ getActivityTypeText(activity.type) }}</span>
-                  <span class="activity-user">{{ activity.nickname }}</span>
-                </template>
+                <span class="activity-type">{{ getActivityTypeText(activity.type) }}</span>
+                <span class="activity-user">{{ activity.nickname }}</span>
               </div>
             </div>
             <div class="activity-time">
@@ -143,7 +141,7 @@ const handleActivityClick = (activity) => {
     const url = `${window.location.origin}/user/${activity.user_id}`
     window.open(url, '_blank')
   } else if (activity.type === 'post_publish' || activity.type === 'comment_publish') {
-    const url = `${window.location.origin}/post?id=${activity.post_id}`
+    const url = `${window.location.origin}/post?id=${activity.target_id}`
     window.open(url, '_blank')
   }
 }
