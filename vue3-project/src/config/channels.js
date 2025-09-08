@@ -1,21 +1,47 @@
-// 频道配置
-export const CHANNELS = [
-  { id: 'recommend', label: '推荐', path: '/recommend' },
-  { id: 'study', label: '学习', path: '/study' },
-  { id: 'campus', label: '校园', path: '/campus' },
-  { id: 'emotion', label: '情感', path: '/emotion' },
-  { id: 'interest', label: '兴趣', path: '/interest' },
-  { id: 'life', label: '生活', path: '/life' },
-  { id: 'social', label: '社交', path: '/social' },
-  { id: 'help', label: '求助', path: '/help' },
-  { id: 'opinion', label: '观点', path: '/opinion' },
-  { id: 'graduation', label: '毕业', path: '/graduation' },
-  { id: 'career', label: '职场', path: '/career' }
+import { getCategories } from '@/api/categories'
+
+// 默认频道配置（推荐频道始终存在）
+const DEFAULT_CHANNELS = [
+  { id: 'recommend', label: '推荐', path: '/recommend' }
 ]
+
+// 动态频道列表
+let dynamicChannels = [...DEFAULT_CHANNELS]
+
+// 从API加载分类数据并转换为频道格式
+export const loadChannelsFromAPI = async () => {
+  try {
+    const response = await getCategories()
+    if (response.success !== false && response.data) {
+      const categoryChannels = response.data.map(category => ({
+        id: category.id,
+        label: category.name,
+        path: `/${category.name}`
+      }))
+      
+      // 合并默认频道和分类频道
+      dynamicChannels = [...DEFAULT_CHANNELS, ...categoryChannels]
+      return dynamicChannels
+    }
+  } catch (error) {
+    console.error('加载分类数据失败:', error)
+  }
+  
+  // 如果加载失败，返回默认频道
+  return DEFAULT_CHANNELS
+}
+
+// 获取当前频道列表
+export const getChannels = () => {
+  return dynamicChannels
+}
+
+// 兼容性：导出CHANNELS（向后兼容）
+export const CHANNELS = dynamicChannels
 
 // 获取有效的频道路径（用于路由验证）
 export const getValidChannelPaths = () => {
-  return CHANNELS.map(ch => ch.path.substring(1)) // 去掉开头的 '/'
+  return dynamicChannels.map(ch => ch.path.substring(1)) // 去掉开头的 '/'
 }
 
 // 根据路径获取频道ID
@@ -28,12 +54,12 @@ export const getChannelIdByPath = (path) => {
     return 'recommend' // 默认返回推荐频道
   }
 
-  const channel = CHANNELS.find(ch => ch.path === channelPath)
+  const channel = dynamicChannels.find(ch => ch.path === channelPath)
   return channel ? channel.id : 'recommend'
 }
 
 // 根据频道ID获取路径
 export const getChannelPath = (channelId) => {
-  const channel = CHANNELS.find(ch => ch.id === channelId)
+  const channel = dynamicChannels.find(ch => ch.id === channelId)
   return channel ? channel.path : '/recommend'
 }

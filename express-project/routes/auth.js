@@ -17,13 +17,13 @@ router.get('/captcha', (req, res) => {
   try {
     // 字体文件路径
     const fontDir = path.join(__dirname, '..', 'fonts');
-    
+
     // 自动读取字体文件夹中的所有.ttf文件
     let fontFiles = [];
     if (fs.existsSync(fontDir)) {
       fontFiles = fs.readdirSync(fontDir).filter(file => file.endsWith('.ttf'));
     }
-    
+
     // 如果有字体文件，随机选择一个加载
     if (fontFiles.length > 0) {
       const randomFont = fontFiles[Math.floor(Math.random() * fontFiles.length)];
@@ -36,7 +36,7 @@ router.get('/captcha', (req, res) => {
       ignoreChars: '0o1ilcIC', // 排除容易混淆的字符
       noise: 4, // 干扰线条数
       color: true, // 彩色验证码
-      fontSize:40,
+      fontSize: 40,
       background: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // 随机颜色
     });
 

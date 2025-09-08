@@ -42,13 +42,20 @@ CREATE TABLE IF NOT EXISTS `admin` (
   KEY `idx_admin_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员表';
 
--- 3. 帖子表
+-- 3. 分类表
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '分类名称',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
+
+-- 4. 帖子表
 CREATE TABLE IF NOT EXISTS `posts` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
   `user_id` bigint(20) NOT NULL COMMENT '发布用户ID',
   `title` varchar(200) NOT NULL COMMENT '标题',
   `content` text NOT NULL COMMENT '内容',
-  `category` varchar(50) DEFAULT NULL COMMENT '分类',
+  `category_id` int(11) DEFAULT NULL COMMENT '分类ID',
   `view_count` bigint(20) DEFAULT 0 COMMENT '浏览量',
   `like_count` int(11) DEFAULT 0 COMMENT '点赞数',
   `collect_count` int(11) DEFAULT 0 COMMENT '收藏数',
@@ -57,14 +64,15 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `is_draft` tinyint(1) DEFAULT 1 COMMENT '是否为草稿：1-草稿，0-已发布',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_category` (`category`),
+  KEY `idx_category_id` (`category_id`),
   KEY `idx_created_at` (`created_at`),
   KEY `idx_like_count` (`like_count`),
-  KEY `idx_category_created_at` (`category`, `created_at`),
-  CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  KEY `idx_category_id_created_at` (`category_id`, `created_at`),
+  CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_posts_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
 
--- 4. 帖子图片表
+-- 5. 帖子图片表
 CREATE TABLE IF NOT EXISTS `post_images` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '图片ID',
   `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
@@ -74,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `post_images` (
   CONSTRAINT `post_images_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子图片表';
 
--- 5. 标签表
+-- 6. 标签表
 CREATE TABLE IF NOT EXISTS `tags` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标签ID',
   `name` varchar(50) NOT NULL COMMENT '标签名',
@@ -86,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `tags` (
   KEY `idx_use_count` (`use_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
 
--- 6. 帖子标签关联表
+-- 7. 帖子标签关联表
 CREATE TABLE IF NOT EXISTS `post_tags` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关联ID',
   `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
@@ -100,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `post_tags` (
   CONSTRAINT `post_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子标签关联表';
 
--- 7. 关注关系表
+-- 8. 关注关系表
 CREATE TABLE IF NOT EXISTS `follows` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关注ID',
   `follower_id` bigint(20) NOT NULL COMMENT '关注者ID',
@@ -115,7 +123,7 @@ CREATE TABLE IF NOT EXISTS `follows` (
   CONSTRAINT `follows_ibfk_2` FOREIGN KEY (`following_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='关注关系表';
 
--- 8. 点赞表
+-- 9. 点赞表
 CREATE TABLE IF NOT EXISTS `likes` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '点赞ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -130,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `likes` (
   CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='点赞表';
 
--- 9. 收藏表
+-- 10. 收藏表
 CREATE TABLE IF NOT EXISTS `collections` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -144,7 +152,7 @@ CREATE TABLE IF NOT EXISTS `collections` (
   CONSTRAINT `collections_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
 
--- 10. 评论表
+-- 11. 评论表
 CREATE TABLE IF NOT EXISTS `comments` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `post_id` bigint(20) NOT NULL COMMENT '帖子ID',
@@ -163,7 +171,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   CONSTRAINT `comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论表';
 
--- 11. 通知表
+-- 12. 通知表
 CREATE TABLE IF NOT EXISTS `notifications` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '通知ID',
   `user_id` bigint(20) NOT NULL COMMENT '接收用户ID',
@@ -187,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   CONSTRAINT `fk_notifications_comment_id` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';
 
--- 12. 用户会话表
+-- 13. 用户会话表
 CREATE TABLE IF NOT EXISTS `user_sessions` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '会话ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -206,9 +214,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
 
--- 插入默认管理员账号（密码: admin123，使用SHA2哈希加密）
-INSERT INTO `admin` (`username`, `password`) VALUES 
-('admin', SHA2('admin123', 256));
+-- 注意：默认数据插入请使用专门的数据生成脚本
 
 -- 数据库初始化完成
 SELECT '数据库初始化完成！' AS message;

@@ -37,7 +37,32 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | major | VARCHAR(100) | Major | Nullable |
 | interests | JSON | Interests | JSON array, nullable |
 
-### 2. Posts Table (posts)
+### 2. Categories Table (categories)
+
+| Field Name | Type | Description | Notes |
+|------------|------|-------------|-------|
+| id | INT | Category ID | Primary key, auto-increment |
+| name | VARCHAR(50) | Category Name | Unique, e.g., Study, Campus, Emotion |
+| created_at | TIMESTAMP | Creation Time | Category creation time |
+
+**Indexes:**
+- PRIMARY KEY (`id`)
+- UNIQUE KEY `name` (`name`)
+- KEY `idx_name` (`name`)
+
+**Initial Data:**
+- 学习 (Study)
+- 校园 (Campus)
+- 情感 (Emotion)
+- 兴趣 (Interest)
+- 生活 (Life)
+- 社交 (Social)
+- 帮助 (Help)
+- 观点 (Opinion)
+- 毕业 (Graduation)
+- 职场 (Career)
+
+### 3. Posts Table (posts)
 
 | Field Name | Type | Description | Notes |
 |------------|------|-------------|-------|
@@ -45,7 +70,7 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | user_id | BIGINT | Publisher User ID | Foreign key to users |
 | title | VARCHAR(200) | Title | Post title |
 | content | TEXT | Content | Post description |
-| category | VARCHAR(50) | Category | e.g., Fashion, Food, nullable |
+| category_id | INT | Category ID | Foreign key to categories table, nullable |
 | is_draft | TINYINT(1) | Is Draft | 1-Draft, 0-Published, default 1 |
 | view_count | BIGINT | View Count | Statistics field, default 0 |
 | like_count | INT | Like Count | Statistics field, default 0 |

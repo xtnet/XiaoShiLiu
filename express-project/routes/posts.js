@@ -24,15 +24,16 @@ router.get('/', optionalAuth, async (req, res) => {
       const forcedUserId = currentUserId;
 
       let query = `
-        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
+        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
         FROM posts p
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.is_draft = ? AND p.user_id = ?
       `;
       let queryParams = [isDraft.toString(), forcedUserId.toString()];
 
       if (category) {
-        query += ` AND p.category = ?`;
+        query += ` AND p.category_id = ?`;
         queryParams.push(category);
       }
 
@@ -62,7 +63,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取草稿总数
       const [countResult] = await pool.execute(
-        'SELECT COUNT(*) as total FROM posts WHERE is_draft = ? AND user_id = ?' + (category ? ' AND category = ?' : ''),
+        'SELECT COUNT(*) as total FROM posts p WHERE p.is_draft = ? AND p.user_id = ?' + (category ? ' AND p.category_id = ?' : ''),
         category ? [isDraft.toString(), forcedUserId.toString(), category] : [isDraft.toString(), forcedUserId.toString()]
       );
       const total = countResult[0].total;
@@ -84,9 +85,10 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     let query = `
-      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
+      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
       FROM posts p
       LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.is_draft = ?
     `;
     let queryParams = [isDraft.toString()];
@@ -100,11 +102,12 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 直接获取前20%浏览量的笔记，然后进行分页（只包含指定状态的笔记）
       query = `
-        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
+        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
         FROM (
           SELECT * FROM posts WHERE is_draft = ? ORDER BY view_count DESC LIMIT ?
         ) p
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         ORDER BY p.view_count DESC
         LIMIT ? OFFSET ?
       `;
@@ -114,7 +117,7 @@ router.get('/', optionalAuth, async (req, res) => {
       let additionalParams = [];
 
       if (category) {
-        whereConditions.push('p.category = ?');
+        whereConditions.push('p.category_id = ?');
         additionalParams.push(category);
       }
 
@@ -179,7 +182,8 @@ router.get('/', optionalAuth, async (req, res) => {
       let countWhereConditions = [];
 
       if (category) {
-        countWhereConditions.push('category = ?');
+        countQuery = 'SELECT COUNT(*) as total FROM posts p LEFT JOIN categories c ON p.category_id = c.id WHERE p.is_draft = ?';
+        countWhereConditions.push('p.category_id = ?');
         countParams.push(category);
       }
 
@@ -223,9 +227,10 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     // 获取笔记基本信息
     const [rows] = await pool.execute(
-      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
+      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
+       LEFT JOIN categories c ON p.category_id = c.id
        WHERE p.id = ?`,
       [postId]
     );
@@ -284,7 +289,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // 创建笔记
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, content, category, images, tags, is_draft } = req.body;
+    const { title, content, category_id, images, tags, is_draft } = req.body;
     const userId = req.user.id;
 
     // 验证必填字段：发布时要求标题和内容，草稿时不强制要求
@@ -294,8 +299,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // 插入笔记
     const [result] = await pool.execute(
-      'INSERT INTO posts (user_id, title, content, category, is_draft) VALUES (?, ?, ?, ?, ?)',
-      [userId, title || '', content || '', category || null, is_draft ? 1 : 0]
+      'INSERT INTO posts (user_id, title, content, category_id, is_draft) VALUES (?, ?, ?, ?, ?)',
+      [userId, title || '', content || '', category_id || null, is_draft ? 1 : 0]
     );
 
     const postId = result.insertId;
@@ -601,11 +606,11 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const postId = req.params.id;
-    const { title, content, category, images, tags, is_draft } = req.body;
+    const { title, content, category_id, images, tags, is_draft } = req.body;
     const userId = req.user.id;
 
     // 验证必填字段：如果不是草稿（is_draft=0），则要求标题、内容和分类不能为空
-    if (!is_draft && (!title || !content || !category || category === '未知分类')) {
+    if (!is_draft && (!title || !content || !category_id)) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题、内容和分类不能为空' });
     }
 
@@ -625,8 +630,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     // 更新笔记基本信息
     await pool.execute(
-      'UPDATE posts SET title = ?, content = ?, category = ?, is_draft = ? WHERE id = ?',
-      [title || '', content || '', category || null, (is_draft ? 1 : 0).toString(), postId.toString()]
+      'UPDATE posts SET title = ?, content = ?, category_id = ?, is_draft = ? WHERE id = ?',
+      [title || '', content || '', category_id || null, (is_draft ? 1 : 0).toString(), postId.toString()]
     );
 
     // 删除原有图片

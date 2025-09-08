@@ -1,9 +1,12 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { getCategories } from '@/api/categories'
 import ExplorePageTemplate from './components/ExplorePageTemplate.vue'
 
 const route = useRoute()
+const categories = ref([])
+
 // 根据路由参数或路由名称获取频道类型
 const channelType = computed(() => {
     if (route.params.channel) {
@@ -12,24 +15,47 @@ const channelType = computed(() => {
     return route.name || 'recommend'
 })
 
-// 频道配置映射
-const channelConfig = {
-    'recommend': { category: 'recommend', title: '推荐' },
-    'study': { category: 'study', title: '学习' },
-    'campus': { category: 'campus', title: '校园' },
-    'emotion': { category: 'emotion', title: '情感' },
-    'interest': { category: 'interest', title: '兴趣' },
-    'life': { category: 'life', title: '生活' },
-    'social': { category: 'social', title: '社交' },
-    'help': { category: 'help', title: '帮助' },
-    'opinion': { category: 'opinion', title: '观点' },
-    'graduation': { category: 'graduation', title: '毕业' },
-    'career': { category: 'career', title: '职场' }
-}
+// 动态生成频道配置映射
+const channelConfig = computed(() => {
+    const config = {
+        'recommend': { category: 'recommend', title: '推荐' }
+    }
+    
+    // 根据分类数据动态生成配置，使用分类ID作为key和category值
+    categories.value.forEach(category => {
+        config[category.id] = {
+            category: category.id, // 使用分类ID
+            title: category.name
+        }
+        // 为了兼容性，也保留分类名称作为key的映射
+        config[category.name] = {
+            category: category.id,
+            title: category.name
+        }
+    })
+    
+    return config
+})
 
 // 获取当前频道配置
 const currentChannel = computed(() => {
-    return channelConfig[channelType.value] || channelConfig['recommend']
+    return channelConfig.value[channelType.value] || channelConfig.value['recommend']
+})
+
+// 加载分类列表
+const loadCategories = async () => {
+    try {
+        const response = await getCategories()
+        if (response.success !== false && response.data) {
+            categories.value = response.data
+        }
+    } catch (error) {
+        console.error('加载分类失败:', error)
+    }
+}
+
+onMounted(() => {
+    loadCategories()
 })
 </script>
 

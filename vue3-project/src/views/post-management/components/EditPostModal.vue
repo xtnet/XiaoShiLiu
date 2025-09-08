@@ -8,8 +8,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { updatePost, getPostDetail } from '@/api/posts'
+import { getCategories } from '@/api/categories'
 import FormModal from '@/views/admin/components/FormModal.vue'
 import MessageToast from '@/components/MessageToast.vue'
 
@@ -44,22 +45,30 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const toastType = ref('success')
 
-// 分类数据
-const categories = [
-  { value: 'study', label: '学习' },
-  { value: 'campus', label: '校园' },
-  { value: 'emotion', label: '情感' },
-  { value: 'interest', label: '兴趣' },
-  { value: 'life', label: '生活' },
-  { value: 'social', label: '社交' },
-  { value: 'help', label: '求助' },
-  { value: 'opinion', label: '观点' },
-  { value: 'graduation', label: '毕业' },
-  { value: 'career', label: '职场' }
-]
+// 分类数据从API动态获取
+const categories = ref([])
+
+// 获取分类数据
+const fetchCategories = async () => {
+  try {
+    const response = await getCategories()
+    if (response.success) {
+      categories.value = response.data.map(cat => ({
+        value: cat.id,
+        label: cat.name
+      }))
+    } else {
+      console.error('获取分类数据失败')
+      categories.value = []
+    }
+  } catch (error) {
+    console.error('获取分类失败:', error)
+    categories.value = []
+  }
+}
 
 // 表单字段配置
-const formFields = [
+const formFields = computed(() => [
   {
     key: 'title',
     label: '标题',
@@ -81,7 +90,7 @@ const formFields = [
     label: '分类',
     type: 'select',
     placeholder: '请选择分类',
-    options: categories,
+    options: categories.value,
     required: true
   },
   {
@@ -96,7 +105,7 @@ const formFields = [
     type: 'multi-image-upload',
     maxImages: 9
   }
-]
+])
 
 // 更新表单数据
 const updateFormData = (newData) => {
@@ -113,10 +122,16 @@ const processPostData = (data) => {
   const newData = {
     title: data.title || '',
     content: data.content || '',
-    category: data.category || '',
+    category: '',
     tags: [],
     images: [],
     image_urls: []
+  }
+
+  // 处理分类数据 - 根据分类名称查找分类ID
+  if (data.category && categories.value.length > 0) {
+    const categoryItem = categories.value.find(cat => cat.label === data.category)
+    newData.category = categoryItem ? categoryItem.value : ''
   }
 
   // 处理标签数据
@@ -137,6 +152,11 @@ const processPostData = (data) => {
 
 // 初始化表单数据
 const initializeForm = async (postData) => {
+  // 确保分类数据已加载
+  if (categories.value.length === 0) {
+    await fetchCategories()
+  }
+
   if (postData && postData.id) {
     try {
       // 获取完整的笔记详情
@@ -200,6 +220,11 @@ const handleClose = () => {
 const handleUploadError = (error) => {
   showMessage(error, 'error')
 }
+
+// 组件挂载时获取分类数据
+onMounted(() => {
+  fetchCategories()
+})
 
 // 保存笔记
 const handleSave = async (processedData) => {

@@ -36,7 +36,7 @@ function transformPostData(backendPost) {
     // 其他字段
     created_at: backendPost.created_at,
     path: `/post/${backendPost.id}`,
-    category: backendPost.category || 'general',
+    category: backendPost.category,
     author_auto_id: backendPost.author_auto_id,
     author_account: backendPost.author_account,
     user_id: backendPost.user_id,

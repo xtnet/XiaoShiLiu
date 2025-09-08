@@ -20,8 +20,8 @@
         <input v-model="searchKeyword" type="text" placeholder="搜索草稿标题或内容" @input="handleSearch" />
       </div>
       <div class="filter-options">
-        <DropdownSelect v-model="selectedCategory" :options="categoryOptions" placeholder="全部分类" label-key="name"
-          value-key="id" min-width="120px" max-width="150px" @change="handleCategoryChange" />
+        <DropdownSelect v-model="selectedCategory" :options="categoryOptions" placeholder="全部分类" label-key="label"
+          value-key="value" min-width="120px" max-width="150px" @change="handleCategoryChange" />
       </div>
     </div>
 
@@ -61,7 +61,7 @@
                 <span class="date">{{ formatDate(draft.originalData?.createdAt || draft.created_at) }}</span>
               </div>
               <div class="meta-row" v-if="draft.category">
-                <span class="category">{{ getCategoryName(draft.category) }}</span>
+                <span class="category">{{ draft.category }}</span>
               </div>
             </div>
           </div>
@@ -107,6 +107,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getDraftPosts, deletePost, updatePost } from '@/api/posts'
+import { getCategories } from '@/api/categories'
 
 import SvgIcon from '@/components/SvgIcon.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
@@ -125,6 +126,7 @@ const totalPages = ref(1)
 const totalDrafts = ref(0)
 const searchKeyword = ref('')
 const selectedCategory = ref('')
+const categories = ref([])
 
 // 弹窗状态
 const showDeleteModal = ref(false)
@@ -135,25 +137,16 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const toastType = ref('success')
 
-// 分类数据
-const categories = ref([
-  { id: 'study', name: '学习' },
-  { id: 'campus', name: '校园' },
-  { id: 'emotion', name: '情感' },
-  { id: 'interest', name: '兴趣' },
-  { id: 'life', name: '生活' },
-  { id: 'social', name: '社交' },
-  { id: 'help', name: '求助' },
-  { id: 'opinion', name: '观点' },
-  { id: 'graduation', name: '毕业' },
-  { id: 'career', name: '职场' }
-])
-
 // 下拉选择器选项
-const categoryOptions = computed(() => [
-  { id: '', name: '全部分类' },
-  ...categories.value
-])
+const categoryOptions = computed(() => {
+  return [
+    { value: '', label: '全部分类' },
+    ...categories.value.map(category => ({
+      value: category.id,
+      label: category.name
+    }))
+  ]
+})
 
 // 消息提示方法
 const showMessage = (message, type = 'success') => {
@@ -179,12 +172,8 @@ const goToPublish = () => {
 // 获取分类名称
 const getCategoryName = (categoryId) => {
   if (!categoryId) return ''
-  // 确保categoryId是字符串类型进行比较
-  const categoryIdStr = String(categoryId)
-  // 如果是general分类，显示为"未知分类"
-  if (categoryIdStr === 'general') return '未知分类'
-  const category = categories.value.find(c => c.id === categoryIdStr)
-  return category ? category.name : categoryIdStr
+  const categoryObj = categories.value.find(cat => cat.id === categoryId)
+  return categoryObj ? categoryObj.name : ''
 }
 
 // 截断内容
@@ -244,7 +233,7 @@ const loadDrafts = async () => {
       page: currentPage.value,
       limit: 10,
       keyword: searchKeyword.value,
-      category: selectedCategory.value,
+      category_id: selectedCategory.value,
       sort: 'created_at',
       user_id: userStore.userInfo.user_id
     }
@@ -326,10 +315,23 @@ const handleImageError = (event) => {
   img.style.display = 'block'
 }
 
+// 加载分类数据
+const loadCategories = async () => {
+  try {
+    const response = await getCategories()
+    if (response.success && response.data) {
+      categories.value = response.data
+    }
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   // 初始化用户信息
   userStore.initUserInfo()
+  loadCategories()
   loadDrafts()
 })
 </script>

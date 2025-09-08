@@ -20,8 +20,8 @@
         <input v-model="searchKeyword" type="text" placeholder="搜索笔记标题或内容" @input="handleSearch" />
       </div>
       <div class="filter-options">
-        <DropdownSelect v-model="selectedCategory" :options="categoryOptions" placeholder="全部分类" label-key="name"
-          value-key="id" min-width="120px" max-width="150px" @change="handleCategoryChange" />
+        <DropdownSelect v-model="selectedCategory" :options="categoryOptions" placeholder="全部分类" label-key="label"
+          value-key="value" min-width="120px" max-width="150px" @change="handleCategoryChange" />
       </div>
     </div>
 
@@ -130,6 +130,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getUserPosts, deletePost, updatePost } from '@/api/posts'
+import { getCategories } from '@/api/categories'
 import SvgIcon from '@/components/SvgIcon.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
 import EditPostModal from './components/EditPostModal.vue'
@@ -148,6 +149,7 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const totalPosts = ref(0)
 const pageSize = 10
+const categories = ref([])
 
 // 模态框状态
 const showEditModal = ref(false)
@@ -159,37 +161,20 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const toastType = ref('success')
 
-// 分类数据
-const categories = ref([
-  { id: 'study', name: '学习' },
-  { id: 'campus', name: '校园' },
-  { id: 'emotion', name: '情感' },
-  { id: 'interest', name: '兴趣' },
-  { id: 'life', name: '生活' },
-  { id: 'social', name: '社交' },
-  { id: 'help', name: '求助' },
-  { id: 'opinion', name: '观点' },
-  { id: 'graduation', name: '毕业' },
-  { id: 'career', name: '职场' }
-])
-
 // 下拉选择器选项
-const categoryOptions = computed(() => [
-  { id: '', name: '全部分类' },
-  ...categories.value
-])
+const categoryOptions = computed(() => {
+  const options = [{ label: '全部分类', value: '' }]
+  categories.value.forEach(category => {
+    options.push({ label: category.name, value: category.id })
+  })
+  return options
+})
 
 
 
 // 获取分类名称
-const getCategoryName = (categoryId) => {
-  if (!categoryId) return ''
-  // 确保categoryId是字符串类型进行比较
-  const categoryIdStr = String(categoryId)
-  // 如果是general分类，显示为"未知分类"
-  if (categoryIdStr === 'general') return '未知分类'
-  const category = categories.value.find(c => c.id === categoryIdStr)
-  return category ? category.name : categoryIdStr
+const getCategoryName = (category) => {
+  return category || ''
 }
 
 // 截断内容
@@ -342,10 +327,23 @@ const handleImageError = (event) => {
   img.style.display = 'block'
 }
 
+// 加载分类数据
+const loadCategories = async () => {
+  try {
+    const response = await getCategories()
+    if (response.success && response.data) {
+      categories.value = response.data
+    }
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   // 初始化用户信息
   userStore.initUserInfo()
+  loadCategories()
   loadPosts()
 })
 </script>

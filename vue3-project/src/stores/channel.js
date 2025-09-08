@@ -1,13 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { CHANNELS, getChannelIdByPath, getChannelPath } from '@/config/channels'
+import { getChannels, loadChannelsFromAPI, getChannelIdByPath, getChannelPath } from '@/config/channels'
 
 export const useChannelStore = defineStore('channel', () => {
   // 频道列表
-  const channels = CHANNELS
+  const channels = ref(getChannels())
+  const isLoading = ref(false)
 
   // 当前活跃的频道ID
   const activeChannelId = ref('recommend')
+
+  // 动态加载频道数据
+  const loadChannels = async () => {
+    isLoading.value = true
+    try {
+      await loadChannelsFromAPI()
+      channels.value = getChannels()
+    } finally {
+      isLoading.value = false
+    }
+  }
 
   // 设置活跃频道
   const setActiveChannel = (channelId) => {
@@ -23,7 +35,9 @@ export const useChannelStore = defineStore('channel', () => {
   return {
     channels,
     activeChannelId,
+    isLoading,
     setActiveChannel,
+    loadChannels,
     getChannelIdByPath: getChannelIdByPathFn,
     getChannelPath: getChannelPathFn
   }

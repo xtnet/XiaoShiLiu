@@ -37,7 +37,32 @@
 | major | VARCHAR(100) | 专业 | 可为空 |
 | interests | JSON | 兴趣爱好 | JSON数组，可为空 |
 
-### 2. 笔记表 (posts)
+### 2. 分类表 (categories)
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| id | INT | 分类ID | 主键，自增 |
+| name | VARCHAR(50) | 分类名称 | 唯一，如：学习、校园、情感等 |
+| created_at | TIMESTAMP | 创建时间 | 分类创建时间 |
+
+**索引：**
+- PRIMARY KEY (`id`)
+- UNIQUE KEY `name` (`name`)
+- KEY `idx_name` (`name`)
+
+**初始数据：**
+- 学习
+- 校园
+- 情感
+- 兴趣
+- 生活
+- 社交
+- 帮助
+- 观点
+- 毕业
+- 职场
+
+### 3. 笔记表 (posts)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -45,7 +70,7 @@
 | user_id | BIGINT | 发布用户ID | 外键关联users |
 | title | VARCHAR(200) | 标题 | 笔记标题 |
 | content | TEXT | 内容 | 笔记描述 |
-| category | VARCHAR(50) | 分类 | 如：穿搭、美食等，可为空 |
+| category_id | INT | 分类ID | 外键关联categories表，可为空 |
 | is_draft | TINYINT(1) | 是否为草稿 | 1-草稿，0-已发布，默认1 |
 | view_count | BIGINT | 浏览量 | 统计字段，默认0 |
 | like_count | INT | 点赞数 | 统计字段，默认0 |

@@ -58,7 +58,7 @@
 
         <div class="category-section">
           <div class="section-title">分类</div>
-          <DropdownSelect v-model="form.category" :options="categories" placeholder="请选择分类" label-key="name"
+          <DropdownSelect v-model="form.category_id" :options="categories" placeholder="请选择分类" label-key="name"
             value-key="id" max-width="300px" min-width="200px" @change="handleCategoryChange" />
         </div>
 
@@ -88,6 +88,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useNavigationStore } from '@/stores/navigation'
 import { createPost, getPostDetail, updatePost, deletePost } from '@/api/posts'
+import { getCategories } from '@/api/categories'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { hasMentions, cleanMentions } from '@/utils/mentionParser'
 
@@ -123,7 +124,7 @@ const form = reactive({
   content: '',
   images: [],
   tags: [],
-  category: ''
+  category_id: null
 })
 
 // 草稿相关状态
@@ -139,8 +140,7 @@ const canPublish = computed(() => {
   return form.title.trim() &&
     form.content.trim() &&
     form.images.length > 0 &&
-    form.category &&
-    form.category !== 'general'
+    form.category_id
 })
 
 const canSaveDraft = computed(() => {
@@ -149,8 +149,8 @@ const canSaveDraft = computed(() => {
 
 onMounted(async () => {
   navigationStore.scrollToTop('instant')
-  loadCategories()
-
+  // 先加载分类列表，确保分类数据可用
+  await loadCategories()
   // 检查是否是编辑草稿模式
   const draftId = route.query.draftId
   const mode = route.query.mode
@@ -163,19 +163,19 @@ onMounted(async () => {
 onUnmounted(() => {
 })
 
-const loadCategories = () => {
-  categories.value = [
-    { id: 'study', name: '学习' },
-    { id: 'campus', name: '校园' },
-    { id: 'emotion', name: '情感' },
-    { id: 'interest', name: '兴趣' },
-    { id: 'life', name: '生活' },
-    { id: 'social', name: '社交' },
-    { id: 'help', name: '求助' },
-    { id: 'opinion', name: '观点' },
-    { id: 'graduation', name: '毕业' },
-    { id: 'career', name: '职场' }
-  ]
+const loadCategories = async () => {
+  try {
+    const response = await getCategories()
+    if (response.success && response.data) {
+      categories.value = response.data.map(category => ({
+        id: category.id,
+        name: category.name
+      }))
+    }
+  } catch (error) {
+    console.error('加载分类失败:', error)
+    showMessage('加载分类失败', 'error')
+  }
 }
 
 const validateForm = () => {
@@ -211,7 +211,7 @@ const handleUploadError = (error) => {
 }
 
 const handleCategoryChange = (data) => {
-  form.category = data.value
+  form.category_id = data.value
 }
 
 const handleContentFocus = () => {
@@ -370,7 +370,7 @@ const handlePublish = async () => {
     return
   }
 
-  if (!form.category || form.category === '未知分类') {
+  if (!form.category_id) {
     showMessage('请选择分类', 'error')
     return
   }
@@ -405,7 +405,7 @@ const handlePublish = async () => {
       content: sanitizedContent,
       images: form.images,
       tags: form.tags,
-      category: form.category,
+      category_id: form.category_id,
       is_draft: false // 发布状态
     }
 
@@ -425,7 +425,7 @@ const handlePublish = async () => {
       form.content = ''
       form.images = []
       form.tags = []
-      form.category = ''
+      form.category_id = null
       imageComponent.reset()
 
       setTimeout(() => {
@@ -446,6 +446,7 @@ const handlePublish = async () => {
 const loadDraftData = async (draftId) => {
   try {
     const response = await getPostDetail(draftId)
+
     if (response && response.originalData) {
       const draft = response.originalData
 
@@ -454,7 +455,14 @@ const loadDraftData = async (draftId) => {
       form.content = draft.content || ''
       form.images = draft.images || []
       form.tags = draft.tags || []
-      form.category = response.category || ''
+
+      // 根据分类名称找到分类ID
+      if (response.category && categories.value.length > 0) {
+        const categoryItem = categories.value.find(cat => cat.name === response.category)
+        form.category_id = categoryItem ? categoryItem.id : null
+      } else {
+        form.category_id = null
+      }
 
       // 设置编辑模式
       currentDraftId.value = draftId
@@ -516,7 +524,7 @@ const handleSaveDraft = async () => {
       content: sanitizedContent,
       images: uploadedImages,
       tags: form.tags || [],
-      category: form.category || '',
+      category_id: form.category_id || null,
       is_draft: true
     }
 
@@ -543,7 +551,7 @@ const handleSaveDraft = async () => {
       form.content = ''
       form.images = []
       form.tags = []
-      form.category = ''
+      form.category_id = null
 
       // 重置编辑状态（在跳转前重置，避免影响当前保存逻辑）
       const shouldResetEditState = true

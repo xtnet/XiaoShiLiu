@@ -19,14 +19,14 @@ class DataGenerator {
     // 读取图片链接文件
     this.avatarLinks = this.loadLinksFromFile('../imgLinks/avatar_link.txt');
     this.imageLinks = this.loadLinksFromFile('../imgLinks/post_img_link.txt');
-    // 与前端严格对应的分类
+    // 使用中文分类名称
     this.categories = [
-      'study', 'campus', 'emotion', 'interest',
-      'life', 'social', 'help', 'opinion', 'graduation', 'career'
+      '学习', '校园', '情感', '兴趣',
+      '生活', '社交', '求助', '观点', '毕业', '职场'
     ];
-    // 分类对应的中文名称和相关内容
+    // 分类对应的相关内容
     this.categoryData = {
-      'study': {
+      '学习': {
         name: '学习',
         tags: ['学习', '知识', '技能', '成长', '教程', '笔记', '考试', '读书'],
         titles: [
@@ -48,7 +48,7 @@ class DataGenerator {
           '学习是一个持续的过程，需要不断地调整方法和心态。今天想和大家聊聊我在学习路上的一些感悟和经验，希望能给迷茫中的你一些启发。'
         ]
       },
-      'campus': {
+      '校园': {
         name: '校园',
         tags: ['校园', '大学', '社团', '活动', '青春', '宿舍', '食堂', '图书馆'],
         titles: [
@@ -70,7 +70,7 @@ class DataGenerator {
           '宿舍是我们在校园里的小家，虽然空间不大，但充满了温馨和欢声笑语。和室友们一起度过的时光，是大学生活中最珍贵的回忆。'
         ]
       },
-      'emotion': {
+      '情感': {
         name: '情感',
         tags: ['情感', '心情', '感悟', '治愈', '温暖', '孤独', '成长', '爱情'],
         titles: [
@@ -92,7 +92,7 @@ class DataGenerator {
           '有时候觉得很孤独，但后来发现孤独也是一种力量。在独处的时光里，我们能够更好地认识自己，倾听内心的声音。'
         ]
       },
-      'interest': {
+      '兴趣': {
         name: '兴趣',
         tags: ['兴趣', '爱好', '收藏', '手工', '创作', '绘画', '音乐', '摄影'],
         titles: [
@@ -114,7 +114,7 @@ class DataGenerator {
           '摄影让我学会了用不同的角度去看世界，每一次按下快门都是对美好瞬间的定格。分享一些我在摄影路上的心得和技巧。'
         ]
       },
-      'life': {
+      '生活': {
         name: '生活',
         tags: ['生活', '日常', '美食', '旅行', '家居', '穿搭', '护肤', '健康'],
         titles: [
@@ -136,7 +136,7 @@ class DataGenerator {
           '家是心灵的港湾，一个温馨舒适的居住环境能够让人感到放松和愉悦。分享一些家居布置的心得，让家变得更有温度。'
         ]
       },
-      'social': {
+      '社交': {
         name: '社交',
         tags: ['社交', '朋友', '聚会', '交流', '分享', '人际关系', '沟通'],
         titles: [
@@ -158,8 +158,8 @@ class DataGenerator {
           '每个人都有自己的社交方式，内向的人也有自己的魅力和优势。重要的是要找到适合自己的社交节奏，做真实的自己。'
         ]
       },
-      'help': {
-        name: '帮助',
+      '求助': {
+        name: '求助',
         tags: ['帮助', '求助', '解答', '支持', '互助', '经验', '建议'],
         titles: [
           '求助：关于xxx的问题，求大神指点',
@@ -180,7 +180,7 @@ class DataGenerator {
           '互帮互助是社区最美好的地方，每个人都有自己的专长和经验。今天想和大家交流一下关于xxx的看法和经验。'
         ]
       },
-      'opinion': {
+      '观点': {
         name: '观点',
         tags: ['观点', '看法', '讨论', '思考', '见解', '评论', '分析'],
         titles: [
@@ -202,7 +202,7 @@ class DataGenerator {
           '每个人都有表达观点的权利，但同时也要尊重他人的不同看法。在讨论中保持理性和包容，才能真正促进思想的交流。'
         ]
       },
-      'graduation': {
+      '毕业': {
         name: '毕业',
         tags: ['毕业', '告别', '回忆', '未来', '成长', '感恩', '青春'],
         titles: [
@@ -224,7 +224,7 @@ class DataGenerator {
           '即将踏出校门，心情既兴奋又忐忑。未来充满了未知，但我相信只要保持初心，勇敢追梦，一切都会是最好的安排。'
         ]
       },
-      'career': {
+      '职场': {
         name: '职场',
         tags: ['职场', '工作', '求职', '面试', '职业', '实习', '升职', '跳槽'],
         titles: [
@@ -356,8 +356,8 @@ class DataGenerator {
   async insertPosts(connection, posts) {
     for (const post of posts) {
       await connection.execute(
-        'INSERT INTO posts (user_id, title, content, category, is_draft, view_count, like_count, collect_count, comment_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [post.user_id, post.title, post.content, post.category, post.is_draft, post.view_count, 0, 0, 0]
+        'INSERT INTO posts (user_id, title, content, category_id, is_draft, view_count, like_count, collect_count, comment_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [post.user_id, post.title, post.content, post.category_id, post.is_draft, post.view_count, 0, 0, 0]
       );
       await this.delay(50);
     }
@@ -529,14 +529,15 @@ class DataGenerator {
   generatePosts(userCount, count = 200) {
     const posts = [];
     for (let i = 0; i < count; i++) {
-      const category = this.categories[Math.floor(Math.random() * this.categories.length)];
+      const categoryIndex = Math.floor(Math.random() * this.categories.length);
+      const category = this.categories[categoryIndex];
       const categoryInfo = this.categoryData[category];
 
       const post = {
         user_id: Math.floor(Math.random() * userCount) + 1,
         title: categoryInfo.titles[Math.floor(Math.random() * categoryInfo.titles.length)],
         content: categoryInfo.contents[Math.floor(Math.random() * categoryInfo.contents.length)],
-        category: category, // 使用英文分类名
+        category_id: categoryIndex + 1, // 使用分类ID（从1开始）
         is_draft: 0, // 灌装数据全部为已发布状态（0表示非草稿）
         view_count: Math.floor(Math.random() * 10000),
         like_count: Math.floor(Math.random() * 500),
@@ -867,6 +868,11 @@ class DataGenerator {
       console.log('生成标签数据...');
       const tags = this.generateTags();
       await this.insertTags(connection, tags);
+
+      // 第二步.一：生成并插入分类数据
+      console.log('生成分类数据...');
+      const categories = this.generateCategories();
+      await this.insertCategories(connection, categories);
 
       // 第三步：生成并插入笔记数据（初始统计为0）
       console.log('生成笔记数据...');
@@ -1214,6 +1220,24 @@ class DataGenerator {
         await connection.end();
       }
     }
+  }
+
+  // 生成分类数据
+  generateCategories() {
+    return this.categories.map(name => ({
+      name: name
+    }));
+  }
+
+  // 插入分类数据
+  async insertCategories(connection, categories) {
+    for (const category of categories) {
+      await connection.execute(
+        'INSERT IGNORE INTO categories (name) VALUES (?)',
+        [category.name]
+      );
+    }
+    console.log(`     已插入 ${categories.length} 个分类`);
   }
 }
 

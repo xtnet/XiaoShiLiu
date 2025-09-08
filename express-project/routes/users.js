@@ -240,7 +240,7 @@ router.get('/:id/posts', optionalAuth, async (req, res) => {
     let queryParams = [userId.toString()];
 
     if (category) {
-      whereConditions.push('p.category = ?');
+      whereConditions.push('p.category_id = ?');
       queryParams.push(category);
     }
 
@@ -256,9 +256,10 @@ router.get('/:id/posts', optionalAuth, async (req, res) => {
 
     // 查询用户发布的笔记
     const query = `
-      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.location
+      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.location, c.name as category
       FROM posts p
       LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN categories c ON p.category_id = c.id
       WHERE ${whereConditions.join(' AND ')}
       ${orderBy}
       LIMIT ? OFFSET ?

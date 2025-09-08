@@ -4,7 +4,7 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description 基于Vue3+Vite+Pinia的现代化图文社区前端应用
- * @version 1.0.2
+ * @version 1.1.0
  * @license GPLv3
  */
 
@@ -24,6 +24,8 @@ import { initTheme } from '@/utils/themeUtils'
 import { install as messageInstall } from '@/utils/messageManager'
 // 导入用户store
 import { useUserStore } from '@/stores/user'
+// 导入频道store
+import { useChannelStore } from '@/stores/channel'
 
 // 初始化主题系统（在应用创建之前）
 initTheme()
@@ -46,5 +48,11 @@ if (userStore.token) {
     console.error('获取用户信息失败:', error)
   })
 }
+
+// 初始化频道数据
+const channelStore = useChannelStore()
+channelStore.loadChannels().catch(error => {
+  console.error('加载频道数据失败:', error)
+})
 
 app.mount('#app')

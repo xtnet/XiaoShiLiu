@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.0.4</span>
+        <span class="version">版本: v1.1.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-07</span>
+        <span class="update-time">更新时间: 2025-09-08</span>
       </div>
     </div>
 
@@ -441,7 +441,7 @@ const apiGroups = ref([
         params: [
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
-          { name: 'category', type: 'string', required: false, description: '分类筛选' }
+          { name: 'category_id', type: 'int', required: false, description: '分类ID筛选' }
         ]
       },
       {
@@ -464,7 +464,7 @@ const apiGroups = ref([
         params: [
           { name: 'title', type: 'string', required: true, description: '笔记标题' },
           { name: 'content', type: 'string', required: true, description: '笔记内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
           { name: 'tags', type: 'array', required: false, description: '标签数组' }
         ]
@@ -526,7 +526,7 @@ const apiGroups = ref([
           { name: 'id', type: 'int', required: true, description: '笔记ID' },
           { name: 'title', type: 'string', required: false, description: '笔记标题' },
           { name: 'content', type: 'string', required: false, description: '笔记内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
           { name: 'tags', type: 'array', required: false, description: '标签数组' }
         ]
@@ -565,7 +565,7 @@ const apiGroups = ref([
         params: [
           { name: 'title', type: 'string', required: false, description: '草稿标题' },
           { name: 'content', type: 'string', required: false, description: '草稿内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
           { name: 'tags', type: 'array', required: false, description: '标签数组' }
         ]
@@ -581,7 +581,7 @@ const apiGroups = ref([
           { name: 'id', type: 'int', required: true, description: '草稿ID' },
           { name: 'title', type: 'string', required: false, description: '草稿标题' },
           { name: 'content', type: 'string', required: false, description: '草稿内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
           { name: 'tags', type: 'array', required: false, description: '标签数组' }
         ]
@@ -607,6 +607,80 @@ const apiGroups = ref([
         params: [
           { name: 'id', type: 'int', required: true, description: '草稿ID' }
         ]
+      }
+    ]
+  },
+  {
+    name: '分类管理接口',
+    apis: [
+      {
+        method: 'GET',
+        path: '/api/categories',
+        title: '获取分类列表',
+        description: '获取所有分类列表',
+        expanded: false,
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": [
+     {
+       "id": 1,
+       "name": "生活",
+       "created_at": "2025-08-30T00:00:00.000Z"
+     }
+   ]
+}`
+      },
+      {
+        method: 'POST',
+         path: '/api/categories',
+         title: '创建分类（管理员）',
+        description: '管理员创建新分类',
+        auth: true,
+        expanded: false,
+        params: [
+           { name: 'name', type: 'string', required: true, description: '分类名称' }
+         ],
+        example: `{
+  "code": 200,
+  "message": "分类创建成功",
+  "data": {
+     "id": 3,
+     "name": "旅游"
+   }
+}`
+      },
+      {
+        method: 'PUT',
+         path: '/api/categories/:id',
+         title: '更新分类（管理员）',
+        description: '管理员更新分类信息',
+        auth: true,
+        expanded: false,
+        params: [
+           { name: 'id', type: 'int', required: true, description: '分类ID' },
+           { name: 'name', type: 'string', required: false, description: '分类名称' }
+         ],
+        example: `{
+  "code": 200,
+  "message": "分类更新成功",
+  "message": "更新成功"
+}`
+      },
+      {
+        method: 'DELETE',
+         path: '/api/categories/:id',
+         title: '删除分类（管理员）',
+        description: '管理员删除指定分类',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'id', type: 'int', required: true, description: '分类ID' }
+        ],
+        example: `{
+  "code": 200,
+  "message": "分类删除成功"
+}`
       }
     ]
   },
@@ -739,7 +813,6 @@ const apiGroups = ref([
     {
       "id": 1,
       "name": "摄影",
-      "description": "摄影相关内容",
       "use_count": 150,
       "created_at": "2025-08-30T00:00:00.000Z"
     }
@@ -1240,7 +1313,7 @@ const apiGroups = ref([
         params: [
           { name: 'title', type: 'string', required: true, description: '笔记标题' },
           { name: 'content', type: 'string', required: true, description: '笔记内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
           { name: 'user_id', type: 'int', required: true, description: '发布用户ID' }
         ]
       },
@@ -1255,7 +1328,7 @@ const apiGroups = ref([
           { name: 'id', type: 'int', required: true, description: '笔记ID' },
           { name: 'title', type: 'string', required: false, description: '笔记标题' },
           { name: 'content', type: 'string', required: false, description: '笔记内容' },
-          { name: 'category', type: 'string', required: false, description: '分类' }
+          { name: 'category_id', type: 'int', required: false, description: '分类ID' }
         ]
       },
       {

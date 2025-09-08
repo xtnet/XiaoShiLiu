@@ -42,6 +42,9 @@ class DatabaseInitializer {
       // 创建管理员表
       await this.createAdminTable(connection);
       
+      // 创建分类表
+      await this.createCategoriesTable(connection);
+      
       // 创建帖子表
       await this.createPostsTable(connection);
       
@@ -131,6 +134,20 @@ class DatabaseInitializer {
     console.log('✓ admin 表创建成功');
   }
 
+  async createCategoriesTable(connection) {
+    const sql = `
+      CREATE TABLE IF NOT EXISTS \`categories\` (
+        \`id\` int(11) NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+        \`name\` varchar(50) NOT NULL COMMENT '分类名称',
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`name\` (\`name\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
+    `;
+    await connection.execute(sql);
+    console.log('✓ categories 表创建成功');
+  }
+
   async createPostsTable(connection) {
     const sql = `
       CREATE TABLE IF NOT EXISTS \`posts\` (
@@ -138,7 +155,7 @@ class DatabaseInitializer {
         \`user_id\` bigint(20) NOT NULL COMMENT '发布用户ID',
         \`title\` varchar(200) NOT NULL COMMENT '标题',
         \`content\` text NOT NULL COMMENT '内容',
-        \`category\` varchar(50) DEFAULT NULL COMMENT '分类',
+        \`category_id\` int(11) DEFAULT NULL COMMENT '分类ID',
         \`view_count\` bigint(20) DEFAULT 0 COMMENT '浏览量',
         \`like_count\` int(11) DEFAULT 0 COMMENT '点赞数',
         \`collect_count\` int(11) DEFAULT 0 COMMENT '收藏数',
@@ -147,11 +164,12 @@ class DatabaseInitializer {
         \`is_draft\` tinyint(1) DEFAULT 1 COMMENT '是否为草稿：1-草稿，0-已发布',
         PRIMARY KEY (\`id\`),
         KEY \`idx_user_id\` (\`user_id\`),
-        KEY \`idx_category\` (\`category\`),
+        KEY \`idx_category_id\` (\`category_id\`),
         KEY \`idx_created_at\` (\`created_at\`),
         KEY \`idx_like_count\` (\`like_count\`),
-        KEY \`idx_category_created_at\` (\`category\`, \`created_at\`),
-        CONSTRAINT \`posts_ibfk_1\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+        KEY \`idx_category_id_created_at\` (\`category_id\`, \`created_at\`),
+        CONSTRAINT \`posts_ibfk_1\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE,
+        CONSTRAINT \`fk_posts_category\` FOREIGN KEY (\`category_id\`) REFERENCES \`categories\` (\`id\`) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
     `;
     await connection.execute(sql);

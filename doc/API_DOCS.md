@@ -2,10 +2,10 @@
 
 ## 项目信息
 - **项目名称**: 小石榴图文社区
-- **版本**: v1.0.4
+- **版本**: v1.1.0
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-07
+- **更新时间**: 2025-09-08
 
 ## 通用说明
 
@@ -481,7 +481,7 @@ Authorization: Bearer <your_jwt_token>
         "title": "美丽的风景",
         "content": "今天拍到了很美的风景",
         "images": ["https://example.com/image1.jpg"],
-        "category": "photography",
+        "category_id": 1,
         "tags": ["风景", "摄影"],
         "like_count": 10,
         "comment_count": 5,
@@ -534,7 +534,7 @@ Authorization: Bearer <your_jwt_token>
         "title": "精彩的瞬间",
         "content": "记录生活中的美好",
         "images": ["https://example.com/image2.jpg"],
-        "category": "life",
+        "category_id": 2,
         "tags": ["生活", "记录"],
         "like_count": 15,
         "comment_count": 8,
@@ -687,6 +687,104 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
+## 分类管理接口
+
+### 1. 获取分类列表
+**接口地址**: `GET /api/categories`
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "学习",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "校园",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "情感",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### 2. 创建分类
+**接口地址**: `POST /api/categories`
+**需要认证**: 是（管理员权限）
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 是 | 分类名称 |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "分类创建成功",
+  "data": {
+    "id": 11,
+    "name": "新分类",
+    "created_at": "2025-01-02T00:00:00.000Z"
+  }
+}
+```
+
+### 3. 更新分类
+**接口地址**: `PUT /api/categories/:id`
+**需要认证**: 是（管理员权限）
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 分类ID |
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 是 | 分类名称 |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "分类更新成功",
+  "data": {
+    "id": 1,
+    "name": "更新后的分类名",
+    "created_at": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 4. 删除分类
+**接口地址**: `DELETE /api/categories/:id`
+**需要认证**: 是（管理员权限）
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 分类ID |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "分类删除成功"
+}
+```
+
+---
+
 ## 笔记相关接口
 
 ### 1. 获取笔记列表
@@ -697,7 +795,7 @@ Authorization: Bearer <your_jwt_token>
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
-| category | string | 否 | 分类筛选 |
+| category_id | int | 否 | 分类ID筛选 |
 
 **响应示例**:
 ```json
@@ -711,7 +809,7 @@ Authorization: Bearer <your_jwt_token>
         "user_id": 1,
         "title": "笔记标题",
         "content": "笔记内容",
-        "category": "生活",
+        "category_id": 2,
         "view_count": 100,
         "like_count": 10,
         "comment_count": 5,
@@ -760,7 +858,7 @@ Authorization: Bearer <your_jwt_token>
 |------|------|------|------|
 | title | string | 是 | 笔记标题 |
 | content | string | 是 | 笔记内容 |
-| category | string | 否 | 分类 |
+| category_id | int | 否 | 分类ID |
 | images | array | 否 | 图片URL数组 |
 | tags | array | 否 | 标签ID数组 |
 
@@ -769,7 +867,7 @@ Authorization: Bearer <your_jwt_token>
 {
   "title": "分享一个美好的下午",
   "content": "今天天气很好，在公园里散步...",
-  "category": "生活",
+  "category_id": 5,
   "images": [
     "https://example.com/image1.jpg",
     "https://example.com/image2.jpg"
@@ -818,7 +916,7 @@ Authorization: Bearer <your_jwt_token>
 | keyword | string | 是 | 搜索关键词（支持标题和内容搜索） |
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
-| category | string | 否 | 分类筛选 |
+| category_id | int | 否 | 分类ID筛选 |
 
 **响应示例**:
 ```json
@@ -873,7 +971,7 @@ Authorization: Bearer <your_jwt_token>
 |------|------|------|------|
 | title | string | 否 | 笔记标题 |
 | content | string | 否 | 笔记内容 |
-| category | string | 否 | 分类 |
+| category_id | int | 否 | 分类ID |
 | images | array | 否 | 图片URL数组 |
 | tags | array | 否 | 标签ID数组 |
 
@@ -987,7 +1085,7 @@ Authorization: Bearer <your_jwt_token>
 |------|------|------|------|
 | title | string | 否 | 草稿标题 |
 | content | string | 否 | 草稿内容 |
-| category | string | 否 | 分类 |
+| category_id | int | 否 | 分类ID |
 | images | array | 否 | 图片URL数组 |
 | tags | array | 否 | 标签数组 |
 
@@ -2044,7 +2142,7 @@ curl -X POST "http://localhost:3001/api/posts" \
   -d '{
     "title": "测试笔记",
     "content": "这是测试内容",
-    "category": "测试"
+    "category_id": 1
   }'
 
 # 创建评论（需要认证）
@@ -2218,7 +2316,7 @@ async function example() {
     const newPost = await createPost({
       title: '测试笔记',
       content: '这是测试内容',
-      category: '测试'
+      category_id: 1
     });
     console.log('创建笔记结果:', newPost);
     
@@ -2362,7 +2460,7 @@ async function example() {
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 | title | string | 否 | 标题搜索 |
-| category | string | 否 | 分类筛选 |
+| category_id | int | 否 | 分类ID筛选 |
 | sortBy | string | 否 | 排序字段（id, view_count, like_count, collect_count, comment_count, created_at） |
 | sortOrder | string | 否 | 排序方向（ASC, DESC） |
 

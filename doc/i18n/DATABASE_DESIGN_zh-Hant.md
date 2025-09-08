@@ -37,7 +37,32 @@
 | major | VARCHAR(100) | 專業 | 可為空 |
 | interests | JSON | 興趣愛好 | JSON陣列，可為空 |
 
-### 2. 筆記表 (posts)
+### 2. 分類表 (categories)
+
+| 欄位名 | 類型 | 說明 | 備註 |
+|--------|------|------|------|
+| id | INT | 分類ID | 主鍵，自增 |
+| name | VARCHAR(50) | 分類名稱 | 唯一，如：學習、校園、情感等 |
+| created_at | TIMESTAMP | 建立時間 | 分類建立時間 |
+
+**索引：**
+- PRIMARY KEY (`id`)
+- UNIQUE KEY `name` (`name`)
+- KEY `idx_name` (`name`)
+
+**初始資料：**
+- 學習
+- 校園
+- 情感
+- 興趣
+- 生活
+- 社交
+- 幫助
+- 觀點
+- 畢業
+- 職場
+
+### 3. 筆記表 (posts)
 
 | 欄位名 | 類型 | 說明 | 備註 |
 |--------|------|------|------|
@@ -45,7 +70,7 @@
 | user_id | BIGINT | 發佈使用者ID | 外鍵關聯users |
 | title | VARCHAR(200) | 標題 | 筆記標題 |
 | content | TEXT | 內容 | 筆記描述 |
-| category | VARCHAR(50) | 分類 | 如：穿搭、美食等，可為空 |
+| category_id | INT | 分類ID | 外鍵關聯categories表，可為空 |
 | is_draft | TINYINT(1) | 是否為草稿 | 1-草稿，0-已發佈，預設1 |
 | view_count | BIGINT | 瀏覽量 | 統計欄位，預設0 |
 | like_count | INT | 按讚數 | 統計欄位，預設0 |

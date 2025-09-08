@@ -17,7 +17,7 @@ const postsCrudConfig = {
   table: 'posts',
   name: '笔记',
   requiredFields: ['user_id', 'title', 'content'],
-  updateFields: ['title', 'content', 'category', 'view_count', 'is_draft'],
+  updateFields: ['title', 'content', 'category_id', 'view_count', 'is_draft'],
   cascadeRules: [
     { table: 'post_images', field: 'post_id' },
     { table: 'post_tags', field: 'post_id' },
@@ -28,7 +28,7 @@ const postsCrudConfig = {
   searchFields: {
     title: { operator: 'LIKE' },
     user_id: { operator: '=' },
-    category: { operator: '=' },
+    category_id: { operator: '=' },
     is_draft: { operator: '=' }
   },
   allowedSortFields: ['id', 'view_count', 'like_count', 'collect_count', 'comment_count', 'created_at'],
@@ -44,9 +44,9 @@ const postsCrudConfig = {
       throw new Error('用户不存在')
     }
 
-    // 设置默认分类
-    if (!data.category) {
-      data.category = ''
+    // 确保分类ID存在
+    if (!data.category_id) {
+      data.category_id = null
     }
 
     return data
@@ -195,11 +195,6 @@ const postsCrudConfig = {
     // 确保浏览量不为负数
     if (data.view_count !== undefined && data.view_count !== null) {
       data.view_count = Math.max(0, parseInt(data.view_count) || 0)
-    }
-
-    // 设置默认分类
-    if (data.category === undefined) {
-      data.category = ''
     }
 
     return { isValid: true }
@@ -404,12 +399,13 @@ const postsCrudConfig = {
 
       // 获取笔记基本信息
       const [postResult] = await pool.execute(`
-        SELECT p.id, p.user_id, p.title, p.content, p.category,
+        SELECT p.id, p.user_id, p.title, p.content, p.category_id, c.name as category,
                p.view_count, p.like_count, p.collect_count, p.comment_count,
                p.is_draft, p.created_at,
                u.nickname, COALESCE(u.user_id, CONCAT('user', LPAD(u.id, 3, '0'))) as user_display_id
         FROM posts p
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.id = ?
       `, [String(postId)])
 
@@ -454,9 +450,13 @@ const postsCrudConfig = {
         params.push(`%${req.query.user_id}%`)
       }
 
-      if (req.query.category) {
-        whereClause += whereClause ? ' AND p.category = ?' : ' WHERE p.category = ?'
-        params.push(req.query.category)
+      if (req.query.category_id) {
+        if (req.query.category_id === 'null') {
+          whereClause += whereClause ? ' AND p.category_id IS NULL' : ' WHERE p.category_id IS NULL'
+        } else {
+          whereClause += whereClause ? ' AND p.category_id = ?' : ' WHERE p.category_id = ?'
+          params.push(req.query.category_id)
+        }
       }
 
       if (req.query.is_draft !== undefined && req.query.is_draft !== '') {
@@ -469,6 +469,7 @@ const postsCrudConfig = {
         SELECT COUNT(*) as total 
         FROM posts p 
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         ${whereClause}
       `
       const [countResult] = await pool.execute(countQuery, params)
@@ -489,12 +490,13 @@ const postsCrudConfig = {
 
       // 获取数据
       const dataQuery = `
-        SELECT p.id, p.user_id, p.title, p.content, p.category,
+        SELECT p.id, p.user_id, p.title, p.content, c.name as category,
                p.view_count, p.like_count, p.collect_count, p.comment_count,
                p.is_draft, p.created_at,
                u.nickname, COALESCE(u.user_id, CONCAT('user', LPAD(u.id, 3, '0'))) as user_display_id
         FROM posts p
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         ${whereClause}
         ${orderClause}
         LIMIT ? OFFSET ?
@@ -1552,7 +1554,7 @@ const adminsCrudConfig = {
   allowedSortFields: ['username', 'created_at'],
   defaultOrderBy: 'created_at DESC',
   primaryKey: 'username', // 使用username作为主键
-  
+
   // 创建前的自定义处理
   beforeCreate: async (data) => {
     // 对密码进行哈希加密
@@ -1562,7 +1564,7 @@ const adminsCrudConfig = {
     }
     return { isValid: true }
   },
-  
+
   // 更新前的自定义处理
   beforeUpdate: async (data) => {
     // 如果更新密码，进行哈希加密
