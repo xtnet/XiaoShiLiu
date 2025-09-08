@@ -46,10 +46,21 @@ router.get('/', async (req, res) => {
     // 构建WHERE条件
     let whereClause = '';
     const queryParams = [];
+    const { category_title } = req.query;
     
+    const conditions = [];
     if (name && name.trim()) {
-      whereClause = 'WHERE c.name LIKE ?';
+      conditions.push('c.name LIKE ?');
       queryParams.push(`%${name.trim()}%`);
+    }
+    
+    if (category_title && category_title.trim()) {
+      conditions.push('c.category_title LIKE ?');
+      queryParams.push(`%${category_title.trim()}%`);
+    }
+    
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ');
     }
     
     const [categories] = await pool.execute(`
