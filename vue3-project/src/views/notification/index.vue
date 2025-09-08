@@ -60,6 +60,7 @@ const selectedPost = ref(null)
 const targetCommentId = ref(null)
 const showLoading = ref(false) // 预加载状态
 
+
 // 数据加载状态跟踪
 const loadedTabs = ref(new Set())
 
@@ -577,87 +578,7 @@ const onImageClick = async (notification) => {
   }
 };
 
-// 辅助函数：在评论列表中查找目标评论（包括回复）
-const findCommentInList = (comments, targetId) => {
-  for (const comment of comments) {
-    if (String(comment.id) === String(targetId)) {
-      return comment
-    }
-    if (comment.replies && comment.replies.length) {
-      const foundInReply = findCommentInList(comment.replies, targetId)
-      if (foundInReply) return foundInReply
-    }
-  }
-  return null
-}
 
-// 预加载DetailCard数据
-const prepareDetailCard = async (post, commentId) => {
-  // 显示加载中状态
-  showLoading.value = true
-
-  try {
-    // 1. 分页加载评论直到找到目标评论
-    let targetComment = null
-    let page = 1
-    const limit = 10
-    let hasMore = true
-
-    // 先初始化评论状态，加载第一页
-    await commentStore.fetchComments(post.id, {
-      page: 1,
-      limit,
-      sort: 'desc',
-      loadMore: false
-    })
-
-    // 在第一页中查找目标评论
-    let comments = commentStore.getComments(post.id).comments || []
-    targetComment = findCommentInList(comments, commentId)
-
-    // 如果第一页没找到，继续分页加载
-    while (!targetComment && hasMore && page < 10) { // 限制最大页数防止无限循环
-      // 加载下一页评论
-      const result = await commentStore.fetchComments(post.id, {
-        page: ++page,
-        limit,
-        sort: 'desc',
-        loadMore: true
-      })
-
-      hasMore = result.hasMore
-
-      // 重新获取评论列表并查找目标评论
-      comments = commentStore.getComments(post.id).comments || []
-      targetComment = findCommentInList(comments, commentId)
-
-      // 找到目标评论后立即停止加载
-      if (targetComment) {
-        console.log('找到目标评论，停止加载更多评论')
-        break
-      }
-    }
-
-    if (!targetComment) {
-      console.warn('未找到目标评论，但仍显示DetailCard')
-    }
-
-    // 2. 初始化点赞状态
-    commentLikeStore.initCommentsLikeStates(commentStore.getComments(post.id).comments)
-
-    // 3. 准备好后再显示详情卡
-    selectedPost.value = post
-    targetCommentId.value = String(commentId)
-    showDetailCard.value = true
-
-    return true
-  } catch (error) {
-    console.error('预加载评论失败:', error)
-    return false
-  } finally {
-    showLoading.value = false
-  }
-}
 
 // 评论点击处理
 const onCommentClick = async (notification) => {
@@ -668,52 +589,33 @@ const onCommentClick = async (notification) => {
       const postDetail = await getPostDetail(notification.target_id);
 
       if (postDetail) {
-        // 如果是评论类型的通知，使用预加载逻辑
+        selectedPost.value = postDetail;
+        
+        // 如果是评论类型的通知，传递评论ID用于定位
         if (notification.commentId) {
-          console.log('开始预加载评论数据，目标评论ID:', notification.commentId);
-          const success = await prepareDetailCard(postDetail, notification.commentId);
-
-          if (success) {
-            // 修改页面标题
-            const originalTitle = document.title
-            document.title = postDetail.title || '笔记详情'
-
-            // 使用History API添加历史记录并更新URL
-            const newUrl = `/post?id=${notification.target_id}`
-            window.history.pushState(
-              {
-                previousUrl: window.location.pathname + window.location.search,
-                showDetailCard: true,
-                postId: notification.target_id,
-                originalTitle: originalTitle
-              },
-              postDetail.title || '笔记详情',
-              newUrl
-            )
-          }
+          targetCommentId.value = notification.commentId;
         } else {
-          // 非评论通知，直接显示DetailCard
-          selectedPost.value = postDetail;
           targetCommentId.value = null;
-          showDetailCard.value = true;
-
-          // 修改页面标题
-          const originalTitle = document.title
-          document.title = postDetail.title || '笔记详情'
-
-          // 使用History API添加历史记录并更新URL
-          const newUrl = `/post?id=${notification.target_id}`
-          window.history.pushState(
-            {
-              previousUrl: window.location.pathname + window.location.search,
-              showDetailCard: true,
-              postId: notification.target_id,
-              originalTitle: originalTitle
-            },
-            postDetail.title || '笔记详情',
-            newUrl
-          )
         }
+
+        showDetailCard.value = true;
+
+        // 修改页面标题
+        const originalTitle = document.title
+        document.title = postDetail.title || '笔记详情'
+
+        // 使用History API添加历史记录并更新URL
+        const newUrl = `/post?id=${notification.target_id}`
+        window.history.pushState(
+          {
+            previousUrl: window.location.pathname + window.location.search,
+            showDetailCard: true,
+            postId: notification.target_id,
+            originalTitle: originalTitle
+          },
+          postDetail.title || '笔记详情',
+          newUrl
+        )
       } else {
         console.error('获取笔记详情失败: 笔记不存在');
       }
@@ -727,6 +629,7 @@ const onCommentClick = async (notification) => {
 const closeDetailCard = () => {
   showDetailCard.value = false;
   selectedPost.value = null;
+  targetCommentId.value = null;
 
   // 恢复原始页面标题
   if (window.history.state && window.history.state.originalTitle) {
@@ -1513,8 +1416,8 @@ watch(isLoggedIn, async (newValue, oldValue) => {
     </div>
   </div>
 
-  <DetailCard v-if="showDetailCard && selectedPost" :item="selectedPost" :targetCommentId="targetCommentId"
-    @close="closeDetailCard" />
+  <DetailCard v-if="showDetailCard && selectedPost" :item="selectedPost"
+          :target-comment-id="targetCommentId" :from-notification="true" @close="closeDetailCard" />
 
 
   <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="showToast = false" />

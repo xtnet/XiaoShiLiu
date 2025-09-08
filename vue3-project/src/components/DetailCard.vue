@@ -2073,7 +2073,7 @@ const onViewerContainerClick = (event) => {
   height: calc(100vh - 100px);
   max-height: 800px;
   margin: 0 auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   position: relative;
   display: flex;
