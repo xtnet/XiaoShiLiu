@@ -411,24 +411,76 @@ onMounted(() => {
   border-radius: 2px;
 }
 
-/* 移动端适配 */
+/* 移动端适配 - 全屏显示 */
 @media (max-width: 768px) {
   .about-modal {
-    width: 95%;
-    max-height: 95vh;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    transform: scale(1);
+  }
+
+  .about-modal.scale-in {
+    transform: scale(1);
+  }
+
+  .close-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 2001;
+    background: transparent;
+    color: var(--text-color-secondary);
+    width: 36px;
+    height: 36px;
+  }
+
+  .close-btn:hover {
+    background: rgba(144, 144, 144, 0.292);
+    transform: scale(1);
   }
 
   .about-header {
-    padding: 20px 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    height: calc(72px + constant(safe-area-inset-top));
+    height: calc(72px + env(safe-area-inset-top));
+    padding: 24px 32px;
+    padding-left: 60px;
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    background: var(--bg-color-primary);
+    border-bottom: 1px solid var(--border-color-primary);
+    border-radius: 0;
   }
 
   .about-content {
-    padding: 24px 20px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: calc(100px + constant(safe-area-inset-top));
+    padding-top: calc(100px + env(safe-area-inset-top));
+    padding-bottom: calc(32px + constant(safe-area-inset-bottom));
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 100vw;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    touch-action: auto;
+    overscroll-behavior: contain;
   }
 
   .logo-section {
-    flex-direction: column;
+    flex-direction: row;
+    padding-top: 12px;
     gap: 12px;
+    margin-bottom: -1px;
   }
 
   .about-title {
