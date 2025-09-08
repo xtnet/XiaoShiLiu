@@ -1214,8 +1214,8 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       </div>
                     </div>
                   </div>
-                  <div class="post-thumbnail">
-                    <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" @click="onUserClick(item.id, $event)">{{ item.username }}/>
+                  <div class="post-thumbnail" @click="onImageClick(item)">
+                    <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" />
                   </div>
                 </div>
               </div>
@@ -1251,7 +1251,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                     </div>
                     <div class="notification-text" @click.stop="onImageClick(item)">点击查看笔记详情</div>
                   </div>
-                  <div class="post-thumbnail">
+                  <div class="post-thumbnail" @click="onImageClick(item)">
                     <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" />
                   </div>
                 </div>
@@ -1289,7 +1289,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                     </div>
                     <div class="notification-text" @click.stop="onImageClick(item)">点击查看笔记详情</div>
                   </div>
-                  <div class="post-thumbnail">
+                  <div class="post-thumbnail" @click="onImageClick(item)">
                     <img v-img-lazy="item.postImage" alt="笔记图片" class="lazy-image" @error="handleImageError" />
                   </div>
                 </div>
