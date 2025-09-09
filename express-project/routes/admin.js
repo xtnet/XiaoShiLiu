@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants')
-const { pool } = require('../config/database')
+const { pool } = require('../config/config')
 const { createCrudHandlers } = require('../middleware/crudFactory')
 const { recordExists } = require('../utils/dbHelper')
 const { adminAuth, uploadBase64ToImageHost } = require('../utils/uploadHelper')
@@ -873,7 +873,7 @@ const likesHandlers = createCrudHandlers(likesCrudConfig)
 // 临时测试接口 - 检查用户数据
 router.get('/test-users', adminAuth, async (req, res) => {
   try {
-    const { pool } = require('../config/database')
+    const { pool } = require('../config/config')
     const [users] = await pool.execute(
       'SELECT id, user_id, nickname FROM users WHERE id IN (SELECT DISTINCT user_id FROM likes LIMIT 10)'
     )

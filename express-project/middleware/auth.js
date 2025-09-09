@@ -1,5 +1,5 @@
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
-const { pool } = require('../config/database');
+const { pool } = require('../config/config');
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 
 /**

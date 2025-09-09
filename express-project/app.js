@@ -7,6 +7,8 @@
  * @version v1.1.2
  * @license GPLv3
  */
+// 加载环境变量
+require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
@@ -46,6 +48,9 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));  // 显式处理OPTIONS请求
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 静态文件服务 - 提供uploads目录的文件访问
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 健康检查路由
 app.get('/api/health', (req, res) => {

@@ -115,10 +115,66 @@ chmod +x deploy.sh
 
 ### 环境变量配置
 
-项目使用 `.env` 文件进行配置，主要配置项：
+项目使用 `.env` 文件进行配置，前后端分别有独立的环境配置：
+
+#### 后端环境变量 (express-project/.env)
 
 ```env
+# 服务器配置
+PORT=3001
+NODE_ENV=development
+
+# JWT配置
+JWT_SECRET=xiaoshiliu_secret_key_2025
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
 # 数据库配置
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# 上传配置
+UPLOAD_MAX_SIZE=50mb
+# 上传策略: local(本地存储) 或 imagehost(第三方图床)
+UPLOAD_STRATEGY=local
+
+# 本地存储配置
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# 第三方图床配置
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+
+# API配置
+API_BASE_URL=http://localhost:3001
+
+# CORS配置
+CORS_ORIGIN=http://localhost:5173
+```
+
+#### 前端环境变量 (vue3-project/.env)
+
+```env
+# API基础URL配置
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# 是否使用真实API
+VITE_USE_REAL_API=true
+
+# 应用标题
+VITE_APP_TITLE=小石榴图文社区
+```
+
+#### Docker环境变量说明
+
+Docker部署时，环境变量通过 `docker-compose.yml` 配置：
+
+```env
+# 数据库配置（Docker环境）
 DB_HOST=mysql
 DB_USER=xiaoshiliu_user
 DB_PASSWORD=123456
@@ -130,6 +186,7 @@ JWT_EXPIRES_IN=7d
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
+UPLOAD_STRATEGY=local
 
 # API配置
 API_BASE_URL=http://localhost:3001

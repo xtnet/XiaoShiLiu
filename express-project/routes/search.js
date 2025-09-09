@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
-const { pool } = require('../config/database');
+const { pool } = require('../config/config');
 const { optionalAuth } = require('../middleware/auth');
 
 // 搜索（通用搜索接口）

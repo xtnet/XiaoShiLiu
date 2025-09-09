@@ -1,7 +1,7 @@
 /**
  * 通用数据库操作工具
  */
-const { pool } = require('../config/database')
+const { pool } = require('../config/config')
 
 /**
  * 检查记录是否存在

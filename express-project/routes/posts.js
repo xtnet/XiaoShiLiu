@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
-const { pool } = require('../config/database');
+const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const { uploadBase64ToImageHost } = require('../utils/uploadHelper');
 const NotificationHelper = require('../utils/notificationHelper');

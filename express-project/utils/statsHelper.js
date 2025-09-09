@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const { pool } = require('../config/config');
 
 /**
  * 获取表的记录总数

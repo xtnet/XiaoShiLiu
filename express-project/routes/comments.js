@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
-const { pool } = require('../config/database');
+const { pool } = require('../config/config');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');

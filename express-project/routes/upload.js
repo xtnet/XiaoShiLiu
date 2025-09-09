@@ -3,7 +3,7 @@ const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
-const { uploadToImageHost, uploadBase64ToImageHost } = require('../utils/uploadHelper');
+const { uploadFile, uploadBase64 } = require('../utils/uploadHelper');
 
 // 配置 multer 内存存储（用于云端图床）
 const storage = multer.memoryStorage();
@@ -34,8 +34,8 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有上传文件' });
     }
 
-    // 直接使用图床上传函数（传入buffer数据）
-    const result = await uploadToImageHost(
+    // 使用统一上传函数（根据配置选择策略）
+    const result = await uploadFile(
       req.file.buffer,
       req.file.originalname,
       req.file.mimetype
@@ -73,7 +73,7 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
     const uploadResults = [];
     
     for (const file of req.files) {
-      const result = await uploadToImageHost(
+      const result = await uploadFile(
         file.buffer,
         file.originalname,
         file.mimetype
@@ -121,8 +121,8 @@ router.post('/base64', authenticateToken, async (req, res) => {
     for (const base64Data of images) {
       processedCount++;
 
-      // 使用通用上传函数
-      const result = await uploadBase64ToImageHost(base64Data);
+      // 使用统一上传函数
+      const result = await uploadBase64(base64Data);
 
       if (result.success) {
         uploadResults.push(result.url);

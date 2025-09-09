@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
+const { pool } = require('../config/config');
 const { success, error } = require('../utils/responseHelper');
 const { authenticateToken } = require('../middleware/auth');
 const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
