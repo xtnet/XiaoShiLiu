@@ -12,6 +12,7 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import UserPersonalityTags from './components/UserPersonalityTags.vue'
 import MentionText from '@/components/mention/MentionText.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,6 +63,10 @@ const userStats = ref({
 
 // 关注状态
 const followStatus = ref(false)
+
+// 图片预览
+const showImageViewer = ref(false)
+const currentImageUrl = ref('')
 
 // 判断是否是当前用户
 const isCurrentUser = computed(() => {
@@ -202,6 +207,18 @@ function handleAvatarError(event) {
   })
 }
 
+// 点击头像预览
+const previewAvatar = () => {
+  console.log('点击头像预览 - 开始')
+  console.log('userInfo.value:', userInfo.value)
+  const avatarUrl = userInfo.value.avatar || defaultAvatar
+  console.log('avatarUrl:', avatarUrl)
+  currentImageUrl.value = avatarUrl
+  showImageViewer.value = true
+  console.log('showImageViewer设置为true:', showImageViewer.value)
+  console.log('currentImageUrl设置为:', currentImageUrl.value)
+}
+
 // 监听路由参数变化
 watch(() => route.params.userId, (newUserId) => {
   if (newUserId) {
@@ -241,7 +258,7 @@ onMounted(async () => {
     <div class="user-info" v-if="userInfo.nickname">
       <div class="basic-info">
         <img :src="userInfo.avatar || defaultAvatar" :alt="userInfo.nickname || '用户头像'" class="avatar"
-          @error="handleAvatarError">
+          @click="previewAvatar" @error="handleAvatarError">
         <div class="user-basic">
           <div class="user-nickname">{{ userInfo?.nickname || '用户' }}</div>
           <div class="user-content">
@@ -331,6 +348,14 @@ onMounted(async () => {
 
 
     <BackToTopButton />
+    
+    <!-- ImageViewer -->
+    <ImageViewer 
+      :visible="showImageViewer" 
+      :images="[currentImageUrl]" 
+      :initial-index="0" 
+      @close="showImageViewer = false" 
+    />
   </div>
 </template>
 
@@ -389,7 +414,7 @@ onMounted(async () => {
   height: 72px;
   border-radius: 50%;
   border: 1px solid var(--border-color-primary);
-  transition: border-color 0.2s ease;
+  cursor: pointer;
 }
 
 .user-basic {

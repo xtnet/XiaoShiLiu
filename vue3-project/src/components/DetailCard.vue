@@ -324,93 +324,19 @@
         <EmojiPicker @select="handleEmojiSelect" />
       </div>
     </div>
-
     <MentionModal :visible="showMentionPanel" @close="closeMentionPanel" @select="handleMentionSelect" />
 
-    <!-- 图片上传模态框 -->
     <!-- 图片上传模态框 -->
     <ImageUploadModal :visible="showImageUpload" :model-value="uploadedImages" @close="closeImageUpload"
       @confirm="handleImageUploadConfirm" @update:model-value="handleImageUploadChange" />
 
-
     <!-- 帖子图片查看器 -->
-    <Transition name="image-viewer" appear>
-      <div v-if="showImageViewer" class="image-viewer-overlay" @click="closeImageViewer">
-        <div class="image-viewer-container" @click.stop="onViewerContainerClick">
-
-          <button class="image-viewer-close" @click="closeImageViewer">
-            <SvgIcon name="close" width="24" height="24" />
-          </button>
-
-
-          <div v-if="hasMultipleImages" class="image-viewer-counter">
-            {{ currentImageIndex + 1 }}/{{ imageList.length }}
-          </div>
-
-
-          <div class="image-viewer-content">
-            <div class="image-viewer-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
-              @touchstart="handleViewerTouchStart" @touchmove="handleViewerTouchMove" @touchend="handleViewerTouchEnd">
-              <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="props.item.title || '图片'"
-                class="viewer-image" />
-            </div>
-          </div>
-
-
-          <div v-if="hasMultipleImages" class="image-viewer-nav">
-            <button class="viewer-nav-btn viewer-prev-btn" @click="prevImageInViewer"
-              :disabled="currentImageIndex === 0" v-show="currentImageIndex > 0">
-              <SvgIcon name="left" width="24" height="24" />
-            </button>
-
-            <button class="viewer-nav-btn viewer-next-btn" @click="nextImageInViewer"
-              :disabled="currentImageIndex === imageList.length - 1" v-show="currentImageIndex < imageList.length - 1">
-              <SvgIcon name="right" width="24" height="24" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <ImageViewer :visible="showImageViewer" :images="imageList" :initial-index="currentImageIndex" image-type="post"
+      @close="closeImageViewer" @change="handleImageIndexChange" />
 
     <!-- 评论图片查看器 -->
-    <Transition name="comment-image-viewer" appear>
-      <div v-if="showCommentImageViewer" class="comment-image-viewer-overlay" @click="closeCommentImageViewer">
-        <div class="comment-image-viewer-container" @click.stop="onViewerContainerClick">
-
-          <button class="image-viewer-close" @click="closeCommentImageViewer">
-            <SvgIcon name="close" width="24" height="24" />
-          </button>
-
-
-          <div v-if="commentHasMultipleImages" class="image-viewer-counter">
-            {{ currentCommentImageIndex + 1 }}/{{ commentImages.length }}
-          </div>
-
-
-          <div class="image-viewer-content">
-            <div class="image-viewer-slider" :style="{ transform: `translateX(-${currentCommentImageIndex * 100}%)` }"
-              @touchstart="handleViewerTouchStart" @touchmove="handleViewerTouchMove" @touchend="handleViewerTouchEnd">
-              <img v-for="(image, index) in commentImages" :key="index" :src="image" :alt="'评论图片'"
-                class="viewer-image" />
-            </div>
-          </div>
-
-
-          <div v-if="commentHasMultipleImages" class="image-viewer-nav">
-            <button class="viewer-nav-btn viewer-prev-btn" @click="prevCommentImageInViewer"
-              :disabled="currentCommentImageIndex === 0" v-show="currentCommentImageIndex > 0">
-              <SvgIcon name="left" width="24" height="24" />
-            </button>
-
-            <button class="viewer-nav-btn viewer-next-btn" @click="nextCommentImageInViewer"
-              :disabled="currentCommentImageIndex === commentImages.length - 1"
-              v-show="currentCommentImageIndex < commentImages.length - 1">
-              <SvgIcon name="right" width="24" height="24" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <ImageViewer :visible="showCommentImageViewer" :images="commentImages" :initial-index="currentCommentImageIndex"
+      image-type="comment" @close="closeCommentImageViewer" @change="handleCommentImageIndexChange" />
   </div>
 </template>
 
@@ -427,6 +353,7 @@ import MentionText from './mention/MentionText.vue'
 import CommentImage from './commentImage/CommentImage.vue'
 import ContentEditableInput from './ContentEditableInput.vue'
 import ImageUploadModal from './commentImage/ImageUploadModal.vue'
+import ImageViewer from './ImageViewer.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
 import { useLikeStore } from '@/stores/like.js'
@@ -477,8 +404,6 @@ const commentLikeStore = useCommentLikeStore()
 const authStore = useAuthStore()
 
 const { lock, unlock } = useScrollLock()
-const { lock: lockImageViewer, unlock: unlockImageViewer } = useScrollLock()
-const { lock: lockCommentImageViewer, unlock: unlockCommentImageViewer } = useScrollLock()
 
 const commentInput = ref('')
 const isLiked = computed(() => likeStore.getPostLikeState(props.item.id)?.liked || false)
@@ -500,6 +425,7 @@ const showImageViewer = ref(false) // 图片查看器状态
 const showCommentImageViewer = ref(false)
 const commentImages = ref([])
 const currentCommentImageIndex = ref(0)
+const isViewingCommentImages = ref(false) // 标识当前是否在查看评论图片
 
 // 用于mention功能的用户数据（实际使用中应该从 API 获取）
 const mentionUsers = ref([])
@@ -734,6 +660,59 @@ const loadMoreComments = async () => {
   }
 }
 
+// 定位新发出的评论
+const locateNewComment = async (commentId, replyingToInfo) => {
+  if (!commentId) return
+
+  try {
+    // 如果是回复评论，需要确保父评论的回复列表展开
+    if (replyingToInfo && replyingToInfo.commentId) {
+      // 查找顶级父评论ID来展开回复列表
+      let topLevelParentId = null
+      
+      // 首先检查是否直接回复顶级评论
+      const directParent = comments.value.find(c => c.id === replyingToInfo.commentId)
+      if (directParent) {
+        topLevelParentId = replyingToInfo.commentId
+      } else {
+        // 如果不是直接回复顶级评论，说明是回复子评论，需要找到顶级父评论
+        for (const comment of comments.value) {
+          if (comment.replies && comment.replies.some(reply => reply.id === replyingToInfo.id)) {
+            topLevelParentId = comment.id
+            break
+          }
+        }
+      }
+      
+      // 展开顶级父评论的回复列表
+      if (topLevelParentId) {
+        expandedReplies.value.add(topLevelParentId)
+      }
+    }
+
+    await nextTick()
+
+    // 查找新评论元素
+    const targetId = String(commentId)
+    let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
+
+    if (commentElement) {
+      // 添加高亮样式
+      commentElement.classList.add('comment-highlight')
+
+      // 滚动到新评论
+      commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // 3秒后移除高亮样式
+      setTimeout(() => {
+        commentElement.classList.remove('comment-highlight')
+      }, 3000)
+    }
+  } catch (error) {
+    console.error('定位新评论失败:', error)
+  }
+}
+
 // 定位目标评论
 const locateTargetComment = async () => {
   console.log('locateTargetComment被调用，targetCommentId:', props.targetCommentId)
@@ -801,14 +780,9 @@ const locateTargetComment = async () => {
     if (targetComment) {
       await nextTick()
 
-      // 优化选择器，支持子评论定位
+      // 查找目标评论元素
       const targetId = String(props.targetCommentId)
       let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
-
-      // 如果没找到，尝试在子评论中查找
-      if (!commentElement) {
-        commentElement = document.querySelector(`.reply-item [data-comment-id="${targetId}"]`)
-      }
 
       console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
       if (commentElement) {
@@ -1782,12 +1756,6 @@ const nextImage = () => {
 const openImageViewer = () => {
   showImageViewer.value = true
   isViewingCommentImages.value = false
-  // 重置为当前帖子图片的索引，确保显示正确的图片
-  // currentImageIndex在帖子图片切换时已经设置好了
-  // 防止背景滚动
-  lockImageViewer()
-  // 添加键盘事件监听
-  document.addEventListener('keydown', handleViewerKeydown)
 }
 
 // 处理评论图片点击事件
@@ -1795,10 +1763,6 @@ const handleCommentImageClick = ({ images, index }) => {
   commentImages.value = images
   currentCommentImageIndex.value = index
   showCommentImageViewer.value = true
-  // 防止背景滚动
-  lockCommentImageViewer()
-  // 添加键盘事件监听
-  document.addEventListener('keydown', handleCommentViewerKeydown)
 }
 
 // 关闭评论图片查看器
@@ -1806,87 +1770,29 @@ const closeCommentImageViewer = () => {
   showCommentImageViewer.value = false
   commentImages.value = []
   currentCommentImageIndex.value = 0
-  // 恢复滚动
-  unlockCommentImageViewer()
-  // 移除键盘事件监听
-  document.removeEventListener('keydown', handleCommentViewerKeydown)
 }
 
-// 评论图片查看器键盘事件处理
-const handleCommentViewerKeydown = (event) => {
-  if (!showCommentImageViewer.value) return
-
-  switch (event.key) {
-    case 'Escape':
-      closeCommentImageViewer()
-      break
-    case 'ArrowLeft':
-      prevCommentImageInViewer()
-      break
-    case 'ArrowRight':
-      nextCommentImageInViewer()
-      break
-  }
+// 处理帖子图片查看器索引变化
+const handleImageIndexChange = (index) => {
+  currentImageIndex.value = index
 }
 
-// 评论图片查看器导航方法
-const prevCommentImageInViewer = () => {
-  if (currentCommentImageIndex.value > 0) {
-    currentCommentImageIndex.value--
-  }
+// 处理评论图片查看器索引变化
+const handleCommentImageIndexChange = (index) => {
+  currentCommentImageIndex.value = index
 }
 
-const nextCommentImageInViewer = () => {
-  if (currentCommentImageIndex.value < commentImages.value.length - 1) {
-    currentCommentImageIndex.value++
-  }
-}
 
-const goToCommentImage = (index) => {
-  if (index >= 0 && index < commentImages.value.length) {
-    currentCommentImageIndex.value = index
-  }
-}
+
+
 
 const closeImageViewer = () => {
   showImageViewer.value = false
-  // 恢复滚动
-  unlockImageViewer()
-  // 移除键盘事件监听
-  document.removeEventListener('keydown', handleViewerKeydown)
 }
 
-// 图片查看器键盘事件处理
-const handleViewerKeydown = (event) => {
-  if (!showImageViewer.value) return
 
-  switch (event.key) {
-    case 'Escape':
-      event.preventDefault()
-      closeImageViewer()
-      break
-    case 'ArrowLeft':
-      event.preventDefault()
-      prevImageInViewer()
-      break
-    case 'ArrowRight':
-      event.preventDefault()
-      nextImageInViewer()
-      break
-  }
-}
 
-const prevImageInViewer = () => {
-  if (currentImageIndex.value > 0) {
-    currentImageIndex.value--
-  }
-}
 
-const nextImageInViewer = () => {
-  if (currentImageIndex.value < imageList.value.length - 1) {
-    currentImageIndex.value++
-  }
-}
 
 const preloadedImages = new Set()
 
@@ -2047,15 +1953,16 @@ const handleSendComment = async () => {
     const commentData = {
       post_id: props.item.id,
       content: finalContent,
-      parent_id: replyingTo.value ? replyingTo.value.commentId : null
+      parent_id: savedReplyingTo ? savedReplyingTo.commentId : null
     }
 
     const response = await commentApi.createComment(commentData)
 
     if (response.success) {
-      showMessage(replyingTo.value ? '回复成功' : '评论成功', 'success')
+      showMessage(savedReplyingTo ? '回复成功' : '评论成功', 'success')
 
-
+      // 获取新评论的ID
+      const newCommentId = response.data?.id
 
       // 清理图片缓存
       savedUploadedImages.forEach(img => {
@@ -2064,8 +1971,87 @@ const handleSendComment = async () => {
         }
       })
 
-      // 重新获取评论列表
-      await fetchComments()
+      // 如果有新评论ID，直接添加到评论列表并定位
+      if (newCommentId) {
+        // 构造包含图片的完整内容
+        const imageUrls = savedUploadedImages
+          .filter(img => img.uploaded && img.url)
+          .map(img => img.url)
+
+        let finalContent = savedInput.trim()
+        if (imageUrls.length > 0) {
+          const imageHtml = imageUrls.map(url => `<img src="${url}" alt="评论图片" class="comment-image" />`).join('')
+          finalContent = finalContent ? `${finalContent}${imageHtml}` : imageHtml
+        }
+
+        // 构造新评论对象
+        const newComment = {
+          id: newCommentId,
+          user_id: userStore.userInfo?.user_id,
+          user_auto_id: userStore.userInfo?.id,
+          username: userStore.userInfo?.nickname || '匿名用户',
+          avatar: userStore.userInfo?.avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+          content: finalContent,
+          time: '刚刚',
+          location: userStore.userInfo?.location || '',
+          likeCount: 0,
+          isLiked: false,
+          parent_id: savedReplyingTo?.id || null,
+          replies: [],
+          reply_count: 0,
+          isReply: !!savedReplyingTo,
+          replyTo: savedReplyingTo?.username
+        }
+
+        // 如果是回复评论，需要添加到对应父评论的replies数组中
+        if (savedReplyingTo) {
+          // 查找顶级父评论（可能是直接回复顶级评论，也可能是回复子评论）
+          let topLevelParent = null
+          
+          // 首先尝试在顶级评论中查找
+          topLevelParent = comments.value.find(c => c.id === savedReplyingTo.commentId)
+          
+          // 如果没找到，可能是回复子评论，需要在所有评论的replies中查找
+          if (!topLevelParent) {
+            for (const comment of comments.value) {
+              if (comment.replies && comment.replies.some(reply => reply.id === savedReplyingTo.id)) {
+                topLevelParent = comment
+                break
+              }
+            }
+          }
+          
+          if (topLevelParent) {
+            // 找到顶级父评论，添加回复
+            topLevelParent.replies.push(newComment)
+            topLevelParent.reply_count = (topLevelParent.reply_count || 0) + 1
+            // 更新commentStore中的数据以保持一致性
+            const commentData = commentStore.getComments(props.item.id)
+            commentStore.updateComments(props.item.id, {
+              ...commentData,
+              total: (commentData.total || 0) + 1
+            })
+          } else {
+            // 父评论不在当前页面中（可能在其他分页），只更新总数不重新加载
+            const commentData = commentStore.getComments(props.item.id)
+            commentStore.updateComments(props.item.id, {
+              ...commentData,
+              total: (commentData.total || 0) + 1
+            })
+          }
+        } else {
+          // 如果是顶级评论，直接添加到评论列表
+          commentStore.addComment(props.item.id, newComment)
+        }
+
+        // 使用setTimeout确保DOM完全更新后定位
+        setTimeout(async () => {
+          await locateNewComment(newCommentId, savedReplyingTo)
+        }, 100)
+      } else {
+        // 没有新评论ID时，刷新评论列表
+        await fetchComments()
+      }
     } else {
       // 发送失败，清理图片缓存并恢复之前的状态
       savedUploadedImages.forEach(img => {
@@ -2257,7 +2243,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   // 移除键盘事件监听器
   document.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('keydown', handleViewerKeydown)
   // DetailCard内部点击事件通过模板处理，无需手动移除
 })
 
@@ -2329,44 +2314,7 @@ const handleTouchEnd = (e) => {
   touchStartY.value = 0
 }
 
-// 图片查看器触摸事件处理
-const handleViewerTouchStart = (e) => {
-  touchStartX.value = e.touches[0].clientX
-  touchStartY.value = e.touches[0].clientY
-}
 
-const handleViewerTouchMove = (e) => {
-  const touchMoveX = e.touches[0].clientX
-  const touchMoveY = e.touches[0].clientY
-
-  const deltaX = Math.abs(touchMoveX - touchStartX.value)
-  const deltaY = Math.abs(touchMoveY - touchStartY.value)
-
-  // 仅当"水平滑动幅度 > 垂直滑动幅度 + 阈值"时，阻止默认行为（避免影响页面垂直滚动）
-  if (deltaX > deltaY && deltaX > SWIPE_THRESHOLD) {
-    e.preventDefault()
-  }
-}
-
-const handleViewerTouchEnd = (e) => {
-  touchEndX.value = e.changedTouches[0].clientX
-  touchEndY.value = e.changedTouches[0].clientY
-
-  const deltaX = touchEndX.value - touchStartX.value
-  const deltaY = touchEndY.value - touchStartY.value
-
-  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-    if (deltaX > 0) {
-      prevImageInViewer()
-    } else {
-      nextImageInViewer()
-    }
-  }
-
-  // 重置记录
-  touchStartX.value = 0
-  touchStartY.value = 0
-}
 
 const goToImage = (index) => {
   if (index >= 0 && index < imageList.value.length) {
@@ -2381,39 +2329,7 @@ function handleAvatarError(event) {
   })
 }
 
-// 当点击图片查看器容器的任意非控制区域时关闭预览
-const onViewerContainerClick = (event) => {
-  const target = event.target
-  // 若点击在翻页按钮或关闭按钮上，保留原有行为
-  if (target.closest && (target.closest('.viewer-nav-btn') || target.closest('.image-viewer-close'))) {
-    return
-  }
 
-  // 检查是否点击在翻页按钮的安全区域内
-  const navButtons = document.querySelectorAll('.viewer-nav-btn')
-  for (const button of navButtons) {
-    const rect = button.getBoundingClientRect()
-    const safeZone = 60 // 安全区域半径
-    const buttonCenterX = rect.left + rect.width / 2
-    const buttonCenterY = rect.top + rect.height / 2
-    const distance = Math.sqrt(
-      Math.pow(event.clientX - buttonCenterX, 2) +
-      Math.pow(event.clientY - buttonCenterY, 2)
-    )
-
-    // 如果点击在安全区域内，不执行关闭操作
-    if (distance <= safeZone) {
-      return
-    }
-  }
-
-  // 根据当前显示的查看器类型调用对应的关闭方法
-  if (showCommentImageViewer.value) {
-    closeCommentImageViewer()
-  } else if (showImageViewer.value) {
-    closeImageViewer()
-  }
-}
 </script>
 
 <style scoped>
@@ -2593,17 +2509,11 @@ const onViewerContainerClick = (event) => {
   height: 100%;
   object-fit: contain;
   background-color: var(--bg-color-secondary);
+  cursor: zoom-in;
 }
 
 /* 图片悬停放大镜效果 */
-.image-zoomable {
-  cursor: zoom-in;
-  transition: none;
-}
 
-.image-zoomable:hover {
-  cursor: zoom-in;
-}
 
 .image-controls {
   position: absolute;

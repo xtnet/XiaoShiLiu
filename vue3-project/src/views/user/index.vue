@@ -12,6 +12,7 @@ import UserPersonalityTags from './components/UserPersonalityTags.vue'
 import MentionText from '@/components/mention/MentionText.vue'
 import { userApi } from '@/api/index.js'
 import BackToTopButton from '@/components/BackToTopButton.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
 
 const router = useRouter()
 const navigationStore = useNavigationStore()
@@ -32,6 +33,10 @@ const userStats = ref({
 // 编辑资料模态框
 const showEditProfileModal = ref(false)
 
+// 图片预览
+const showImageViewer = ref(false)
+const currentImageUrl = ref('')
+
 // 打开编辑资料模态框
 const openEditProfileModal = () => {
   showEditProfileModal.value = true
@@ -42,9 +47,16 @@ const closeEditProfileModal = () => {
   showEditProfileModal.value = false
 }
 
-// 点击头像打开编辑资料模态框
-const openAvatarCropModal = () => {
-  showEditProfileModal.value = true
+// 点击头像预览
+const previewAvatar = () => {
+  console.log('点击头像预览 - 开始')
+  console.log('userStore.userInfo:', userStore.userInfo)
+  const avatarUrl = userStore.userInfo?.avatar || defaultAvatar
+  console.log('avatarUrl:', avatarUrl)
+  currentImageUrl.value = avatarUrl
+  showImageViewer.value = true
+  console.log('showImageViewer设置为true:', showImageViewer.value)
+  console.log('currentImageUrl设置为:', currentImageUrl.value)
 }
 
 // 处理头像加载失败
@@ -302,7 +314,7 @@ function handleCollect(data) {
     <div class="user-info" v-if="userStore.isLoggedIn">
       <div class="basic-info">
         <img :src="userStore.userInfo?.avatar || defaultAvatar" :alt="userStore.userInfo?.nickname || '用户头像'"
-          class="avatar" @click="openAvatarCropModal" @error="handleAvatarError">
+          class="avatar" @click="previewAvatar" @error="handleAvatarError">
         <div class="user-basic">
           <div class="user-nickname">{{ userStore.userInfo?.nickname || '用户' }}</div>
           <div class="user-content">
@@ -395,10 +407,18 @@ function handleCollect(data) {
     </div>
 
     <BackToTopButton />
-
-
-    <EditProfileModal :visible="showEditProfileModal" :user-info="userStore.userInfo"
-      @update:visible="showEditProfileModal = $event" @save="handleProfileSaved" />
+     
+     <!-- EditProfileModal -->
+     <EditProfileModal :visible="showEditProfileModal" :user-info="userStore.userInfo"
+       @update:visible="showEditProfileModal = $event" @save="handleProfileSaved" />
+    
+    <!-- ImageViewer -->
+    <ImageViewer 
+      :visible="showImageViewer" 
+      :images="[currentImageUrl]" 
+      :initial-index="0" 
+      @close="showImageViewer = false" 
+    />
   </div>
 </template>
 
@@ -493,7 +513,6 @@ function handleCollect(data) {
   border-radius: 50%;
   border: 1px solid var(--border-color-primary);
   cursor: pointer;
-  transition: border-color 0.2s ease;
 }
 
 .user-basic {
