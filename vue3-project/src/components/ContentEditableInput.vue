@@ -35,7 +35,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'keydown', 'mention'])
+const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'keydown', 'mention', 'paste-image'])
 
 const inputRef = ref(null)
 const isUserTyping = ref(false)
@@ -304,6 +304,24 @@ const handleKeydown = (event) => {
 const handlePaste = (event) => {
   event.preventDefault()
   const clipboardData = event.clipboardData || window.clipboardData
+  
+  // 检查是否有图片文件
+  const items = clipboardData.items
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile()
+        if (file) {
+          // 发送图片文件给父组件处理
+          emit('paste-image', file)
+          return
+        }
+      }
+    }
+  }
+  
+  // 处理文本粘贴
   const pastedText = clipboardData.getData('text/plain')
   if (!pastedText) return
 

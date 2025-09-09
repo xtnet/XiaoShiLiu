@@ -250,7 +250,7 @@
                   <ContentEditableInput ref="focusedInput" v-model="commentInput" :input-class="'comment-input'"
                     :placeholder="replyingTo ? `回复 ${replyingTo.username}：` : '说点什么...'" :enable-mention="true"
                     :mention-users="mentionUsers" @focus="handleInputFocus" @keydown="handleInputKeydown"
-                    @mention="handleMentionInput" />
+                    @mention="handleMentionInput" @paste-image="handlePasteImage" />
                 </div>
 
 
@@ -740,85 +740,101 @@ const locateTargetComment = async () => {
     return
   }
 
-  // 首先在当前已加载的评论中查找（支持递归搜索子评论）
-  const findCommentInCurrent = () => {
-    const currentComments = comments.value || []
+  // 在移动端锁定页面滚动，避免定位过程中的滚动冲突
+  const isMobile = window.innerWidth <= 768
+  if (isMobile) {
+    lock()
+  }
 
-    // 递归搜索函数，同时检查是否需要展开回复
-    const searchComments = (commentList, parentCommentId = null) => {
-      for (const comment of commentList) {
-        // 检查当前评论是否为目标
-        if (comment.id == props.targetCommentId) {
-          // 如果目标评论是回复，且父评论有折叠的回复，需要展开
-          if (parentCommentId && comment.replies && comment.replies.length > 2) {
-            expandedReplies.value.add(parentCommentId)
-          }
-          return comment
-        }
-        // 检查子评论（如果有）
-        if (comment.replies && comment.replies.length > 0) {
-          const foundInReplies = searchComments(comment.replies, comment.id)
-          if (foundInReplies) {
-            // 如果在子评论中找到目标，且该评论有超过2个回复，需要展开
-            if (comment.replies.length > 2) {
-              expandedReplies.value.add(comment.id)
+  try {
+    // 首先在当前已加载的评论中查找（支持递归搜索子评论）
+    const findCommentInCurrent = () => {
+      const currentComments = comments.value || []
+
+      // 递归搜索函数，同时检查是否需要展开回复
+      const searchComments = (commentList, parentCommentId = null) => {
+        for (const comment of commentList) {
+          // 检查当前评论是否为目标
+          if (comment.id == props.targetCommentId) {
+            // 如果目标评论是回复，且父评论有折叠的回复，需要展开
+            if (parentCommentId && comment.replies && comment.replies.length > 2) {
+              expandedReplies.value.add(parentCommentId)
             }
-            return foundInReplies
+            return comment
+          }
+          // 检查子评论（如果有）
+          if (comment.replies && comment.replies.length > 0) {
+            const foundInReplies = searchComments(comment.replies, comment.id)
+            if (foundInReplies) {
+              // 如果在子评论中找到目标，且该评论有超过2个回复，需要展开
+              if (comment.replies.length > 2) {
+                expandedReplies.value.add(comment.id)
+              }
+              return foundInReplies
+            }
           }
         }
+        return null
       }
-      return null
+
+      return searchComments(currentComments)
     }
 
-    return searchComments(currentComments)
-  }
+    let targetComment = findCommentInCurrent()
 
-  let targetComment = findCommentInCurrent()
+    // 如果在当前评论中没找到，需要加载更多评论
+    if (!targetComment && hasMoreCommentsToShow.value) {
+      let maxAttempts = 10 // 最多尝试加载10页
+      let attempts = 0
 
-  // 如果在当前评论中没找到，需要加载更多评论
-  if (!targetComment && hasMoreCommentsToShow.value) {
-    let maxAttempts = 10 // 最多尝试加载10页
-    let attempts = 0
+      while (!targetComment && hasMoreCommentsToShow.value && attempts < maxAttempts) {
+        await loadMoreComments()
+        await nextTick()
+        targetComment = findCommentInCurrent()
+        attempts++
+      }
+    }
 
-    while (!targetComment && hasMoreCommentsToShow.value && attempts < maxAttempts) {
-      await loadMoreComments()
+    // 如果找到了目标评论，进行定位和高亮
+    if (targetComment) {
       await nextTick()
-      targetComment = findCommentInCurrent()
-      attempts++
-    }
-  }
 
-  // 如果找到了目标评论，进行定位和高亮
-  if (targetComment) {
-    await nextTick()
+      // 优化选择器，支持子评论定位
+      const targetId = String(props.targetCommentId)
+      let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
 
-    // 优化选择器，支持子评论定位
-    const targetId = String(props.targetCommentId)
-    let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
+      // 如果没找到，尝试在子评论中查找
+      if (!commentElement) {
+        commentElement = document.querySelector(`.reply-item [data-comment-id="${targetId}"]`)
+      }
 
-    // 如果没找到，尝试在子评论中查找
-    if (!commentElement) {
-      commentElement = document.querySelector(`.reply-item [data-comment-id="${targetId}"]`)
-    }
+      console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
+      if (commentElement) {
+        // 添加高亮样式
+        commentElement.classList.add('comment-highlight')
 
-    console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
-    if (commentElement) {
-      // 添加高亮样式
-      commentElement.classList.add('comment-highlight')
+        // 滚动到目标评论
+        commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
-      // 滚动到目标评论
-      commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-
-      // 3秒后移除高亮样式
-      setTimeout(() => {
-        commentElement.classList.remove('comment-highlight')
-      }, 3000)
-      console.log('评论定位成功')
+        // 3秒后移除高亮样式
+        setTimeout(() => {
+          commentElement.classList.remove('comment-highlight')
+        }, 3000)
+        console.log('评论定位成功')
+      } else {
+        console.log('未找到评论元素')
+      }
     } else {
-      console.log('未找到评论元素')
+      console.log('未找到目标评论')
     }
-  } else {
-    console.log('未找到目标评论')
+  } finally {
+    // 定位完成后，在移动端解锁页面滚动
+    if (isMobile) {
+      // 延迟解锁，确保滚动动画完成
+      setTimeout(() => {
+        unlock()
+      }, 1000)
+    }
   }
 }
 
@@ -1193,6 +1209,53 @@ const handleImageUploadConfirm = async (images) => {
 // 处理图片上传变化
 const handleImageUploadChange = (images) => {
   uploadedImages.value = images
+}
+
+// 处理粘贴图片
+const handlePasteImage = async (file) => {
+  try {
+    // 验证图片文件
+    const validation = imageUploadApi.validateImageFile(file)
+    if (!validation.valid) {
+      showMessage(validation.error, 'error')
+      return
+    }
+
+    // 创建图片预览
+    const preview = await imageUploadApi.createImagePreview(file)
+    
+    // 添加到上传图片列表（先显示预览）
+    const newImage = {
+      file: file,
+      preview: preview,
+      uploaded: false,
+      url: null
+    }
+    
+    uploadedImages.value.push(newImage)
+    showMessage('正在上传图片...', 'info')
+    
+    // 直接上传到图床
+    const uploadResult = await imageUploadApi.uploadImage(file)
+    if (uploadResult.success) {
+      // 更新图片状态为已上传
+      const imageIndex = uploadedImages.value.length - 1
+      uploadedImages.value[imageIndex].uploaded = true
+      uploadedImages.value[imageIndex].url = uploadResult.data.url
+      showMessage('图片上传成功', 'success')
+    } else {
+      // 上传失败，移除图片
+      uploadedImages.value.pop()
+      showMessage(uploadResult.message || '图片上传失败', 'error')
+    }
+  } catch (error) {
+    console.error('处理粘贴图片失败:', error)
+    // 如果有添加的图片，移除它
+    if (uploadedImages.value.length > 0) {
+      uploadedImages.value.pop()
+    }
+    showMessage('处理图片失败，请重试', 'error')
+  }
 }
 
 // 删除上传的图片

@@ -144,8 +144,7 @@ const handleActivityClick = (activity) => {
     const url = `${window.location.origin}/post?id=${activity.target_id}`
     window.open(url, '_blank')
   } else if (activity.type === 'comment_publish') {
-    // 评论类型活动，传递评论ID作为targetCommentId参数
-    const url = `${window.location.origin}/post?id=${activity.target_id}&targetCommentId=${activity.comment_id}`
+    const url = `${window.location.origin}/post?id=${activity.target_id}&targetCommentId=${activity.id}`
     window.open(url, '_blank')
   }
 }

@@ -1685,7 +1685,7 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
 
     newComments.forEach(comment => {
       activities.push({
-        id: `comment_${comment.id}`,
+        id: comment.id,
         type: 'comment_publish',
         user_id: comment.user_id,
         nickname: comment.nickname,
@@ -1694,7 +1694,6 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
         content: comment.content, // 原始评论内容，用于CommentImage组件渲染
         description: `${comment.nickname} 在《${comment.post_title}》中发表了评论`, 
         target_id: comment.post_id,
-        comment_id: comment.id, // 添加评论ID用于定位
         created_at: comment.created_at
       })
     })
