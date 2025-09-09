@@ -13,7 +13,7 @@
         <SvgIcon name="close" />
       </button>
 
-      <DetailCard :item="postData" :page-mode="true" />
+      <DetailCard :item="postData" :page-mode="true" :target-comment-id="targetCommentId" />
     </div>
   </div>
 </template>
@@ -30,6 +30,7 @@ const router = useRouter()
 
 const postData = ref(null)
 const loading = ref(true)
+const targetCommentId = ref(null)
 
 // 响应式显示返回主页按钮（只在移动端显示）
 const showBackButton = ref(false)
@@ -83,6 +84,8 @@ onMounted(() => {
 
   const postId = route.query.id
   if (postId) {
+    // 获取targetCommentId参数
+    targetCommentId.value = route.query.targetCommentId || null
     fetchPostDetail(postId)
   } else {
     router.replace({ name: 'not_found' })

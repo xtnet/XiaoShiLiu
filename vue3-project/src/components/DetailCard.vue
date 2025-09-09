@@ -149,7 +149,7 @@
                       </button>
                     </div>
                     <div class="comment-text">
-                      <CommentImage :content="comment.content" />
+                      <CommentImage :content="comment.content" @image-click="handleCommentImageClick" />
                     </div>
                     <span class="comment-time">{{ comment.time }} {{ comment.location }}</span>
                     <div class="comment-actions">
@@ -187,7 +187,7 @@
                           </div>
                           <div class="reply-text">
                             回复 <span class="reply-to">{{ reply.replyTo }}</span>：
-                            <CommentImage :content="reply.content" />
+                            <CommentImage :content="reply.content" @image-click="handleCommentImageClick" />
                           </div>
                           <span class="reply-time">{{ reply.time }} {{ reply.location }}</span>
                           <div class="reply-actions">
@@ -243,7 +243,7 @@
                         回复 <span class="reply-username">{{ replyingTo.username }}</span>
                       </div>
                       <div class="reply-second-line">
-                        <CommentImage :content="replyingTo.content" />
+                        <CommentImage :content="replyingTo.content" @image-click="handleCommentImageClick" />
                       </div>
                     </div>
                   </div>
@@ -338,6 +338,7 @@
     />
 
 
+    <!-- 帖子图片查看器 -->
     <Transition name="image-viewer" appear>
       <div v-if="showImageViewer" class="image-viewer-overlay" @click="closeImageViewer">
         <div class="image-viewer-container" @click.stop="onViewerContainerClick">
@@ -347,7 +348,7 @@
           </button>
 
 
-          <div v-if="imageList.length > 1" class="image-viewer-counter">
+          <div v-if="hasMultipleImages" class="image-viewer-counter">
             {{ currentImageIndex + 1 }}/{{ imageList.length }}
           </div>
 
@@ -361,7 +362,7 @@
           </div>
 
 
-          <div v-if="imageList.length > 1" class="image-viewer-nav">
+          <div v-if="hasMultipleImages" class="image-viewer-nav">
             <button class="viewer-nav-btn viewer-prev-btn" @click="prevImageInViewer"
               :disabled="currentImageIndex === 0" v-show="currentImageIndex > 0">
               <SvgIcon name="left" width="24" height="24" />
@@ -375,6 +376,45 @@
         </div>
       </div>
     </Transition>
+
+    <!-- 评论图片查看器 -->
+    <Transition name="comment-image-viewer" appear>
+      <div v-if="showCommentImageViewer" class="comment-image-viewer-overlay" @click="closeCommentImageViewer">
+        <div class="comment-image-viewer-container" @click.stop="onViewerContainerClick">
+
+          <button class="image-viewer-close" @click="closeCommentImageViewer">
+            <SvgIcon name="close" width="24" height="24" />
+          </button>
+
+
+          <div v-if="commentHasMultipleImages" class="image-viewer-counter">
+            {{ currentCommentImageIndex + 1 }}/{{ commentImages.length }}
+          </div>
+
+
+          <div class="image-viewer-content">
+            <div class="image-viewer-slider" :style="{ transform: `translateX(-${currentCommentImageIndex * 100}%)` }"
+              @touchstart="handleViewerTouchStart" @touchmove="handleViewerTouchMove" @touchend="handleViewerTouchEnd">
+              <img v-for="(image, index) in commentImages" :key="index" :src="image" :alt="'评论图片'"
+                class="viewer-image" />
+            </div>
+          </div>
+
+
+          <div v-if="commentHasMultipleImages" class="image-viewer-nav">
+            <button class="viewer-nav-btn viewer-prev-btn" @click="prevCommentImageInViewer"
+              :disabled="currentCommentImageIndex === 0" v-show="currentCommentImageIndex > 0">
+              <SvgIcon name="left" width="24" height="24" />
+            </button>
+
+            <button class="viewer-nav-btn viewer-next-btn" @click="nextCommentImageInViewer"
+              :disabled="currentCommentImageIndex === commentImages.length - 1" v-show="currentCommentImageIndex < commentImages.length - 1">
+              <SvgIcon name="right" width="24" height="24" />
+            </button>
+          </div>
+         </div>
+       </div>
+     </Transition>
   </div>
 </template>
 
@@ -442,6 +482,7 @@ const authStore = useAuthStore()
 
 const { lock, unlock } = useScrollLock()
 const { lock: lockImageViewer, unlock: unlockImageViewer } = useScrollLock()
+const { lock: lockCommentImageViewer, unlock: unlockCommentImageViewer } = useScrollLock()
 
 const commentInput = ref('')
 const isLiked = computed(() => likeStore.getPostLikeState(props.item.id)?.liked || false)
@@ -458,6 +499,11 @@ let lastScrollTop = 0
 const currentImageIndex = ref(0)
 const showImageControls = ref(false)
 const showImageViewer = ref(false) // 图片查看器状态
+
+// 评论图片查看器相关状态（完全独立）
+const showCommentImageViewer = ref(false)
+const commentImages = ref([])
+const currentCommentImageIndex = ref(0)
 
 // 用于mention功能的用户数据（实际使用中应该从 API 获取）
 const mentionUsers = ref([])
@@ -579,6 +625,11 @@ const imageList = computed(() => {
 })
 
 const hasMultipleImages = computed(() => imageList.value.length > 1)
+
+// 评论图片查看器是否有多张图片
+const commentHasMultipleImages = computed(() => {
+  return commentImages.value.length > 1
+})
 
 
 
@@ -1643,10 +1694,71 @@ const nextImage = () => {
 // 图片查看器相关方法
 const openImageViewer = () => {
   showImageViewer.value = true
+  isViewingCommentImages.value = false
+  // 重置为当前帖子图片的索引，确保显示正确的图片
+  // currentImageIndex在帖子图片切换时已经设置好了
   // 防止背景滚动
   lockImageViewer()
   // 添加键盘事件监听
   document.addEventListener('keydown', handleViewerKeydown)
+}
+
+// 处理评论图片点击事件
+const handleCommentImageClick = ({ images, index }) => {
+  commentImages.value = images
+  currentCommentImageIndex.value = index
+  showCommentImageViewer.value = true
+  // 防止背景滚动
+  lockCommentImageViewer()
+  // 添加键盘事件监听
+  document.addEventListener('keydown', handleCommentViewerKeydown)
+}
+
+// 关闭评论图片查看器
+const closeCommentImageViewer = () => {
+  showCommentImageViewer.value = false
+  commentImages.value = []
+  currentCommentImageIndex.value = 0
+  // 恢复滚动
+  unlockCommentImageViewer()
+  // 移除键盘事件监听
+  document.removeEventListener('keydown', handleCommentViewerKeydown)
+}
+
+// 评论图片查看器键盘事件处理
+const handleCommentViewerKeydown = (event) => {
+  if (!showCommentImageViewer.value) return
+
+  switch (event.key) {
+    case 'Escape':
+      closeCommentImageViewer()
+      break
+    case 'ArrowLeft':
+      prevCommentImageInViewer()
+      break
+    case 'ArrowRight':
+      nextCommentImageInViewer()
+      break
+  }
+}
+
+// 评论图片查看器导航方法
+const prevCommentImageInViewer = () => {
+  if (currentCommentImageIndex.value > 0) {
+    currentCommentImageIndex.value--
+  }
+}
+
+const nextCommentImageInViewer = () => {
+  if (currentCommentImageIndex.value < commentImages.value.length - 1) {
+    currentCommentImageIndex.value++
+  }
+}
+
+const goToCommentImage = (index) => {
+  if (index >= 0 && index < commentImages.value.length) {
+    currentCommentImageIndex.value = index
+  }
 }
 
 const closeImageViewer = () => {
@@ -2189,7 +2301,31 @@ const onViewerContainerClick = (event) => {
   if (target.closest && (target.closest('.viewer-nav-btn') || target.closest('.image-viewer-close'))) {
     return
   }
-  closeImageViewer()
+  
+  // 检查是否点击在翻页按钮的安全区域内
+  const navButtons = document.querySelectorAll('.viewer-nav-btn')
+  for (const button of navButtons) {
+    const rect = button.getBoundingClientRect()
+    const safeZone = 60 // 安全区域半径
+    const buttonCenterX = rect.left + rect.width / 2
+    const buttonCenterY = rect.top + rect.height / 2
+    const distance = Math.sqrt(
+      Math.pow(event.clientX - buttonCenterX, 2) + 
+      Math.pow(event.clientY - buttonCenterY, 2)
+    )
+    
+    // 如果点击在安全区域内，不执行关闭操作
+    if (distance <= safeZone) {
+      return
+    }
+  }
+  
+  // 根据当前显示的查看器类型调用对应的关闭方法
+  if (showCommentImageViewer.value) {
+    closeCommentImageViewer()
+  } else if (showImageViewer.value) {
+    closeImageViewer()
+  }
 }
 </script>
 
@@ -3771,7 +3907,7 @@ const onViewerContainerClick = (event) => {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  z-index: 3000;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3780,6 +3916,33 @@ const onViewerContainerClick = (event) => {
 }
 
 .image-viewer-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 评论图片查看器样式 */
+.comment-image-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: zoom-out;
+}
+
+.comment-image-viewer-container {
   position: relative;
   width: 100%;
   height: 100%;
@@ -3941,6 +4104,22 @@ const onViewerContainerClick = (event) => {
 
 .image-viewer-enter-to,
 .image-viewer-leave-from {
+  opacity: 1;
+}
+
+/* 评论图片查看器动画 */
+.comment-image-viewer-enter-active,
+.comment-image-viewer-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.comment-image-viewer-enter-from,
+.comment-image-viewer-leave-to {
+  opacity: 0;
+}
+
+.comment-image-viewer-enter-to,
+.comment-image-viewer-leave-from {
   opacity: 1;
 }
 

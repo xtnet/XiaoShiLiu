@@ -140,8 +140,12 @@ const handleActivityClick = (activity) => {
     // 新窗口打开用户主页
     const url = `${window.location.origin}/user/${activity.user_id}`
     window.open(url, '_blank')
-  } else if (activity.type === 'post_publish' || activity.type === 'comment_publish') {
+  } else if (activity.type === 'post_publish') {
     const url = `${window.location.origin}/post?id=${activity.target_id}`
+    window.open(url, '_blank')
+  } else if (activity.type === 'comment_publish') {
+    // 评论类型活动，传递评论ID作为targetCommentId参数
+    const url = `${window.location.origin}/post?id=${activity.target_id}&targetCommentId=${activity.comment_id}`
     window.open(url, '_blank')
   }
 }
