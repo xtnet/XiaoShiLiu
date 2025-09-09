@@ -827,31 +827,30 @@ defineExpose({
 .image-item {
   transition: all 0.2s ease;
   cursor: move;
-}
-
-.image-item.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
-}
-
-.image-item.touch-dragging {
-  opacity: 0.8;
-  transform: scale(1.05);
-  z-index: 1000;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transition: none;
-}
-
-.image-item.long-pressing {
-  transform: scale(0.98);
-  opacity: 0.9;
-  transition: all 0.1s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  user-select: none;
 }
 
 .image-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 拖拽状态样式 */
+.image-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.05) rotate(5deg);
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.image-item.touch-dragging {
+  opacity: 0.8;
+  transform: scale(1.6) rotate(3deg);
+  z-index: 1000;
+}
+
+.image-item.long-pressing {
+  transform: scale(0.95);
 }
 
 /* 移动端优化 */
@@ -862,6 +861,11 @@ defineExpose({
   
   .image-item.touch-dragging {
     touch-action: none; /* 拖拽时完全禁用默认触摸行为 */
+    transform: rotate(2deg);
+  }
+  
+  .image-item.long-pressing {
+    transform: scale(0.9);
   }
   
   .image-overlay {
