@@ -131,6 +131,16 @@ JWT_EXPIRES_IN=7d
 
 # 上傳配置
 UPLOAD_MAX_SIZE=50mb
+# 圖片上傳策略 (local: 本地儲存, imagehost: 第三方圖床)
+UPLOAD_STRATEGY=imagehost
+
+# 本地儲存配置
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# 第三方圖床配置
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
 
 # API配置
 API_BASE_URL=http://localhost:3001

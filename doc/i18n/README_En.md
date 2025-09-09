@@ -168,6 +168,58 @@
 
 > Note: The above are the minimum version requirements for traditional local development. For Docker deployment, the default image versions are as follows: MySQL 8.0, Node 18-alpine (frontend/backend build/run), Nginx alpine; Docker >= 20, Docker Compose >= 2. See [Deployment Guide](DEPLOYMENT_En.md) for details.
 
+## Environment Configuration
+
+The project uses environment variables for configuration management, with separate `.env` files for frontend and backend:
+
+### Backend Configuration (express-project/.env)
+
+```env
+# Server configuration
+PORT=3001
+NODE_ENV=development
+
+# Database configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# JWT configuration
+JWT_SECRET=xiaoshiliu_secret_key_2025
+JWT_EXPIRES_IN=7d
+
+# Upload configuration
+UPLOAD_MAX_SIZE=50mb
+# Image upload strategy (local: local storage, imagehost: third-party image hosting)
+UPLOAD_STRATEGY=imagehost
+
+# Local storage configuration
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# Third-party image hosting configuration
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+```
+
+### Frontend Configuration (vue3-project/.env)
+
+```env
+# API base URL configuration
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# Application configuration
+VITE_USE_REAL_API=true
+VITE_APP_TITLE=XiaoShiLiu Image-Text Community
+```
+
+> 💡 **Configuration Notes**:
+> - Backend supports both local storage and third-party image hosting upload strategies
+> - Frontend uses Vite environment variables, variable names must start with `VITE_`
+> - For detailed configuration instructions, please refer to the [Deployment Guide](DEPLOYMENT_En.md)
+
 ### 1. Install Dependencies
 
 ```bash

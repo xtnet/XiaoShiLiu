@@ -169,6 +169,58 @@
 
 > 提示：上述為傳統本地開發的最低版本要求。若使用 Docker 部署，預設鏡像版本如下：MySQL 8.0、Node 18-alpine（前後端建構/執行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。詳見[部署指南文件](DEPLOYMENT_zh-Hant.md)。
 
+## 環境配置
+
+項目使用環境變數進行配置管理，前後端分別有獨立的 `.env` 文件：
+
+### 後端配置 (express-project/.env)
+
+```env
+# 伺服器配置
+PORT=3001
+NODE_ENV=development
+
+# 資料庫配置
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# JWT配置
+JWT_SECRET=xiaoshiliu_secret_key_2025
+JWT_EXPIRES_IN=7d
+
+# 上傳配置
+UPLOAD_MAX_SIZE=50mb
+# 圖片上傳策略 (local: 本地儲存, imagehost: 第三方圖床)
+UPLOAD_STRATEGY=imagehost
+
+# 本地儲存配置
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# 第三方圖床配置
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+```
+
+### 前端配置 (vue3-project/.env)
+
+```env
+# API基礎URL配置
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# 應用配置
+VITE_USE_REAL_API=true
+VITE_APP_TITLE=小石榴圖文社區
+```
+
+> 💡 **配置說明**：
+> - 後端支援本地儲存和第三方圖床兩種上傳策略
+> - 前端使用 Vite 環境變數，變數名需以 `VITE_` 開頭
+> - 詳細配置說明請參考 [部署指南](DEPLOYMENT_zh-Hant.md)
+
 ### 1. 安裝依賴
 
 ```bash

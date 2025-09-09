@@ -191,9 +191,10 @@ DB_PORT=3306
 JWT_SECRET=xiaoshiliu_secret_key_2025
 JWT_EXPIRES_IN=7d
 
-# 上传策略配置
-UPLOAD_STRATEGY=local  # local(本地存储) 或 imagehost(第三方图床)
+# 上传配置
 UPLOAD_MAX_SIZE=50mb
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
+UPLOAD_STRATEGY=imagehost
 
 # 本地存储配置
 LOCAL_UPLOAD_DIR=uploads

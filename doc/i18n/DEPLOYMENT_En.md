@@ -131,6 +131,16 @@ JWT_EXPIRES_IN=7d
 
 # Upload configuration
 UPLOAD_MAX_SIZE=50mb
+# Image upload strategy (local: local storage, imagehost: third-party image hosting)
+UPLOAD_STRATEGY=imagehost
+
+# Local storage configuration
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# Third-party image hosting configuration
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
 
 # API configuration
 API_BASE_URL=http://localhost:3001

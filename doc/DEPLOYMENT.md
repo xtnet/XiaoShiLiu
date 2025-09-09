@@ -138,6 +138,16 @@ DB_PORT=3306
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
+UPLOAD_STRATEGY=imagehost
+
+# 本地存储配置
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# 第三方图床配置
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
 # 上传策略: local(本地存储) 或 imagehost(第三方图床)
 UPLOAD_STRATEGY=local
 
@@ -186,7 +196,8 @@ JWT_EXPIRES_IN=7d
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
-UPLOAD_STRATEGY=local
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
+UPLOAD_STRATEGY=imagehost
 
 # API配置
 API_BASE_URL=http://localhost:3001
