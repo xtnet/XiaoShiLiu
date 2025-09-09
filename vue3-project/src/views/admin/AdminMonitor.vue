@@ -83,7 +83,7 @@ const fetchActivities = async () => {
 const getActivityIcon = (type) => {
   const iconMap = {
     'user_register': 'user',
-    'post_publish': 'note',
+    'post_publish': 'post',
     'comment_publish': 'chat'
   }
   return iconMap[type] || 'data'

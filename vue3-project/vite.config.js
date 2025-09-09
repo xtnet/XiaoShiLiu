@@ -4,7 +4,7 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description Vue3项目的Vite构建配置
- * @version 1.1.1
+ * @version v1.1.2
  */
 
 import { fileURLToPath, URL } from 'node:url'

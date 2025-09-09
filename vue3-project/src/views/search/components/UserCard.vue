@@ -41,7 +41,7 @@ const props = defineProps({
             userId: '',
             avatar: '',
             followers: 0,
-            notes: 0,
+            posts: 0,
             isFollowing: false,
             buttonType: 'normal' // 新增按钮类型
         })

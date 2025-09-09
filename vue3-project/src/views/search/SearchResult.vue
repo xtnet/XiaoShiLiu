@@ -147,7 +147,7 @@ function handleUserResults(usersData) {
                 userId: user.user_id,
                 avatar: user.avatar,
                 followers: user.fans_count || 0,
-                notes: user.post_count || 0,
+                posts: user.post_count || 0,
                 isFollowing: user.isFollowing || false,
                 buttonType: user.buttonType || 'follow',
                 bio: user.bio,

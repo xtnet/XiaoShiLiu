@@ -84,18 +84,18 @@
                   :class="{ active: index === currentImageIndex }" @click="goToImage(index)"></span>
               </div>
             </div>
-            <div class="note-content">
-              <h2 class="note-title">{{ noteData.title }}</h2>
-              <p class="note-text">
-                <MentionText :text="noteData.content" />
+            <div class="post-content">
+              <h2 class="post-title">{{ postData.title }}</h2>
+              <p class="post-text">
+                <MentionText :text="postData.content" />
               </p>
-              <div class="note-tags">
-                <span v-for="tag in noteData.tags" :key="tag" class="tag clickable-tag" @click="handleTagClick(tag)">#{{
+              <div class="post-tags">
+                <span v-for="tag in postData.tags" :key="tag" class="tag clickable-tag" @click="handleTagClick(tag)">#{{
                   tag }}</span>
               </div>
-              <div class="note-meta">
-                <span class="time">{{ noteData.time }}</span>
-                <span class="location">{{ noteData.location }}</span>
+              <div class="post-meta">
+                <span class="time">{{ postData.time }}</span>
+                <span class="location">{{ postData.location }}</span>
               </div>
             </div>
 
@@ -329,13 +329,8 @@
 
     <!-- 图片上传模态框 -->
     <!-- 图片上传模态框 -->
-    <ImageUploadModal
-      :visible="showImageUpload"
-      :model-value="uploadedImages"
-      @close="closeImageUpload"
-      @confirm="handleImageUploadConfirm"
-      @update:model-value="handleImageUploadChange"
-    />
+    <ImageUploadModal :visible="showImageUpload" :model-value="uploadedImages" @close="closeImageUpload"
+      @confirm="handleImageUploadConfirm" @update:model-value="handleImageUploadChange" />
 
 
     <!-- 帖子图片查看器 -->
@@ -408,13 +403,14 @@
             </button>
 
             <button class="viewer-nav-btn viewer-next-btn" @click="nextCommentImageInViewer"
-              :disabled="currentCommentImageIndex === commentImages.length - 1" v-show="currentCommentImageIndex < commentImages.length - 1">
+              :disabled="currentCommentImageIndex === commentImages.length - 1"
+              v-show="currentCommentImageIndex < commentImages.length - 1">
               <SvgIcon name="right" width="24" height="24" />
             </button>
           </div>
-         </div>
-       </div>
-     </Transition>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -592,7 +588,7 @@ const isCurrentUserPost = computed(() => {
   return currentUserId === authorId
 })
 
-const noteData = computed(() => {
+const postData = computed(() => {
   const data = {
     title: props.item.title || '无标题',
     content: props.item.originalData?.content || props.item.content || '暂无内容',
@@ -1113,7 +1109,7 @@ const handleInputFocus = () => {
     }
     return
   }
-  
+
   isInputFocused.value = true
 }
 
@@ -1137,7 +1133,7 @@ const setCommentSort = async (order) => {
     showSortMenu.value = false
     return
   }
-  
+
   commentSortOrder.value = order
   showSortMenu.value = false
 
@@ -1189,7 +1185,7 @@ const toggleImageUpload = () => {
     authStore.openLoginModal()
     return
   }
-  
+
   showImageUpload.value = !showImageUpload.value
 }
 
@@ -1202,15 +1198,15 @@ const handleImageUploadConfirm = async (images) => {
   // 先设置图片到uploadedImages
   uploadedImages.value = images
   showImageUpload.value = false
-  
+
   // 只上传新添加的图片（没有uploaded标记或uploaded为false的图片）
   const newImages = images.filter(img => !img.uploaded)
-  
+
   if (newImages.length > 0) {
     try {
       const files = newImages.map(img => img.file)
       const uploadResult = await imageUploadApi.uploadImages(files)
-      
+
       if (uploadResult.success && uploadResult.data && uploadResult.data.uploaded) {
         // 更新新上传图片的状态和URL
         let uploadIndex = 0
@@ -1251,7 +1247,7 @@ const handlePasteImage = async (file) => {
 
     // 创建图片预览
     const preview = await imageUploadApi.createImagePreview(file)
-    
+
     // 添加到上传图片列表（先显示预览）
     const newImage = {
       file: file,
@@ -1259,10 +1255,10 @@ const handlePasteImage = async (file) => {
       uploaded: false,
       url: null
     }
-    
+
     uploadedImages.value.push(newImage)
     showMessage('正在上传图片...', 'info')
-    
+
     // 直接上传到图床
     const uploadResult = await imageUploadApi.uploadImage(file)
     if (uploadResult.success) {
@@ -2019,13 +2015,13 @@ const handleSendComment = async () => {
 
   // 立即反馈：折叠输入框
   isInputFocused.value = false
-  
+
   // 保存当前输入内容和回复状态，用于失败时恢复和骨架屏显示
   const savedInput = commentInput.value
   const savedReplyingTo = replyingTo.value
   const savedUploadedImages = [...uploadedImages.value]
 
-  
+
   // 清空输入状态
   commentInput.value = ''
   replyingTo.value = null
@@ -2058,7 +2054,7 @@ const handleSendComment = async () => {
 
     if (response.success) {
       showMessage(replyingTo.value ? '回复成功' : '评论成功', 'success')
-      
+
 
 
       // 清理图片缓存
@@ -2077,7 +2073,7 @@ const handleSendComment = async () => {
           URL.revokeObjectURL(img.url)
         }
       })
-      
+
 
       commentInput.value = savedInput
       replyingTo.value = savedReplyingTo
@@ -2093,7 +2089,7 @@ const handleSendComment = async () => {
         URL.revokeObjectURL(img.url)
       }
     })
-    
+
 
     commentInput.value = savedInput
     replyingTo.value = savedReplyingTo
@@ -2392,7 +2388,7 @@ const onViewerContainerClick = (event) => {
   if (target.closest && (target.closest('.viewer-nav-btn') || target.closest('.image-viewer-close'))) {
     return
   }
-  
+
   // 检查是否点击在翻页按钮的安全区域内
   const navButtons = document.querySelectorAll('.viewer-nav-btn')
   for (const button of navButtons) {
@@ -2401,16 +2397,16 @@ const onViewerContainerClick = (event) => {
     const buttonCenterX = rect.left + rect.width / 2
     const buttonCenterY = rect.top + rect.height / 2
     const distance = Math.sqrt(
-      Math.pow(event.clientX - buttonCenterX, 2) + 
+      Math.pow(event.clientX - buttonCenterX, 2) +
       Math.pow(event.clientY - buttonCenterY, 2)
     )
-    
+
     // 如果点击在安全区域内，不执行关闭操作
     if (distance <= safeZone) {
       return
     }
   }
-  
+
   // 根据当前显示的查看器类型调用对应的关闭方法
   if (showCommentImageViewer.value) {
     closeCommentImageViewer()
@@ -2774,11 +2770,11 @@ const onViewerContainerClick = (event) => {
   overscroll-behavior: auto;
 }
 
-.note-content {
+.post-content {
   padding: 5px 16px 0 16px;
 }
 
-.note-title {
+.post-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-color-primary);
@@ -2789,7 +2785,7 @@ const onViewerContainerClick = (event) => {
   overflow-wrap: break-word;
 }
 
-.note-text {
+.post-text {
   color: var(--text-color-primary);
   font-size: 16px;
   line-height: 1.6;
@@ -2799,7 +2795,7 @@ const onViewerContainerClick = (event) => {
   overflow-wrap: break-word;
 }
 
-.note-tags {
+.post-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -2822,7 +2818,7 @@ const onViewerContainerClick = (event) => {
 }
 
 
-.note-meta {
+.post-meta {
   display: flex;
   gap: 8px;
   color: var(--text-color-secondary);
@@ -2979,6 +2975,7 @@ const onViewerContainerClick = (event) => {
   from {
     background-color: transparent;
   }
+
   to {
     background-color: var(--bg-color-secondary);
   }
@@ -2988,6 +2985,7 @@ const onViewerContainerClick = (event) => {
   from {
     background-color: var(--bg-color-secondary);
   }
+
   to {
     background-color: transparent;
   }
@@ -3888,16 +3886,16 @@ const onViewerContainerClick = (event) => {
   }
 
 
-  .note-content {
+  .post-content {
     padding: 0 16px 16px 16px;
   }
 
-  .note-title {
+  .post-title {
     font-size: 20px;
     margin-bottom: 16px;
   }
 
-  .note-text {
+  .post-text {
     font-size: 16px;
     line-height: 1.7;
     margin-bottom: 20px;
@@ -4244,6 +4242,4 @@ const onViewerContainerClick = (event) => {
   color: var(--text-color-secondary);
   font-size: 14px;
 }
-
-
 </style>

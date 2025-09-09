@@ -29,11 +29,11 @@ const { width: windowWidth } = useWindowSize()
 
 // tab栏相关
 const tabs = ref([
-  { name: 'notes', label: '笔记' },
+  { name: 'posts', label: '笔记' },
   { name: 'collections', label: '收藏' }
 ])
 
-const activeTab = ref('notes')
+const activeTab = ref('posts')
 const tabBarRef = ref(null)
 const fixedTabBarRef = ref(null)
 
@@ -212,7 +212,7 @@ watch(() => route.params.userId, (newUserId) => {
     }
 
     userId.value = newUserId
-    activeTab.value = 'notes'
+    activeTab.value = 'posts'
 
     // 重新加载数据
     getUserInfo()
@@ -313,10 +313,10 @@ onMounted(async () => {
 
     <div class="content-switch-container" v-if="userInfo.nickname">
 
-      <div class="content-item" :class="{ active: activeTab === 'notes' }"
-        :style="{ transform: activeTab === 'notes' ? 'translateX(0%)' : 'translateX(-100%)' }">
+      <div class="content-item" :class="{ active: activeTab === 'posts' }"
+        :style="{ transform: activeTab === 'posts' ? 'translateX(0%)' : 'translateX(-100%)' }">
         <div class="waterfall-container">
-          <WaterfallFlow :userId="userId" :type="'posts'" :key="`notes-${userId}`" />
+          <WaterfallFlow :userId="userId" :type="'posts'" :key="`posts-${userId}`" />
         </div>
       </div>
 

@@ -11,7 +11,7 @@
           <span>草稿箱</span>
         </button>
         <button class="manage-btn" @click="goToPostManagement">
-          <SvgIcon name="note" width="20" height="20" />
+          <SvgIcon name="post" width="20" height="20" />
           <span>笔记管理</span>
         </button>
       </div>
@@ -21,7 +21,7 @@
       <!-- 登录提示 -->
       <div class="login-prompt" v-if="!isLoggedIn">
         <div class="prompt-content">
-          <SvgIcon name="note" width="48" height="48" class="prompt-icon" />
+          <SvgIcon name="post" width="48" height="48" class="prompt-icon" />
           <h3>请先登录</h3>
           <p>登录后即可发布和管理笔记</p>
         </div>
@@ -474,7 +474,7 @@ const loadDraftData = async (draftId) => {
       form.title = response.title || ''
       form.content = draft.content || ''
       form.images = draft.images || []
-      
+
       // 处理标签数据：确保转换为字符串数组
       if (draft.tags && Array.isArray(draft.tags)) {
         form.tags = draft.tags.map(tag => {
@@ -1229,21 +1229,21 @@ const handleSaveDraft = async () => {
   line-height: 1.5;
 }
 
-  .tag-input {
-    min-width: 80px;
-  }
+.tag-input {
+  min-width: 80px;
+}
 
-  .publish-actions {
-    padding: 1.5rem 0.75rem;
-    gap: 0.75rem;
-  }
+.publish-actions {
+  padding: 1.5rem 0.75rem;
+  gap: 0.75rem;
+}
 
-  .publish-actions .cancel-btn,
-  .publish-actions .publish-btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.85rem;
-    min-width: 80px;
-  }
+.publish-actions .cancel-btn,
+.publish-actions .publish-btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  min-width: 80px;
+}
 
 @media (max-width: 480px) {
   .publish-header {

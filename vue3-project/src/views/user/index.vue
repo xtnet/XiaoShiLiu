@@ -154,18 +154,18 @@ const { width: windowWidth } = useWindowSize()
 
 // tab栏相关
 const tabs = ref([
-  { name: 'notes', label: '笔记' },
+  { name: 'posts', label: '笔记' },
   { name: 'collections', label: '收藏' },
   { name: 'likes', label: '点赞' }
 ])
 
-const activeTab = ref('notes')
+const activeTab = ref('posts')
 const tabBarRef = ref(null)
 const fixedTabBarRef = ref(null)
 
 // 添加刷新键，用于触发WaterfallFlow组件重新加载数据
 const refreshKeys = ref({
-  notes: 0,
+  posts: 0,
   collections: 0,
   likes: 0
 })
@@ -366,17 +366,17 @@ function handleCollect(data) {
 
     <div class="content-switch-container" v-if="userStore.isLoggedIn">
 
-      <div class="content-item" :class="{ active: activeTab === 'notes' }"
-        :style="{ transform: activeTab === 'notes' ? 'translateX(0%)' : 'translateX(-100%)' }">
+      <div class="content-item" :class="{ active: activeTab === 'posts' }"
+        :style="{ transform: activeTab === 'posts' ? 'translateX(0%)' : 'translateX(-100%)' }">
         <div class="waterfall-container">
-          <WaterfallFlow :userId="userStore.userInfo?.user_id" :type="'posts'" :refreshKey="refreshKeys.notes"
+          <WaterfallFlow :userId="userStore.userInfo?.user_id" :type="'posts'" :refreshKey="refreshKeys.posts"
             @follow="handleFollow" @unfollow="handleUnfollow" @like="handleLike" @collect="handleCollect" />
         </div>
       </div>
 
 
       <div class="content-item" :class="{ active: activeTab === 'collections' }"
-        :style="{ transform: activeTab === 'collections' ? 'translateX(0%)' : activeTab === 'notes' ? 'translateX(100%)' : 'translateX(-100%)' }">
+        :style="{ transform: activeTab === 'collections' ? 'translateX(0%)' : activeTab === 'posts' ? 'translateX(100%)' : 'translateX(-100%)' }">
         <div class="waterfall-container">
           <WaterfallFlow :userId="userStore.userInfo?.user_id" :type="'collections'"
             :refreshKey="refreshKeys.collections" @follow="handleFollow" @unfollow="handleUnfollow" @like="handleLike"

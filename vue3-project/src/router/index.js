@@ -129,7 +129,7 @@ const router = createRouter({
           component: SearchResult,
           beforeEnter: (to, from, next) => {
             // 验证tab参数是否有效
-            const validTabs = ['all', 'note', 'video', 'user']
+            const validTabs = ['all', 'post', 'video', 'user']
             if (validTabs.includes(to.params.tab)) {
               next()
             } else {
