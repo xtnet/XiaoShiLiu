@@ -679,7 +679,8 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
     // 查询所有关注的用户（包括互相关注）
     const [rows] = await pool.execute(
       `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
-              f.created_at as followed_at
+              f.created_at as followed_at,
+              (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM follows f
        LEFT JOIN users u ON f.following_id = u.id
        WHERE f.follower_id = ?
@@ -773,7 +774,8 @@ router.get('/:id/followers', optionalAuth, async (req, res) => {
 
     const [rows] = await pool.execute(
       `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
-              f.created_at as followed_at
+              f.created_at as followed_at,
+              (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM follows f
        LEFT JOIN users u ON f.follower_id = u.id
        WHERE f.following_id = ?
@@ -862,7 +864,8 @@ router.get('/:id/mutual-follows', optionalAuth, async (req, res) => {
 
     // 查询互关用户
     const [rows] = await pool.execute(
-      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at
+      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+              (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM users u
        WHERE u.id IN (
          SELECT f1.following_id 

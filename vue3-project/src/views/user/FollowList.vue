@@ -117,7 +117,7 @@ async function loadUserList(type) {
           user_id: user.user_id,
           avatar: user.avatar,
           followers: user.fans_count || 0,
-          notes: user.post_count || 0,
+          post_count: user.post_count || 0,
           isFollowing: user.isFollowing || false,
           isMutual: user.isMutual || false,
           buttonType: user.buttonType || 'follow',
