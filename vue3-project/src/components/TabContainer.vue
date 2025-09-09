@@ -21,7 +21,7 @@ const emit = defineEmits(['tab-change'])
 
 const containerRef = ref(null)
 const tabItems = ref([])
-const activeId = ref(props.activeTab || (props.tabs.length > 0 ? props.tabs[0].id : ''))
+const activeId = ref(props.activeTab !== '' && props.activeTab !== undefined ? String(props.activeTab) : (props.tabs.length > 0 ? props.tabs[0].id : ''))
 const sliderLeft = ref(0)
 const sliderWidth = ref(0)
 
