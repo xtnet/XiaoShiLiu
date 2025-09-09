@@ -2171,6 +2171,9 @@ const handleKeydown = (event) => {
   // 如果正在输入评论，不处理快捷键
   if (isInputFocused.value) return
 
+  // 如果认证模态框打开，不处理快捷键
+  if (authStore.showAuthModal) return
+
   // 如果图片查看器打开，不处理这些快捷键（图片查看器有自己的键盘处理）
   if (showImageViewer.value) return
 
