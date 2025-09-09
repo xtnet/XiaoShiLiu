@@ -276,7 +276,57 @@ docker-compose logs mysql
 docker-compose exec -T backend node scripts/generate-data.js
 ```
 
-#### 4. 清理和重置
+#### 4. 文件上传权限问题
+
+**问题现象**：
+- 前端上传文件时返回400错误
+- 后端日志显示：`EACCES: permission denied, open '/app/uploads/xxx.png'`
+
+**原因分析**：
+Docker容器内uploads目录权限问题，目录属于root用户，但应用运行在nodejs用户下。
+
+**解决方案**：
+
+1. **检查uploads目录权限**：
+```bash
+docker-compose exec backend ls -la /app/uploads
+```
+
+2. **修复权限问题**：
+```bash
+# 使用root用户修改目录所有者
+docker-compose exec --user root backend chown -R nodejs:nodejs /app/uploads
+```
+
+3. **验证权限修复**：
+```bash
+# 确认目录现在属于nodejs用户
+docker-compose exec backend ls -la /app/uploads
+```
+
+**预防措施**：
+- 确保Dockerfile中正确设置了uploads目录权限
+- 在容器启动时自动修复权限问题
+
+#### 5. 上传策略配置
+
+项目支持两种文件上传策略：
+
+**本地存储模式**（推荐用于开发和小型部署）：
+```yaml
+# docker-compose.yml中设置
+environment:
+  UPLOAD_STRATEGY: local
+```
+
+**第三方图床模式**（推荐用于生产环境）：
+```yaml
+# docker-compose.yml中设置
+environment:
+  UPLOAD_STRATEGY: imagehost
+```
+
+#### 6. 清理和重置
 
 如果遇到问题需要重新开始：
 

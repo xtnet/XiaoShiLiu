@@ -219,7 +219,57 @@ docker-compose logs mysql
 docker-compose exec -T backend node scripts/generate-data.js
 ```
 
-#### 4. Cleanup and Reset
+#### 4. File Upload Permission Issues
+
+**Problem Symptoms**:
+- Frontend file upload returns 400 error
+- Backend logs show: `EACCES: permission denied, open '/app/uploads/xxx.png'`
+
+**Root Cause Analysis**:
+Docker container uploads directory permission issue - directory belongs to root user, but application runs under nodejs user.
+
+**Solution**:
+
+1. **Check uploads directory permissions**:
+```bash
+docker-compose exec backend ls -la /app/uploads
+```
+
+2. **Fix permission issue**:
+```bash
+# Use root user to change directory ownership
+docker-compose exec --user root backend chown -R nodejs:nodejs /app/uploads
+```
+
+3. **Verify permission fix**:
+```bash
+# Confirm directory now belongs to nodejs user
+docker-compose exec backend ls -la /app/uploads
+```
+
+**Prevention Measures**:
+- Ensure Dockerfile correctly sets uploads directory permissions
+- Automatically fix permission issues on container startup
+
+#### 5. Upload Strategy Configuration
+
+The project supports two file upload strategies:
+
+**Local Storage Mode** (recommended for development and small deployments):
+```yaml
+# Set in docker-compose.yml
+environment:
+  UPLOAD_STRATEGY: local
+```
+
+**Third-party Image Host Mode** (recommended for production):
+```yaml
+# Set in docker-compose.yml
+environment:
+  UPLOAD_STRATEGY: imagehost
+```
+
+#### 6. Cleanup and Reset
 
 If you encounter issues and need to start over:
 
