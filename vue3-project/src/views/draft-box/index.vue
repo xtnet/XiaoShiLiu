@@ -226,6 +226,7 @@ const loadDrafts = async () => {
     // 检查用户是否已登录
     if (!userStore.userInfo || !userStore.userInfo.user_id) {
       showMessage('请先登录', 'error')
+      router.push('/user')
       return
     }
 

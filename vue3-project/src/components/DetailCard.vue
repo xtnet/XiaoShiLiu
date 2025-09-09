@@ -1099,6 +1099,15 @@ const handleToastClose = () => {
 
 // 输入框聚焦处理
 const handleInputFocus = () => {
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    authStore.openLoginModal()
+    if (focusedInput.value) {
+      focusedInput.value.blur()
+    }
+    return
+  }
+  
   isInputFocused.value = true
 }
 
@@ -1162,6 +1171,12 @@ const closeMentionPanel = () => {
 
 // 图片上传面板切换
 const toggleImageUpload = () => {
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    authStore.openLoginModal()
+    return
+  }
+  
   showImageUpload.value = !showImageUpload.value
 }
 

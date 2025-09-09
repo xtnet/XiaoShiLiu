@@ -18,7 +18,16 @@
     </div>
 
     <div class="publish-content">
-      <form @submit.prevent="handlePublish" class="publish-form">
+      <!-- 登录提示 -->
+      <div class="login-prompt" v-if="!isLoggedIn">
+        <div class="prompt-content">
+          <SvgIcon name="note" width="48" height="48" class="prompt-icon" />
+          <h3>请先登录</h3>
+          <p>登录后即可发布和管理笔记</p>
+        </div>
+      </div>
+
+      <form v-if="isLoggedIn" @submit.prevent="handlePublish" class="publish-form">
         <div class="image-upload-section">
           <MultiImageUpload ref="multiImageUploadRef" v-model="form.images" :max-images="9" :allow-delete-last="true"
             @error="handleUploadError" />
@@ -68,7 +77,7 @@
         </div>
       </form>
 
-      <div class="publish-actions">
+      <div v-if="isLoggedIn" class="publish-actions">
         <button class="draft-btn" :disabled="!canSaveDraft || isSavingDraft" @click="handleSaveDraft">
           {{ isSavingDraft ? '保存中...' : '存草稿' }}
         </button>
@@ -86,6 +95,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 import { useNavigationStore } from '@/stores/navigation'
 import { createPost, getPostDetail, updatePost, deletePost } from '@/api/posts'
 import { getCategories } from '@/api/categories'
@@ -103,6 +113,8 @@ import ContentEditableInput from '@/components/ContentEditableInput.vue'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
+const authStore = useAuthStore()
 const navigationStore = useNavigationStore()
 const { lock, unlock } = useScrollLock()
 
@@ -146,6 +158,14 @@ const canPublish = computed(() => {
 const canSaveDraft = computed(() => {
   return form.images.length > 0
 })
+
+// 登录状态检查
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+
+// 打开登录模态框
+const openLoginModal = () => {
+  authStore.openLoginModal()
+}
 
 onMounted(async () => {
   navigationStore.scrollToTop('instant')
@@ -1172,6 +1192,42 @@ const handleSaveDraft = async () => {
   .publish-content {
     padding: 1rem;
   }
+}
+
+/* 登录提示样式 */
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.prompt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.prompt-icon {
+  color: var(--text-color-quaternary);
+  margin-bottom: 16px;
+}
+
+.prompt-content h3 {
+  color: var(--text-color-primary);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.prompt-content p {
+  color: var(--text-color-secondary);
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
 
   .tag-input {
     min-width: 80px;
@@ -1188,7 +1244,6 @@ const handleSaveDraft = async () => {
     font-size: 0.85rem;
     min-width: 80px;
   }
-}
 
 @media (max-width: 480px) {
   .publish-header {
