@@ -699,6 +699,12 @@ const fetchComments = async () => {
 
 // 加载更多评论（从服务器获取更多数据）
 const loadMoreComments = async () => {
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    authStore.openLoginModal()
+    return
+  }
+
   if (!hasMoreCommentsToShow.value) {
     return
   }
@@ -1125,6 +1131,13 @@ const handleDetailCardClick = (event) => {
 
 // 设置评论排序方式
 const setCommentSort = async (order) => {
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    authStore.openLoginModal()
+    showSortMenu.value = false
+    return
+  }
+  
   commentSortOrder.value = order
   showSortMenu.value = false
 
