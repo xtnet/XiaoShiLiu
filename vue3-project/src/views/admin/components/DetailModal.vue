@@ -68,6 +68,7 @@ const closeModal = () => {
   max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
+  transition: background-color 0.3s ease;
 }
 
 .detail-modal {
@@ -120,9 +121,9 @@ const closeModal = () => {
   padding: 8px;
   border-radius: 2px;
   border: 1px solid var(--border-color-primary);
-
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-color-primary);
+  transition: border-color 0.3s ease;
 }
 </style>

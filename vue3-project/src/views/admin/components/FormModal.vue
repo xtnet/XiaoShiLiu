@@ -724,6 +724,7 @@ const handleSubmit = async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background-color 0.2s ease;
 }
 
 .modal-header {
@@ -734,6 +735,7 @@ const handleSubmit = async () => {
   border-bottom: 1px solid var(--border-color-primary);
   flex-shrink: 0;
   background: var(--bg-color-primary);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .modal-header h4 {
@@ -767,6 +769,7 @@ const handleSubmit = async () => {
   background: var(--bg-color-primary);
   border-top: 1px solid var(--border-color-primary);
   padding: 20px 30px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .form-group {
@@ -796,6 +799,7 @@ const handleSubmit = async () => {
   background-color: var(--bg-color-primary);
   color: var(--text-color-primary);
   caret-color: var(--primary-color);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .form-group input:focus {

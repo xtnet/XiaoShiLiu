@@ -1150,6 +1150,7 @@ const handleImageError = (event) => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  transition: background-color 0.3s ease;
 }
 
 .table-header {
@@ -1160,6 +1161,7 @@ const handleImageError = (event) => {
   border-bottom: 1px solid var(--border-color-primary);
   background-color: var(--bg-color-secondary);
   gap: 20px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header-left {
@@ -1220,6 +1222,7 @@ const handleImageError = (event) => {
   height: 32px;
   color: var(--text-color-primary);
   box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .search-field input:focus {
@@ -1251,6 +1254,7 @@ const handleImageError = (event) => {
   text-overflow: ellipsis;
   height: 32px;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .custom-select:hover .select-value {
@@ -1286,6 +1290,7 @@ const handleImageError = (event) => {
   max-height: 200px;
   overflow-y: auto;
   margin-top: 2px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .select-option {
@@ -1327,6 +1332,7 @@ const handleImageError = (event) => {
   word-break: break-all;
   vertical-align: top;
   white-space: normal;
+  transition: border-color 0.3s ease;
 }
 
 .data-table th {
@@ -1334,6 +1340,11 @@ const handleImageError = (event) => {
   font-weight: 600;
   color: var(--text-color-primary);
   width: auto;
+  transition: background-color 0.3s ease;
+}
+
+.data-table tr {
+  transition: background-color 0.3s ease;
 }
 
 .data-table tr:hover {
@@ -1370,7 +1381,7 @@ const handleImageError = (event) => {
   object-fit: cover;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .table-image:hover {
@@ -1385,6 +1396,7 @@ const handleImageError = (event) => {
   padding: 20px 30px;
   border-top: 1px solid var(--border-color-primary);
   background-color: var(--bg-color-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .pagination-info {
@@ -1406,7 +1418,7 @@ const handleImageError = (event) => {
 .pagination-controls button,
 .page-numbers button {
   user-select: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .pagination-controls button:hover:not(:disabled),
@@ -1432,6 +1444,7 @@ const handleImageError = (event) => {
   justify-content: center;
   align-items: center;
   z-index: 100;
+  transition: background-color 0.3s ease;
 }
 
 .loading-spinner {

@@ -1,8 +1,6 @@
 <template>
   <div class="admin-layout">
-
     <template v-if="localLoginSuccess">
-
       <div class="sidebar" :class="{ collapsed: isCollapsed, expanded: isExpanded }" @mouseenter="handleMouseEnter"
         @mouseleave="handleMouseLeave">
         <div class="sidebar-header">
@@ -21,37 +19,35 @@
 
 
         <div class="sidebar-footer">
-
-          <div v-if="!isCollapsed || isExpanded" class="admin-theme-switcher">
+          <div v-if="isExpanded || !isCollapsed">
             <div class="theme-switcher-content">
-              <div class="theme-toggle-container">
-
-                <div class="theme-toggle-indicator" :style="{ transform: `translateX(${indicatorPosition}px)` }">
-                </div>
-
-
-                <div v-for="(option, index) in themeStore.themeOptions" :key="option.value"
-                  class="theme-option-wrapper">
-                  <button class="theme-toggle-option" :class="{ 'active': themeStore.currentTheme === option.value }"
-                    @click="themeStore.setTheme(option.value)" :title="option.label">
-                    <SvgIcon :name="option.icon" width="12" height="12" />
-                  </button>
-                  <div class="tooltip">{{ option.label }}</div>
+              <div class="admin-theme-toggle">
+                <div class="theme-toggle-track">
+                  <div class="theme-toggle-indicator" :style="{ transform: `translateX(${indicatorPosition}px)` }">
+                  </div>
+                  <div v-for="(option, index) in themeStore.themeOptions" :key="option.value"
+                    class="theme-option-wrapper">
+                    <button class="theme-toggle-option" :class="{ 'active': themeStore.currentTheme === option.value }"
+                      @click="themeStore.setTheme(option.value)">
+                      <SvgIcon :name="option.icon" width="12" height="12" />
+                    </button>
+                    <div class="tooltip">{{ option.label }}</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          <div class="logout-btn" @click="handleLogout">
+            <SvgIcon name="leftArrow" />
+            <span class="logout-text">退出登录</span>
+          </div>
         </div>
 
-        <button class="logout-btn" @click="handleLogout" title="退出登录">
-          <SvgIcon name="leftArrow" />
-          <span class="logout-text">退出登录</span>
-        </button>
+
       </div>
     </template>
 
     <div class="main-content">
-      <!-- 中小屏头部：替代侧边栏，放在主内容顶部，确保可见 -->
       <div class="content-header">
         <div class="header-left">
           <h1>{{ currentPageTitle }}</h1>
@@ -142,7 +138,7 @@ const logoUrl = new URL('@/assets/imgs/logo.ico', import.meta.url).href
 
 const indicatorPosition = computed(() => {
   const index = themeStore.themeOptions.findIndex(option => option.value === themeStore.currentTheme)
-  return index * 24
+  return index * 28 // 每个按钮宽度28px
 })
 
 const isCollapsed = ref(true)
@@ -352,6 +348,7 @@ const goBack = () => {
   width: 100vw;
   background-color: var(--bg-color-secondary);
   overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 .sidebar {
@@ -362,9 +359,9 @@ const goBack = () => {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color-primary);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 100;
+  transition: width 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar.collapsed {
@@ -384,6 +381,8 @@ const goBack = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: var(--bg-color-primary);
+  transition: background-color 0.3s ease,border-color 0.3s ease;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -443,29 +442,30 @@ const goBack = () => {
   padding: 20px 12px;
   overflow-y: auto;
   overflow-x: hidden;
+  background-color: var(--bg-color-primary);
+  transition: background-color 0.3s ease;
+}
+
+.sidebar.collapsed.expanded .sidebar-footer {
+  border-top: 1px solid var(--border-color-primary);
 }
 
 .sidebar-footer {
-  padding: 16px 12px;
-  border-top: 1px solid var(--border-color-primary);
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-/* 主题切换器样式 */
-.admin-theme-switcher {
-  width: 100%;
+  background-color: var(--bg-color-primary);
+  transition: background-color 0.3s ease;
 }
 
 .theme-switcher-content {
+  padding: 24px 8px 8px 8px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
 }
 
-.theme-toggle-container {
+.admin-theme-toggle {
   display: inline-block;
   flex-shrink: 0;
 }
@@ -474,9 +474,10 @@ const goBack = () => {
   position: relative;
   display: flex;
   background: var(--bg-color-secondary);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 2px;
   border: 1px solid var(--border-color-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .theme-option-wrapper {
@@ -486,28 +487,29 @@ const goBack = () => {
 
 .theme-toggle-indicator {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
   background: var(--bg-color-primary);
   border-radius: 50%;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   z-index: 1;
 }
 
 .theme-toggle-option {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   z-index: 2;
   color: var(--text-color-tertiary);
 }
@@ -523,18 +525,19 @@ const goBack = () => {
 /* Tooltip 样式 */
 .tooltip {
   position: absolute;
-  bottom: 30px;
+  bottom: 35px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--bg-color-primary);
   color: var(--text-color-primary);
   padding: 4px 8px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border-color-primary);
   z-index: 10;
   pointer-events: none;
@@ -549,6 +552,10 @@ const goBack = () => {
 .theme-toggle-option :deep(svg) {
   display: block;
   margin: auto;
+}
+
+[data-theme="dark"] .theme-toggle-indicator {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .admin-info {
@@ -634,30 +641,24 @@ const goBack = () => {
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid var(--border-color-primary);
+  background: var(--bg-color-primary);
+  border-top: 1px solid var(--border-color-primary);
   color: var(--text-color-secondary);
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
   font-size: 14px;
-  white-space: nowrap;
-  width: 100%;
+  transition: background 0.3s ease,border-color 0.3s ease;
 }
 
 .sidebar.collapsed .logout-btn {
   justify-content: center;
-  padding: 8px;
-  width: 56px;
-  height: 40px;
+  padding: 8px 8px 16px 8px;
 }
 
 .sidebar.collapsed.expanded .logout-btn {
   justify-content: flex-start;
-  padding: 8px 12px;
-  width: 100%;
+  padding-left: 28px;
+  width: calc(100% - 0px);
+  box-sizing: border-box;
 }
 
 .logout-btn:hover {
@@ -665,25 +666,28 @@ const goBack = () => {
 }
 
 .logout-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  color: var(--text-color-tertiary);
 }
 
 .logout-text {
   opacity: 1;
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 10px;
+  text-wrap: nowrap;
 }
 
 .sidebar.collapsed .logout-text {
   opacity: 0;
-  width: 0;
   overflow: hidden;
+  display: none;
 }
 
 .sidebar.collapsed.expanded .logout-text {
   opacity: 1;
   width: auto;
+  display: flex;
 }
 
 .nav-item {
@@ -692,12 +696,13 @@ const goBack = () => {
   padding: 12px 16px;
   color: var(--text-color-primary);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   border-radius: 999px;
   margin: 4px 0;
   font-weight: 500;
   white-space: nowrap;
   position: relative;
+  transition: all 0.3s ease;
 }
 
 .sidebar.collapsed .nav-item {
@@ -774,6 +779,7 @@ const goBack = () => {
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header-left h1 {
@@ -805,7 +811,7 @@ const goBack = () => {
   border-radius: 999px;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-decoration: none;
   font-weight: 500;
 }
@@ -825,6 +831,7 @@ const goBack = () => {
   overflow-y: auto;
   background-color: var(--bg-color-secondary);
   flex-direction: column;
+  transition: background-color 0.3s ease;
 }
 
 /* 滚动条样式 */
@@ -897,8 +904,6 @@ const goBack = () => {
 }
 
 
-/* content-header 在小屏也显示 */
-/* 原来隐藏 content-header 的规则已移除 */
 
 /* header 内小屏品牌区域样式 */
 .header-brand {
@@ -1017,6 +1022,7 @@ const goBack = () => {
   border-radius: 6px;
   cursor: pointer;
   color: var(--text-color-primary);
+  transition: background-color 0.3s ease;
 }
 
 .mobile-menu-icon {
@@ -1060,6 +1066,7 @@ const goBack = () => {
   animation: slideUp 0.3s ease-out;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   min-height: 200px;
+  transition: background-color 0.3s ease;
 }
 
 .filter-menu-content::-webkit-scrollbar {
@@ -1095,6 +1102,7 @@ const goBack = () => {
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color-primary);
+  transition: border-color 0.3s ease;
 }
 
 .filter-menu-header h3 {
@@ -1111,7 +1119,7 @@ const goBack = () => {
   cursor: pointer;
   color: var(--text-color-secondary);
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .close-btn:hover {
