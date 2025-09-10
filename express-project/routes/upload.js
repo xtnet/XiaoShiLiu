@@ -3,7 +3,7 @@ const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
-const { uploadFile, uploadBase64 } = require('../utils/uploadHelper');
+const { uploadFile } = require('../utils/uploadHelper');
 
 // 配置 multer 内存存储（用于云端图床）
 const storage = multer.memoryStorage();
@@ -102,50 +102,6 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
     });
   } catch (error) {
     console.error('多图片上传失败:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
-  }
-});
-
-// Base64图片上传到图床
-router.post('/base64', authenticateToken, async (req, res) => {
-  try {
-    const { images } = req.body;
-
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有提供图片数据' });
-    }
-
-    const uploadResults = [];
-    let processedCount = 0;
-
-    for (const base64Data of images) {
-      processedCount++;
-
-      // 使用统一上传函数
-      const result = await uploadBase64(base64Data);
-
-      if (result.success) {
-        uploadResults.push(result.url);
-      }
-    }
-
-    if (uploadResults.length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '所有图片上传失败' });
-    }
-
-    // 记录用户上传操作日志
-    console.log(`Base64图片上传成功 - 用户ID: ${req.user.id}, 上传数量: ${uploadResults.length}`);
-
-    res.json({
-      code: RESPONSE_CODES.SUCCESS,
-      message: '上传成功',
-      data: {
-        urls: uploadResults,
-        count: uploadResults.length
-      }
-    });
-  } catch (error) {
-    console.error('Base64图片上传失败:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
   }
 });

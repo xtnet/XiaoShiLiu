@@ -4,7 +4,7 @@ const { HTTP_STATUS, RESPONSE_CODES } = require('../constants')
 const { pool } = require('../config/config')
 const { createCrudHandlers } = require('../middleware/crudFactory')
 const { recordExists } = require('../utils/dbHelper')
-const { adminAuth, uploadBase64ToImageHost } = require('../utils/uploadHelper')
+const { adminAuth } = require('../utils/uploadHelper')
 const {
   validateLikeOrFavoriteData,
   validateFollowData,
@@ -55,68 +55,42 @@ const postsCrudConfig = {
   // 创建后的处理（处理图片和标签）
   afterCreate: async (postId, data, req) => {
     const { images, image_urls, tags } = data
-
     // 处理图片信息
     if (images !== undefined || image_urls !== undefined) {
-      // 合并两种图片来源
+      // 收集所有有效的图片URL
       const allImages = []
-      const base64Images = []
-
-      // 添加上传到图床的图片
+      // 处理images字段
       if (images && Array.isArray(images)) {
         for (const image of images) {
           if (typeof image === 'string') {
-            if (image.startsWith('data:image/')) {
-              base64Images.push(image)
-            } else {
-              allImages.push(image)
-            }
+            allImages.push(image)
           } else if (image && typeof image === 'object') {
             const possibleUrlProps = ['url', 'preview', 'src', 'path', 'link']
-            let foundValidUrl = false
-
             for (const prop of possibleUrlProps) {
               if (image[prop] && typeof image[prop] === 'string') {
-                if (image[prop].startsWith('data:image/')) {
-                  base64Images.push(image[prop])
-                  foundValidUrl = true
-                  break
-                } else {
-                  allImages.push(image[prop])
-                  foundValidUrl = true
-                  break
-                }
+                allImages.push(image[prop])
+                break
               }
             }
           }
         }
       }
 
-      // 添加URL输入的图片
+      // 处理image_urls字段
       if (image_urls && Array.isArray(image_urls)) {
         const validUrls = image_urls.filter(url =>
           url &&
           typeof url === 'string' &&
-          !url.startsWith('[待上传]') &&
-          !url.startsWith('data:image/')
+          !url.startsWith('[待上传]')
         )
         allImages.push(...validUrls)
-      }
-
-      // 上传base64图片到图床
-      if (base64Images.length > 0) {
-        const token = req.headers.authorization?.replace('Bearer ', '')
-        const uploadedUrls = await uploadBase64ToImageHost(base64Images)
-        if (uploadedUrls.length > 0) {
-          allImages.push(...uploadedUrls)
-        }
       }
 
       // 插入图片
       if (allImages.length > 0) {
         for (const imageUrl of allImages) {
           const cleanUrl = imageUrl ? imageUrl.trim().replace(/\`/g, '').replace(/\s+/g, '') : ''
-          if (cleanUrl && !cleanUrl.startsWith('data:image/')) {
+          if (cleanUrl) {
             await pool.execute(
               'INSERT INTO post_images (post_id, image_url) VALUES (?, ?)',
               [String(postId), cleanUrl]
@@ -211,55 +185,33 @@ const postsCrudConfig = {
 
       // 使用Set来避免重复的图片URL
       const allImagesSet = new Set()
-      const base64Images = []
 
       // 处理image_urls字段
       if (image_urls && Array.isArray(image_urls)) {
         for (const url of image_urls) {
           if (url && typeof url === 'string') {
-            if (url.startsWith('data:image/')) {
-              base64Images.push(url)
-            } else if (!url.startsWith('[待上传:')) {
+            // 只处理有效URL
+            if (!url.startsWith('[待上传:')) {
               allImagesSet.add(url)
             }
           }
         }
       }
 
-      // 处理images字段中的base64数据
+      // 处理images字段
       if (images && Array.isArray(images)) {
         for (const image of images) {
           if (typeof image === 'string') {
-            if (image.startsWith('data:image/')) {
-              base64Images.push(image)
-            }
+            allImagesSet.add(image)
           } else if (image && typeof image === 'object') {
             const possibleUrlProps = ['url', 'preview', 'src', 'path', 'link']
             for (const prop of possibleUrlProps) {
               if (image[prop] && typeof image[prop] === 'string') {
-                if (image[prop].startsWith('data:image/')) {
-                  base64Images.push(image[prop])
-                  break
-                }
+                allImagesSet.add(image[prop])
+                break
               }
             }
           }
-        }
-      }
-
-      // 上传base64图片到图床
-      if (base64Images.length > 0) {
-        const uploadedUrls = []
-        for (const base64Data of base64Images) {
-          const result = await uploadBase64ToImageHost(base64Data)
-          if (result.success) {
-            uploadedUrls.push(result.url)
-          }
-        }
-        if (uploadedUrls.length > 0) {
-          uploadedUrls.forEach(url => allImagesSet.add(url))
-          // 记录管理员图片上传操作日志
-          console.log(`管理员Base64图片上传成功 - 用户ID: ${req.user.id}, 上传数量: ${uploadedUrls.length}`);
         }
       }
 
@@ -268,7 +220,7 @@ const postsCrudConfig = {
       if (allImages.length > 0) {
         for (const imageUrl of allImages) {
           const cleanUrl = imageUrl ? imageUrl.trim().replace(/\`/g, '').replace(/\s+/g, '') : ''
-          if (cleanUrl && !cleanUrl.startsWith('data:image/')) {
+          if (cleanUrl) {
             await pool.execute(
               'INSERT INTO post_images (post_id, image_url) VALUES (?, ?)',
               [postId, cleanUrl]

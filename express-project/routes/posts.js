@@ -3,7 +3,6 @@ const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
-const { uploadBase64ToImageHost } = require('../utils/uploadHelper');
 const NotificationHelper = require('../utils/notificationHelper');
 
 // 获取笔记列表
@@ -313,25 +312,11 @@ router.post('/', authenticateToken, async (req, res) => {
     // 处理图片
     if (images && images.length > 0) {
       const validUrls = []
-      const base64Images = []
 
-      // 分离有效URL和base64数据
+      // 处理所有有效的URL
       for (const imageUrl of images) {
         if (imageUrl && typeof imageUrl === 'string') {
-          if (!imageUrl.startsWith('data:image/')) {
-            validUrls.push(imageUrl)
-          } else {
-            base64Images.push(imageUrl)
-          }
-        }
-      }
-
-      // 上传base64图片到图床
-      if (base64Images.length > 0) {
-        const token = req.headers.authorization?.replace('Bearer ', '')
-        const uploadedUrls = await uploadBase64Images(base64Images, token)
-        if (uploadedUrls.length > 0) {
-          validUrls.push(...uploadedUrls)
+          validUrls.push(imageUrl)
         }
       }
 
@@ -645,25 +630,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // 处理新图片
     if (images && images.length > 0) {
       const validUrls = []
-      const base64Images = []
 
-      // 分离有效URL和base64数据
+      // 处理所有有效的URL
       for (const imageUrl of images) {
         if (imageUrl && typeof imageUrl === 'string') {
-          if (!imageUrl.startsWith('data:image/')) {
-            validUrls.push(imageUrl)
-          } else {
-            base64Images.push(imageUrl)
-          }
-        }
-      }
-
-      // 上传base64图片到图床
-      if (base64Images.length > 0) {
-        const token = req.headers.authorization?.replace('Bearer ', '')
-        const uploadedUrls = await uploadBase64Images(base64Images, token)
-        if (uploadedUrls.length > 0) {
-          validUrls.push(...uploadedUrls)
+          validUrls.push(imageUrl)
         }
       }
 

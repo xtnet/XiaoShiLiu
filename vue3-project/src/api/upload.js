@@ -1,5 +1,3 @@
-import request from './request.js'
-
 // 压缩图片函数
 const compressImage = (file, maxSizeMB = 0.8, quality = 0.4) => {
   return new Promise((resolve) => {
@@ -247,48 +245,6 @@ export function createImagePreview(file) {
   })
 }
 
-export async function uploadBase64Images(base64Images) {
-  try {
-    if (!base64Images || !Array.isArray(base64Images) || base64Images.length === 0) {
-      throw new Error('没有提供图片数据')
-    }
-
-
-
-    const response = await request.post('/upload/base64', {
-      images: base64Images
-    })
-
-    if (!response.success) {
-      throw new Error(response.message || '上传失败')
-    }
-
-
-
-    return {
-      success: true,
-      data: response.data.urls,
-      message: response.message
-    }
-  } catch (error) {
-    console.error('❌ 上传base64图片到图床失败:', error.message)
-
-    let errorMessage = '上传失败，请重试'
-    if (error.message && error.message.includes('timeout')) {
-      errorMessage = '上传超时，图片较多时需要更长时间，请稍后重试'
-    } else if (error.message && error.message.includes('网络')) {
-      errorMessage = '网络连接失败，请检查网络后重试'
-    } else if (error.message) {
-      errorMessage = error.message
-    }
-
-    return {
-      success: false,
-      data: [],
-      message: errorMessage
-    }
-  }
-}
 
 export default {
   uploadImage,
@@ -296,6 +252,5 @@ export default {
   uploadCroppedImage,
   validateImageFile,
   formatFileSize,
-  createImagePreview,
-  uploadBase64Images
+  createImagePreview
 }

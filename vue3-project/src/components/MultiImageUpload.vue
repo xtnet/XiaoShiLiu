@@ -428,9 +428,7 @@ const getTouchTargetIndex = (clientX, clientY) => {
   return targetIndex >= 0 ? targetIndex : -1
 }
 
-
-
-// 获取所有图片数据（包括已有URL和新图片的base64）
+// 获取所有图片数据（包括已有URL和新图片文件）
 const getAllImageData = async () => {
   const allImageData = []
 
@@ -439,14 +437,8 @@ const getAllImageData = async () => {
       // 已上传的图片，直接使用URL
       allImageData.push(item.url)
     } else if (item.file && !item.uploaded) {
-      // 新选择的图片，转换为base64
-      try {
-        const base64 = await fileToBase64(item.file)
-        allImageData.push(base64)
-      } catch (error) {
-        console.error('转换图片为base64失败:', error)
-        throw new Error(`图片 ${item.file.name} 处理失败`)
-      }
+      // 新选择的图片，直接使用文件对象
+      allImageData.push(item.file)
     }
   }
 
@@ -511,18 +503,6 @@ const compressImage = (file, maxSizeMB = 0.8, quality = 0.4) => {
   })
 }
 
-// 将文件转换为base64
-const fileToBase64 = async (file) => {
-  // 先压缩图片
-  const compressedFile = await compressImage(file)
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(compressedFile)
-  })
-}
 
 // 暴露上传方法给父组件（保持兼容性）
 const uploadAllImages = async () => {
@@ -541,7 +521,6 @@ const uploadAllImages = async () => {
       .map(item => item.url)
     return existingUrls
   }
-
 
   isUploading.value = true
   error.value = ''

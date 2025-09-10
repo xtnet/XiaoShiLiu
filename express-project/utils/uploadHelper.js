@@ -98,53 +98,6 @@ async function uploadToImageHost(fileBuffer, filename, mimetype) {
   }
 }
 
-/**
- * 从base64数据上传到图床
- * @param {string} base64Data - base64格式的图片数据
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadBase64ToImageHost(base64Data) {
-  try {
-    // 验证base64格式
-    if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:image/')) {
-      return {
-        success: false,
-        message: '无效的base64数据'
-      };
-    }
-
-    // 解析base64数据
-    const matches = base64Data.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
-    if (!matches) {
-      return {
-        success: false,
-        message: 'base64格式不正确'
-      };
-    }
-
-    const imageType = matches[1];
-    const imageBuffer = Buffer.from(matches[2], 'base64');
-
-    // 检查文件大小（5MB限制）
-    if (imageBuffer.length > 5 * 1024 * 1024) {
-      return {
-        success: false,
-        message: '图片大小超过5MB限制'
-      };
-    }
-
-    const filename = `image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${imageType}`;
-    const mimetype = `image/${imageType}`;
-
-    return await uploadToImageHost(imageBuffer, filename, mimetype);
-  } catch (error) {
-    console.error('❌ Base64图片上传失败:', error.message);
-    return {
-      success: false,
-      message: error.message || 'Base64图片上传失败'
-    };
-  }
-}
 
 /**
  * 从文件路径上传到图床
@@ -231,60 +184,12 @@ async function uploadFile(fileBuffer, filename, mimetype) {
   }
 }
 
-/**
- * 统一base64上传接口
- * @param {string} base64Data - base64格式的图片数据
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadBase64(base64Data) {
-  try {
-    // 验证base64格式
-    if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:image/')) {
-      return {
-        success: false,
-        message: '无效的base64数据'
-      };
-    }
-
-    // 解析base64数据
-    const matches = base64Data.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
-    if (!matches) {
-      return {
-        success: false,
-        message: 'base64格式不正确'
-      };
-    }
-
-    const imageType = matches[1];
-    const imageBuffer = Buffer.from(matches[2], 'base64');
-
-    // 检查文件大小（5MB限制）
-    if (imageBuffer.length > 5 * 1024 * 1024) {
-      return {
-        success: false,
-        message: '图片大小超过5MB限制'
-      };
-    }
-
-    const filename = `image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${imageType}`;
-    const mimetype = `image/${imageType}`;
-
-    return await uploadFile(imageBuffer, filename, mimetype);
-  } catch (error) {
-    console.error('❌ base64上传失败:', error.message);
-    return {
-      success: false,
-      message: error.message || 'base64上传失败'
-    };
-  }
-}
+// 已移除统一base64上传接口，直接使用文件上传
 
 module.exports = {
   uploadToImageHost,
-  uploadBase64ToImageHost,
   uploadFileToImageHost,
   saveToLocal,
   uploadFile,
-  uploadBase64,
   adminAuth
 };
