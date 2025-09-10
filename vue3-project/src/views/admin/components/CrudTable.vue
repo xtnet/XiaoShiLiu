@@ -144,6 +144,16 @@
                   {{ item[column.key] }}
                 </span>
               </span>
+              <span v-else-if="column.type === 'post-link' && item[column.key]">
+                <span class="post-link" @click="openPostDetail(item, column.key)" :title="'查看笔记详情'">
+                  {{ item[column.key] }}
+                </span>
+              </span>
+              <span v-else-if="column.type === 'comment-link' && item[column.key]">
+                <span class="comment-link" @click="openPostWithCommentId(item, column.key)" :title="'定位到评论位置'">
+                  {{ item[column.key] }}
+                </span>
+              </span>
               <span v-else-if="column.type === 'content' && item[column.key]">
                 <span class="content-link" @click="showDetail(item, column)" :title="'查看' + column.label">
                   {{ column.label }}
@@ -205,10 +215,10 @@
       @close="closeDetailModal" />
 
 
-    <ImageModal v-model:visible="showImageModalVisible" :image-url="currentImage" @close="closeImageModal" />
+    <ImageViewer v-model:visible="showImageModalVisible" :images="[currentImage]" :initial-index="0" @close="closeImageModal" />
 
 
-    <ImageCarousel v-model:visible="showImageCarouselVisible" :images="currentImages" @close="closeImageCarousel" />
+    <ImageViewer v-model:visible="showImageCarouselVisible" :images="currentImages.map(img => img.image_url)" :initial-index="0" @close="closeImageCarousel" />
 
 
     <TagsModal v-model:visible="showTagsModalVisible" :title="tagsModalTitle" :tags="currentTags"
@@ -244,8 +254,8 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import ConfirmDialog from '../../../components/ConfirmDialog.vue'
 import DetailModal from './DetailModal.vue'
 import FormModal from './FormModal.vue'
-import ImageModal from './ImageModal.vue'
-import ImageCarousel from './ImageCarousel.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
+
 import TagsModal from './TagsModal.vue'
 import PersonalityTagsModal from './PersonalityTagsModal.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
@@ -1038,6 +1048,14 @@ const openUserProfile = async (item, fieldKey) => {
   }
 }
 
+//跳转到笔记页面
+const openPostDetail = async (item) => {
+  window.open(`${window.location.origin}/post?id=${item.id}`, '_blank')
+}
+const openPostWithCommentId = (item) => {
+  console.log(item)
+  window.open(`${window.location.origin}/post?id=${item.post_id}&targetCommentId=${item.id}`, '_blank')
+}
 const handleSort = (field, order) => {
   clearCache()
   sortField.value = field
@@ -1521,7 +1539,9 @@ const handleImageError = (event) => {
 /* 详情相关样式 */
 .truncated-content,
 .content-link,
-.user-link {
+.user-link,
+.post-link,
+.comment-link {
   color: var(--text-color-secondary);
   cursor: pointer;
   text-decoration: underline;

@@ -10,7 +10,7 @@ const columns = [
   { key: 'id', label: 'ID', sortable: true },
   { key: 'user_id', label: '用户ID', sortable: false },
   { key: 'user_display_id', label: '用户小石榴号', type: 'user-link', sortable: false },
-  { key: 'post_id', label: '笔记ID', sortable: false },
+  { key: 'post_id', label: '笔记ID',type:'post-link', sortable: false },
   { key: 'post_title', label: '笔记标题', type: 'content', sortable: false },
   { key: 'created_at', label: '收藏时间', type: 'date', sortable: true }
 ]

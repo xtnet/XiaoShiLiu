@@ -945,7 +945,7 @@ const collectionsCrudConfig = {
     }
 
     // 检查是否已经收藏
-    const { pool } = require('../config/database')
+    const { pool } = require('../config/config')
     const [existing] = await pool.execute(
       'SELECT id FROM collections WHERE user_id = ? AND post_id = ?',
       [String(data.user_id), String(data.post_id)]
@@ -1089,7 +1089,7 @@ const followsCrudConfig = {
     await validateFollowData(data)
 
     // 检查是否已经关注
-    const { pool } = require('../config/database')
+    const { pool } = require('../config/config')
     const [existing] = await pool.execute(
       'SELECT id FROM follows WHERE follower_id = ? AND following_id = ?',
       [String(data.follower_id), String(data.following_id)]
@@ -1108,7 +1108,7 @@ const followsCrudConfig = {
   beforeUpdate: async (data, id) => {
     if (data.following_id) {
       // 获取当前记录的关注者ID
-      const { pool } = require('../config/database')
+      const { pool } = require('../config/config')
       const [current] = await pool.execute('SELECT follower_id FROM follows WHERE id = ?', [String(id)])
       if (current.length === 0) {
         return {
@@ -1402,7 +1402,7 @@ const sessionsCrudConfig = {
   // 自定义查询
   customQueries: {
     getList: async (req) => {
-      const { pool } = require('../config/database')
+      const { pool } = require('../config/config')
       const page = parseInt(req.query.page) || 1
       const limit = parseInt(req.query.limit) || 20
       const offset = (page - 1) * limit

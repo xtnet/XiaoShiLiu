@@ -27,7 +27,7 @@ onMounted(() => {
 })
 
 const columns = [
-  { key: 'id', label: 'ID', sortable: true },
+  { key: 'id', label: 'ID', type: 'post-link', sortable: true },
   { key: 'title', label: '标题', type: 'content', sortable: false },
   { key: 'user_id', label: '作者ID', sortable: false },
   { key: 'user_display_id', label: '小石榴号', type: 'user-link', sortable: false },

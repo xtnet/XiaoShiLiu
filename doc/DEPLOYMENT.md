@@ -468,7 +468,6 @@ npm run dev
 | 文件 | 说明 |
 |------|------|
 | `config/config.js` | 主配置文件 |
-| `config/database.js` | 数据库配置 |
 | `.env` | 环境变量配置文件 |
 | `database_design.md` | 数据库设计文档 |
 | `scripts/init-database.js` | 数据库初始化脚本 |

@@ -411,7 +411,6 @@ npm run dev
 | 文件 | 說明 |
 |------|------|
 | `config/config.js` | 主配置文件 |
-| `config/database.js` | 資料庫配置 |
 | `.env` | 環境變數配置文件 |
 | `database_design.md` | 資料庫設計文檔 |
 | `scripts/init-database.js` | 資料庫初始化腳本 |
