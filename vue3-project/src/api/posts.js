@@ -1,6 +1,7 @@
 import { postApi } from './index.js'
 import request from './request.js'
 import apiConfig from '@/config/api.js'
+import { hasViewedPost, markPostAsViewed } from '@/utils/viewTracker.js'
 
 // 转换后端数据格式为前端瀑布流需要的格式
 function transformPostData(backendPost) {
@@ -213,7 +214,20 @@ export async function getPostList(params = {}) {
 // 获取笔记详情
 export async function getPostDetail(postId) {
   try {
-    const response = await postApi.getPostDetail(postId)
+    // 检查是否已经浏览过该帖子
+    const alreadyViewed = hasViewedPost(postId)
+
+    let response
+    if (alreadyViewed) {
+      // 如果已经浏览过，调用不增加浏览量的API
+      response = await request.get(`/posts/${postId}?skipViewCount=true`)
+    } else {
+      // 如果未浏览过，调用正常API（会增加浏览量）
+      response = await postApi.getPostDetail(postId)
+      // 标记为已浏览
+      markPostAsViewed(postId)
+    }
+
     if (response && response.data) {
       return transformPostData(response.data)
     }

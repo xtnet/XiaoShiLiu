@@ -270,9 +270,14 @@ router.get('/:id', optionalAuth, async (req, res) => {
       post.collected = false;
     }
 
-    // 增加浏览量
-    await pool.execute('UPDATE posts SET view_count = view_count + 1 WHERE id = ?', [postId]);
-    post.view_count = post.view_count + 1;
+    // 检查是否跳过浏览量增加
+    const skipViewCount = req.query.skipViewCount === 'true';
+
+    if (!skipViewCount) {
+      // 增加浏览量
+      await pool.execute('UPDATE posts SET view_count = view_count + 1 WHERE id = ?', [postId]);
+      post.view_count = post.view_count + 1;
+    }
 
 
     res.json({
