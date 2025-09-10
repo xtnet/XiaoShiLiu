@@ -1944,6 +1944,9 @@ const filteredApiGroups = computed(() => {
 </script>
 
 <style scoped>
+*{
+  transition: background-color 0.3s ease,border-color 0.3s ease;
+}
 .api-docs {
   margin: 0 auto;
 }
@@ -2237,8 +2240,8 @@ mark {
 
 .api-details {
   padding: 20px 30px;
-  background-color: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
+  background-color: var(--bg-color-secondary);
+  border-top: 1px solid var(--border-color-primary);
 }
 
 .description,
@@ -2264,13 +2267,13 @@ mark {
 
 .params-table th,
 .params-table td {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--text-color-tertiary);
   padding: 8px 12px;
   text-align: left;
 }
 
 .params-table th {
-  background-color: #e9ecef;
+  background-color: var(--bg-color-secondary);
   font-weight: 600;
 }
 
@@ -2279,8 +2282,8 @@ mark {
 }
 
 .example .code-block {
-  background-color: #ffffff;
-  border: 1px solid #dee2e6;
+  background-color: var(--bg-color-primary);
+  border: 1px solid var(--border-color-primary);
 }
 
 /* 移动端适配 */
