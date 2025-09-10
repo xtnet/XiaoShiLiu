@@ -32,10 +32,14 @@ const props = defineProps({
   mentionUsers: {
     type: Array,
     default: () => []
+  },
+  enableShiftEnterSend: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'keydown', 'mention', 'paste-image'])
+const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'keydown', 'mention', 'paste-image', 'send'])
 
 const inputRef = ref(null)
 const isUserTyping = ref(false)
@@ -73,7 +77,7 @@ const sanitizeContent = (content) => {
   return content.replace(/<[^>]*>/g, '')
 }
 
-// 将HTML格式的mention链接转换为[@nickname:user_id]格式
+// 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持<br>标签用于换行
 const convertMentionLinksToText = (html) => {
   if (!html) return ''
 
@@ -90,8 +94,27 @@ const convertMentionLinksToText = (html) => {
     link.parentNode.replaceChild(mentionText, link)
   })
 
-  // 过滤HTML标签
-  return sanitizeContent(tempDiv.innerHTML)
+  // 将其他换行元素转换为<br>标签，统一换行格式
+  let content = tempDiv.innerHTML
+  // 处理<div>标签（contenteditable中的换行通常生成div）
+  // 先处理连续的div标签
+  content = content.replace(/<\/div><div>/gi, '<br>')
+  // 处理第一个div标签（如果内容以div开头，说明第一行后面有换行）
+  content = content.replace(/^([^<]*)<div>/gi, '$1<br>')
+  // 移除所有剩余的div标签
+  content = content.replace(/<\/?div[^>]*>/gi, '')
+  // 处理<p>标签
+  content = content.replace(/<\/p><p>/gi, '<br>')
+  content = content.replace(/<p>/gi, '')
+  content = content.replace(/<\/p>/gi, '')
+
+  // 过滤其他HTML标签，但保留<br>标签
+  content = content.replace(/<(?!br\s*\/?)[^>]*>/gi, '')
+
+  // 清理多余的<br>标签
+  content = content.replace(/^(<br\s*\/?\s*)+/gi, '').replace(/(<br\s*\/?\s*)+$/gi, '')
+
+  return content
 }
 
 // 处理输入事件
@@ -120,7 +143,7 @@ const handleInput = (event) => {
           const atSymbol = document.createElement('span')
           atSymbol.setAttribute('data-at-marker', timestamp)
           atSymbol.textContent = '@'
-      
+
 
           const beforeText = text.substring(0, atIndex)
           const afterText = text.substring(atIndex + 1)
@@ -162,7 +185,7 @@ const handleFocus = (event) => {
     oldMarkers.forEach(marker => marker.remove())
     cursorMarkerId.value = null
   }
-  
+
   emit('focus', event)
 }
 
@@ -235,6 +258,17 @@ const removeMentionLink = (linkElement) => {
 }
 
 const handleKeydown = (event) => {
+  // 处理Enter键
+  if (event.key === 'Enter') {
+    if (event.shiftKey && props.enableShiftEnterSend) {
+      // Shift+Enter发送
+      event.preventDefault()
+      emit('send')
+      return
+    }
+    // 普通Enter键允许默认换行行为，不阻止
+  }
+
   if (event.key === 'Backspace') {
     const selection = window.getSelection()
     if (selection.rangeCount > 0) {
@@ -304,7 +338,7 @@ const handleKeydown = (event) => {
 const handlePaste = (event) => {
   event.preventDefault()
   const clipboardData = event.clipboardData || window.clipboardData
-  
+
   // 检查是否有图片文件
   const items = clipboardData.items
   if (items) {
@@ -320,7 +354,7 @@ const handlePaste = (event) => {
       }
     }
   }
-  
+
   // 处理文本粘贴
   const pastedText = clipboardData.getData('text/plain')
   if (!pastedText) return
@@ -373,7 +407,7 @@ const positionCursorAfterElement = (element) => {
 
 const insertAtSymbol = () => {
   if (!inputRef.value) return
-  
+
   // 查找标记节点
   if (cursorMarkerId.value) {
     const marker = document.getElementById(cursorMarkerId.value)
@@ -384,14 +418,14 @@ const insertAtSymbol = () => {
       atSymbol.setAttribute('data-at-marker', timestamp)
       atSymbol.textContent = '@'
 
-      
+
       // 直接在标记节点位置插入@符号
       marker.parentNode.insertBefore(atSymbol, marker)
-      
+
       // 删除标记节点
       marker.remove()
       cursorMarkerId.value = null
-      
+
       // 设置光标到@符号后面
       const selection = window.getSelection()
       const range = document.createRange()
@@ -399,30 +433,30 @@ const insertAtSymbol = () => {
       range.setEndAfter(atSymbol)
       selection.removeAllRanges()
       selection.addRange(range)
-      
+
       emit('update:modelValue', inputRef.value.innerHTML)
       return true
     }
   }
-  
+
   // 如果没有标记节点，回退到原有逻辑（在末尾插入）
   inputRef.value.focus()
   const selection = window.getSelection()
   const range = document.createRange()
   range.selectNodeContents(inputRef.value)
   range.collapse(false)
-  
+
   const timestamp = Date.now()
   const atSymbol = document.createElement('span')
   atSymbol.setAttribute('data-at-marker', timestamp)
   atSymbol.textContent = '@'
-  
+
   range.insertNode(atSymbol)
   range.setStartAfter(atSymbol)
   range.setEndAfter(atSymbol)
   selection.removeAllRanges()
   selection.addRange(range)
-  
+
   emit('update:modelValue', inputRef.value.innerHTML)
   return true
 }
@@ -445,19 +479,19 @@ const selectMentionUser = (user) => {
 
   // 优先查找最近的@符号span进行替换
   let atMarker = null
-  
+
   // 先查找所有@符号span
   const atMarkers = inputRef.value.querySelectorAll('span[data-at-marker]')
   if (atMarkers.length > 0) {
     // 取最后一个（最近插入的）@符号
     atMarker = atMarkers[atMarkers.length - 1]
   }
-  
+
   if (atMarker) {
     // 创建mention链接并替换@符号
     const mentionLink = createMentionLink(targetUserId, targetNickname)
     atMarker.parentNode.replaceChild(mentionLink, atMarker)
-    
+
     // 设置光标到mention链接后面
     const selection = window.getSelection()
     const range = document.createRange()
@@ -465,28 +499,28 @@ const selectMentionUser = (user) => {
     range.setEndAfter(mentionLink)
     selection.removeAllRanges()
     selection.addRange(range)
-    
+
     // 触发更新事件
     emit('update:modelValue', convertMentionLinksToText(inputRef.value.innerHTML))
-    
+
     resetUserTypingFlag()
     return
   }
-  
+
   // 如果没有@符号，查找光标标记节点
   if (cursorMarkerId.value) {
     const marker = document.getElementById(cursorMarkerId.value)
     if (marker) {
       // 创建mention链接
       const mentionLink = createMentionLink(targetUserId, targetNickname)
-      
+
       // 直接在标记节点位置插入mention链接
       marker.parentNode.insertBefore(mentionLink, marker)
-      
+
       // 删除标记节点
       marker.remove()
       cursorMarkerId.value = null
-      
+
       // 设置光标到mention链接后面
       const selection = window.getSelection()
       const range = document.createRange()
@@ -494,10 +528,10 @@ const selectMentionUser = (user) => {
       range.setEndAfter(mentionLink)
       selection.removeAllRanges()
       selection.addRange(range)
-      
+
       // 触发更新事件
       emit('update:modelValue', convertMentionLinksToText(inputRef.value.innerHTML))
-      
+
       resetUserTypingFlag()
       return
     }
@@ -521,7 +555,7 @@ const focus = () => {
         marker.remove()
       }
     })
-    
+
     const selection = window.getSelection()
     selection.removeAllRanges() // 清空现有选区
 
@@ -535,7 +569,7 @@ const focus = () => {
           range.setStartBefore(marker)
           range.setEndBefore(marker)
           selection.addRange(range)
-          
+
           // 删除标记节点
           marker.remove()
         } catch (e) {
@@ -582,11 +616,11 @@ const insertEmoji = (emojiChar) => {
       // 直接在标记节点位置插入表情
       const textNode = document.createTextNode(emojiChar)
       marker.parentNode.insertBefore(textNode, marker)
-      
+
       // 删除标记节点
       marker.remove()
       cursorMarkerId.value = null
-      
+
       // 设置光标到表情后面
       const selection = window.getSelection()
       const range = document.createRange()
@@ -594,33 +628,33 @@ const insertEmoji = (emojiChar) => {
       range.setEndAfter(textNode)
       selection.removeAllRanges()
       selection.addRange(range)
-      
+
       // 触发input事件同步内容
       const inputEvent = new Event('input', { bubbles: true })
       inputRef.value.dispatchEvent(inputEvent)
-      
+
       resetUserTypingFlag()
       return
     }
   }
-  
+
   // 如果没有标记节点，回退到原有逻辑（在末尾插入）
   inputRef.value.focus()
   const selection = window.getSelection()
   const range = document.createRange()
   range.selectNodeContents(inputRef.value)
   range.collapse(false)
-  
+
   const textNode = document.createTextNode(emojiChar)
   range.insertNode(textNode)
   range.setStartAfter(textNode)
   range.setEndAfter(textNode)
   selection.removeAllRanges()
   selection.addRange(range)
-  
+
   const inputEvent = new Event('input', { bubbles: true })
   inputRef.value.dispatchEvent(inputEvent)
-  
+
   resetUserTypingFlag()
 }
 
@@ -646,7 +680,8 @@ defineExpose({
   content: attr(placeholder);
   color: var(--text-color-secondary, #999);
   pointer-events: none;
-  position: absolute;
+  display: block;
+  opacity: 0.6;
 }
 
 [contenteditable] :deep(p) {

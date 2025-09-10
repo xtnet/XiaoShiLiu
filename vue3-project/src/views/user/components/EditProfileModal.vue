@@ -371,12 +371,6 @@ watch(() => form.bio, (newValue) => {
   if (newValue && newValue.length > 200) {
     // 截断到200字符
     form.bio = newValue.substring(0, 200)
-    // 如果有ContentEditableInput组件引用，同步更新其内容
-    if (bioTextarea.value && bioTextarea.value.$el) {
-      nextTick(() => {
-        bioTextarea.value.$el.innerHTML = form.bio
-      })
-    }
   }
 })
 
@@ -576,7 +570,7 @@ const handleInputKeydown = (event) => {
             // 删除整个mention链接
             prevElement.remove()
             // 更新form.bio的值
-            form.bio = event.target.innerHTML
+            form.bio = event.target.textContent || ''
 
             // 重新设置光标位置
             nextTick(() => {
@@ -641,7 +635,7 @@ const handleClose = () => {
 const sanitizeContent = (content) => {
   if (!content) return ''
 
-  // 保留mention链接，但移除其他危险标签
+  // 保留mention链接和<br>标签，但移除其他危险标签
   // 先保存mention链接
   const mentionLinks = []
   let processedContent = content.replace(/<a[^>]*class="mention-link"[^>]*>.*?<\/a>/g, (match) => {
@@ -650,13 +644,24 @@ const sanitizeContent = (content) => {
     return placeholder
   })
 
-  // 移除所有其他HTML标签
-  processedContent = processedContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+  // 将其他换行元素转换为<br>标签
+  processedContent = processedContent.replace(/<\/div><div[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<\/p><p[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<div[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/div>/gi, '')
+  processedContent = processedContent.replace(/<p[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/p>/gi, '')
+
+  // 移除其他HTML标签，但保留<br>标签
+  processedContent = processedContent.replace(/<(?!br\s*\/?)[^>]*>/gi, '').replace(/&nbsp;/g, ' ')
 
   // 恢复mention链接
   mentionLinks.forEach((link, index) => {
     processedContent = processedContent.replace(`__MENTION_${index}__`, link)
   })
+
+  // 清理多余的<br>标签
+  processedContent = processedContent.replace(/(<br\s*\/?\s*){2,}/gi, '<br>')
 
   return processedContent.trim()
 }
@@ -860,7 +865,7 @@ const handleSave = async () => {
 }
 
 .content-textarea:empty:before {
-  content: attr(data-placeholder);
+  content: attr(placeholder);
   color: var(--text-color-secondary);
   pointer-events: none;
 }

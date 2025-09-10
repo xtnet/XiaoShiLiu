@@ -51,9 +51,23 @@ const parsedContent = computed(() => {
   const imgElements = tempDiv.querySelectorAll('img')
   const images = Array.from(imgElements).map(img => img.src)
   
-  // 移除图片元素，获取纯文本
+  // 移除图片元素，获取文本（保留换行信息）
   imgElements.forEach(img => img.remove())
-  const text = tempDiv.textContent || tempDiv.innerText || ''
+  
+  // 将<br>标签转换为换行符，保留换行信息
+  let htmlContent = tempDiv.innerHTML
+  htmlContent = htmlContent.replace(/<br\s*\/?>/gi, '\n')
+  htmlContent = htmlContent.replace(/<\/div><div>/gi, '\n')
+  htmlContent = htmlContent.replace(/<div>/gi, '')
+  htmlContent = htmlContent.replace(/<\/div>/gi, '')
+  htmlContent = htmlContent.replace(/<\/p><p>/gi, '\n')
+  htmlContent = htmlContent.replace(/<p>/gi, '')
+  htmlContent = htmlContent.replace(/<\/p>/gi, '')
+  
+  // 创建新的临时div来获取纯文本
+  const textDiv = document.createElement('div')
+  textDiv.innerHTML = htmlContent
+  const text = textDiv.textContent || textDiv.innerText || ''
   
   return { text: text.trim(), images }
 })

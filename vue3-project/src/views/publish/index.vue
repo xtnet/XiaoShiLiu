@@ -42,7 +42,7 @@
         <div class="input-section">
           <div class="content-input-wrapper">
             <ContentEditableInput ref="contentTextarea" v-model="form.content" :input-class="'content-textarea'"
-              placeholder="填写更全面的描述信息，让更多的人看到你吧!" :enable-mention="true" :mention-users="mentionUsers"
+              placeholder="请输入内容" :enable-mention="true" :mention-users="mentionUsers"
               @focus="handleContentFocus" @blur="handleContentBlur" @keydown="handleInputKeydown"
               @mention="handleMentionInput" />
             <div class="content-actions">
@@ -341,7 +341,7 @@ const handleInputKeydown = (event) => {
           prevNode.remove()
 
           // 更新form.content
-          form.content = event.target.innerHTML
+          form.content = event.target.textContent || ''
           return
         }
       }
@@ -353,7 +353,7 @@ const handleInputKeydown = (event) => {
 const sanitizeContent = (content) => {
   if (!content) return ''
 
-  // 保留mention链接，但移除其他危险标签
+  // 保留mention链接和<br>标签，但移除其他危险标签
   // 先保存mention链接
   const mentionLinks = []
   let processedContent = content.replace(/<a[^>]*class="mention-link"[^>]*>.*?<\/a>/g, (match) => {
@@ -362,13 +362,24 @@ const sanitizeContent = (content) => {
     return placeholder
   })
 
-  // 移除所有其他HTML标签
-  processedContent = processedContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+  // 将其他换行元素转换为<br>标签
+  processedContent = processedContent.replace(/<\/div><div[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<\/p><p[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<div[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/div>/gi, '')
+  processedContent = processedContent.replace(/<p[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/p>/gi, '')
+
+  // 移除其他HTML标签，但保留<br>标签
+  processedContent = processedContent.replace(/<(?!br\s*\/?)[^>]*>/gi, '').replace(/&nbsp;/g, ' ')
 
   // 恢复mention链接
   mentionLinks.forEach((link, index) => {
     processedContent = processedContent.replace(`__MENTION_${index}__`, link)
   })
+
+  // 清理多余的<br>标签
+  processedContent = processedContent.replace(/(<br\s*\/?\s*){2,}/gi, '<br>')
 
   return processedContent.trim()
 }
@@ -842,7 +853,7 @@ const handleSaveDraft = async () => {
 }
 
 .content-textarea:empty:before {
-  content: attr(data-placeholder);
+  content: attr(placeholder);
   color: var(--text-color-secondary);
   pointer-events: none;
 }
@@ -1239,6 +1250,7 @@ const handleSaveDraft = async () => {
 }
 
 .publish-actions .cancel-btn,
+.publish-actions .draft-btn,
 .publish-actions .publish-btn {
   padding: 0.6rem 1.2rem;
   font-size: 0.85rem;

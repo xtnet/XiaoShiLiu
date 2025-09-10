@@ -125,7 +125,7 @@
               </div>
 
               <div v-else class="comments-list">
-                <div v-if="enhancedComments.length === 0" class="no-comments">
+                <div v-if="enhancedComments.length === 0 && commentCount === 0 && !hasMoreCommentsToShow" class="no-comments">
                   <span>暂无评论，快来抢沙发吧~</span>
                 </div>
 
@@ -249,8 +249,8 @@
                   </div>
                   <ContentEditableInput ref="focusedInput" v-model="commentInput" :input-class="'comment-input'"
                     :placeholder="replyingTo ? `回复 ${replyingTo.username}：` : '说点什么...'" :enable-mention="true"
-                    :mention-users="mentionUsers" @focus="handleInputFocus" @keydown="handleInputKeydown"
-                    @mention="handleMentionInput" @paste-image="handlePasteImage" />
+                    :mention-users="mentionUsers" :enable-shift-enter-send="true" @focus="handleInputFocus"
+                    @mention="handleMentionInput" @paste-image="handlePasteImage" @send="handleSendComment" />
                 </div>
 
 
@@ -669,7 +669,7 @@ const locateNewComment = async (commentId, replyingToInfo) => {
     if (replyingToInfo && replyingToInfo.commentId) {
       // 查找顶级父评论ID来展开回复列表
       let topLevelParentId = null
-      
+
       // 首先检查是否直接回复顶级评论
       const directParent = comments.value.find(c => c.id === replyingToInfo.commentId)
       if (directParent) {
@@ -683,7 +683,7 @@ const locateNewComment = async (commentId, replyingToInfo) => {
           }
         }
       }
-      
+
       // 展开顶级父评论的回复列表
       if (topLevelParentId) {
         expandedReplies.value.add(topLevelParentId)
@@ -1265,75 +1265,10 @@ const removeUploadedImage = (index) => {
 
 // 输入框键盘事件处理
 const handleInputKeydown = (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    // 回车键发送评论（不包括Shift+Enter）
-    event.preventDefault()
-    handleSendComment()
-  } else if (event.key === 'Escape') {
+  if (event.key === 'Escape') {
     // ESC键取消输入
     event.preventDefault()
     handleCancelInput()
-  } else if (event.key === 'Backspace' || event.key === 'Delete') {
-    // 处理删除mention标签的逻辑
-    const selection = window.getSelection()
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-
-      if (event.key === 'Backspace') {
-        // Backspace: 优先处理正常的文本删除
-        if (range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset > 0) {
-          // 如果光标在文本节点中且不在开头，允许正常删除文本
-          return
-        }
-
-        // 只有当光标紧邻mention标签且没有其他文本可删除时，才删除mention
-        const prevNode = range.startContainer.previousSibling
-        if (prevNode && prevNode.classList && prevNode.classList.contains('mention-link')) {
-          // 检查是否有选中的文本，如果有则优先删除选中的文本
-          if (range.startOffset !== range.endOffset) {
-            return // 让浏览器处理选中文本的删除
-          }
-          event.preventDefault()
-          prevNode.remove()
-          commentInput.value = event.target.innerHTML
-          return
-        }
-
-        // 如果光标在文本节点开头，检查前面的兄弟节点
-        if (range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset === 0) {
-          const textNode = range.startContainer
-          const prevSibling = textNode.previousSibling
-          if (prevSibling && prevSibling.classList && prevSibling.classList.contains('mention-link')) {
-            event.preventDefault()
-            prevSibling.remove()
-            commentInput.value = event.target.innerHTML
-            return
-          }
-        }
-      } else if (event.key === 'Delete') {
-        // Delete: 检查光标后面是否有mention标签
-        const nextNode = range.endContainer.nextSibling
-        if (nextNode && nextNode.classList && nextNode.classList.contains('mention-link')) {
-          event.preventDefault()
-          nextNode.remove()
-          commentInput.value = event.target.innerHTML
-          return
-        }
-
-        // 如果光标在文本节点末尾，检查后面的兄弟节点
-        if (range.endContainer.nodeType === Node.TEXT_NODE &&
-          range.endOffset === range.endContainer.textContent.length) {
-          const textNode = range.endContainer
-          const nextSibling = textNode.nextSibling
-          if (nextSibling && nextSibling.classList && nextSibling.classList.contains('mention-link')) {
-            event.preventDefault()
-            nextSibling.remove()
-            commentInput.value = event.target.innerHTML
-            return
-          }
-        }
-      }
-    }
   }
 }
 // 开始回复评论
@@ -1873,7 +1808,7 @@ const handleMentionInput = () => {
 // 内容安全过滤函数
 const sanitizeContent = (content) => {
   if (!content) return ''
-  // 保留mention链接，但移除其他危险标签
+  // 保留mention链接和<br>标签，但移除其他危险标签
   // 先保存mention链接
   const mentionLinks = []
   let processedContent = content.replace(/<a[^>]*class="mention-link"[^>]*>.*?<\/a>/g, (match) => {
@@ -1882,13 +1817,24 @@ const sanitizeContent = (content) => {
     return placeholder
   })
 
-  // 移除所有其他HTML标签
-  processedContent = processedContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+  // 将其他换行元素转换为<br>标签
+  processedContent = processedContent.replace(/<\/div><div[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<\/p><p[^>]*>/gi, '<br>')
+  processedContent = processedContent.replace(/<div[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/div>/gi, '')
+  processedContent = processedContent.replace(/<p[^>]*>/gi, '')
+  processedContent = processedContent.replace(/<\/p>/gi, '')
+
+  // 移除其他HTML标签，但保留<br>标签
+  processedContent = processedContent.replace(/<(?!br\s*\/?)[^>]*>/gi, '').replace(/&nbsp;/g, ' ')
 
   // 恢复mention链接
   mentionLinks.forEach((link, index) => {
     processedContent = processedContent.replace(`__MENTION_${index}__`, link)
   })
+
+  // 清理多余的<br>标签
+  processedContent = processedContent.replace(/(<br\s*\/?\s*){2,}/gi, '<br>')
 
   return processedContent.trim()
 }
@@ -2007,10 +1953,10 @@ const handleSendComment = async () => {
         if (savedReplyingTo) {
           // 查找顶级父评论（可能是直接回复顶级评论，也可能是回复子评论）
           let topLevelParent = null
-          
+
           // 首先尝试在顶级评论中查找
           topLevelParent = comments.value.find(c => c.id === savedReplyingTo.commentId)
-          
+
           // 如果没找到，可能是回复子评论，需要在所有评论的replies中查找
           if (!topLevelParent) {
             for (const comment of comments.value) {
@@ -2020,7 +1966,7 @@ const handleSendComment = async () => {
               }
             }
           }
-          
+
           if (topLevelParent) {
             // 找到顶级父评论，添加回复
             topLevelParent.replies.push(newComment)

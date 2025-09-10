@@ -38,6 +38,12 @@
               <span class="shortcut-desc">点赞</span>
               <kbd class="shortcut-key">D</kbd>
             </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">发送评论</span>
+              <kbd class="shortcut-key">Shift</kbd>
+              <span class="plus">+</span>
+              <kbd class="shortcut-key">Enter</kbd>
+            </div>
           </div>
         </div>
       </div>
@@ -198,13 +204,16 @@ onMounted(() => {
   height: 24px;
   padding: 0 8px;
   background: var(--text-color-primary);
-  border-radius: 12%;
+  border-radius: 5px;
   font-size: 15px;
   font-weight: 600;
   color: var(--bg-color-primary);
   font-family: var(--font-family);
 }
 
+.plus {
+  margin: 0 4px;
+}
 @media (max-width: 768px) {
   .shortcuts-modal {
     width: 300px;

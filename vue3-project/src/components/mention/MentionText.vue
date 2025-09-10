@@ -1,5 +1,5 @@
 <template>
-  <span v-html="parsedText" @click="handleMentionClick"></span>
+  <span class="mention-text" v-html="parsedText" @click="handleMentionClick"></span>
 </template>
 
 <script setup>
@@ -39,6 +39,11 @@ const handleMentionClick = (event) => {
 </script>
 
 <style scoped>
+.mention-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 :deep(.mention-link) {
   color: var(--text-color-tag);
   text-decoration: none;
