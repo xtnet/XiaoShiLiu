@@ -63,7 +63,6 @@
             <SvgIcon name="home" />
             <span class="back-text">返回主站</span>
           </button>
-
           <!-- 小屏筛选按钮（下拉） -->
           <div v-if="shouldShowFilter" class="filters mobile-only">
             <button class="filter-btn" @click="isFilterOpen = !isFilterOpen" aria-label="筛选"
@@ -82,6 +81,10 @@
               </div>
             </div>
           </div>
+          <!-- 移动端主题切换按钮 -->
+          <button class="mobile-theme-toggle-btn mobile-only" @click="themeStore.toggleTwoTheme" aria-label="切换主题">
+            <SvgIcon :name="themeStore.currentTheme === 'dark' ? 'sun' : 'moon'" width="20" height="20" />
+          </button>
 
           <!-- 小屏菜单按钮（代替侧边栏） -->
           <DropdownMenu class="mobile-only" direction="down">
@@ -311,8 +314,19 @@ const handleMouseEnter = () => {
   }
 }
 
-const handleMouseLeave = () => {
-  isExpanded.value = false
+const handleMouseLeave = (event) => {
+  // 获取侧边栏元素的边界信息
+  const sidebarElement = event.currentTarget
+  const rect = sidebarElement.getBoundingClientRect()
+  
+  // 获取鼠标离开时的位置
+  const mouseX = event.clientX
+  
+  // 只有当鼠标从右侧离开时才收起侧边栏
+  // 右侧边界位置 + 一些容差值
+  if (mouseX >= rect.right - 5) {
+    isExpanded.value = false
+  }
 }
 
 // 退出登录
@@ -339,6 +353,8 @@ const handleLogout = async () => {
 const goBack = () => {
   window.open('/', '_blank')
 }
+
+
 </script>
 
 <style scoped>
@@ -361,17 +377,17 @@ const goBack = () => {
   border-right: 1px solid var(--border-color-primary);
   position: relative;
   z-index: 100;
-  transition: width 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar.collapsed {
   width: 80px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar.collapsed.expanded {
   width: 280px;
   z-index: 1000;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-header {
@@ -382,7 +398,7 @@ const goBack = () => {
   justify-content: center;
   align-items: center;
   background-color: var(--bg-color-primary);
-  transition: background-color 0.3s ease,border-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -448,6 +464,7 @@ const goBack = () => {
 
 .sidebar.collapsed.expanded .sidebar-footer {
   border-top: 1px solid var(--border-color-primary);
+  transition: border 0.3s ease,background-color 0.3s ease;
 }
 
 .sidebar-footer {
@@ -455,7 +472,7 @@ const goBack = () => {
   flex-direction: column;
   gap: 16px;
   background-color: var(--bg-color-primary);
-  transition: background-color 0.3s ease;
+  border-top: 1px solid var(--border-color-primary);
 }
 
 .theme-switcher-content {
@@ -646,7 +663,7 @@ const goBack = () => {
   color: var(--text-color-secondary);
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease,border-color 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar.collapsed .logout-btn {
@@ -945,6 +962,7 @@ const goBack = () => {
 
   .header-right .back-btn,
   .header-right .filter-btn,
+  .header-right .mobile-theme-toggle-btn,
   .header-right .mobile-menu-btn {
     width: 36px;
     height: 36px;
@@ -957,10 +975,21 @@ const goBack = () => {
     color: #fff;
     background: var(--primary-color);
     border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .header-right .back-btn:hover,
+  .header-right .filter-btn:hover,
+  .header-right .mobile-theme-toggle-btn:hover,
+  .header-right .mobile-menu-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
   }
 
   .header-right .back-btn svg,
   .header-right .filter-btn svg,
+  .header-right .mobile-theme-toggle-btn svg,
   .header-right .mobile-menu-btn svg {
     width: 20px;
     height: 20px;

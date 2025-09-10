@@ -41,6 +41,11 @@ export const useThemeStore = defineStore('theme', () => {
     setTheme(themeOptions[nextIndex].value)
   }
 
+  //切换主题但省略跟随系统，只有亮暗切换
+  const toggleTwoTheme = () => {
+    setTheme(currentTheme.value === 'light' ? 'dark' : 'light')
+  }
+
   // 监听系统主题变化
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   const handleSystemThemeChange = () => {
@@ -63,7 +68,7 @@ export const useThemeStore = defineStore('theme', () => {
     // 方法
     setTheme,
     toggleTheme,
-
+    toggleTwoTheme,
     // 配置
     themeOptions
   }

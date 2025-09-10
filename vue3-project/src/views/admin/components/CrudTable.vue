@@ -215,10 +215,12 @@
       @close="closeDetailModal" />
 
 
-    <ImageViewer v-model:visible="showImageModalVisible" :images="[currentImage]" :initial-index="0" @close="closeImageModal" />
+    <ImageViewer v-model:visible="showImageModalVisible" :images="[currentImage]" :initial-index="0"
+      @close="closeImageModal" />
 
 
-    <ImageViewer v-model:visible="showImageCarouselVisible" :images="currentImages.map(img => img.image_url)" :initial-index="0" @close="closeImageCarousel" />
+    <ImageViewer v-model:visible="showImageCarouselVisible" :images="currentImages.map(img => img.image_url)"
+      :initial-index="0" @close="closeImageCarousel" />
 
 
     <TagsModal v-model:visible="showTagsModalVisible" :title="tagsModalTitle" :tags="currentTags"
@@ -1332,7 +1334,7 @@ const handleImageError = (event) => {
   word-break: break-all;
   vertical-align: top;
   white-space: normal;
-  transition: border-color 0.3s ease;
+  transition: border-bottom 0.3s ease;
 }
 
 .data-table th {
@@ -1340,6 +1342,7 @@ const handleImageError = (event) => {
   font-weight: 600;
   color: var(--text-color-primary);
   width: auto;
+  border-bottom: 1px solid transparent;
   transition: background-color 0.3s ease;
 }
 
