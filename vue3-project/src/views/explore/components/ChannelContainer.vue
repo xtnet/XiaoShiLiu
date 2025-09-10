@@ -149,19 +149,25 @@ onUnmounted(() => {
 .fixed-channel-container {
     position: fixed;
     top: 72px;
-    left: 0;
-    right: 0;
-    z-index: 999;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 10px;
     background: var(--bg-color-primary);
+    z-index: 50;
+    transition: background-color 0.2s ease;
 }
 
 .hidden {
     display: none;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 961px) {
     .fixed-channel-container {
-        left: 250px;
+        left: calc(50% + 114px);
+        width: calc(100% - 228px);
+        max-width: calc(1200px - 228px);
     }
 }
 </style>
