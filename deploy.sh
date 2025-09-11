@@ -73,12 +73,12 @@ start_services() {
     docker-compose up -d
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}服务启动成功!${NC}"
-        echo ""
-        echo -e "${CYAN}访问地址:${NC}"
-        echo -e "  前端: http://localhost"
-        echo -e "  后端API: http://localhost:3001"
-        echo -e "  数据库: localhost:3306"
+        echo -e "${GREEN}✓ 所有服务已成功启动！${NC}"
+        echo -e "\n${BLUE}服务访问地址：${NC}"
+        echo -e "  前端界面: ${GREEN}http://localhost:8080${NC}"
+        echo -e "  后端API:  ${GREEN}http://localhost:3001${NC}"
+        echo -e "  数据库:   ${GREEN}localhost:3307${NC}"
+        echo -e "\n${YELLOW}注意：容器已配置为中国时区(Asia/Shanghai)${NC}"
         echo ""
         echo -e "${YELLOW}使用 './deploy.sh --logs' 查看日志${NC}"
         echo -e "${YELLOW}使用 './deploy.sh --status' 查看服务状态${NC}"

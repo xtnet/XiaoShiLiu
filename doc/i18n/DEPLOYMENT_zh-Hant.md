@@ -100,9 +100,9 @@ chmod +x deploy.sh
 
 | 服務 | 地址 | 說明 |
 |------|------|------|
-| 前端界面 | http://localhost | 主要存取入口 |
-| 後端API | http://localhost:3001 | API接口 |
-| 資料庫 | localhost:3306 | MySQL資料庫 |
+| 前端界面 | http://localhost:8080 | 主要存取入口 |
+| 後端API | http://localhost:3001 | API服務 |
+| 資料庫 | localhost:3307 | MySQL資料庫 |
 
 ### Docker 部署架構
 

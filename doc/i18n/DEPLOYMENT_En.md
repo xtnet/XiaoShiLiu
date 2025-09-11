@@ -100,9 +100,9 @@ After services start successfully, you can access through the following addresse
 
 | Service | Address | Description |
 |---------|---------|-------------|
-| Frontend Interface | http://localhost | Main access entry |
-| Backend API | http://localhost:3001 | API endpoints |
-| Database | localhost:3306 | MySQL database |
+| Frontend Interface | http://localhost:8080 | Main access entry |
+| Backend API | http://localhost:3001 | API service |
+| Database | localhost:3307 | MySQL database |
 
 ### Docker Deployment Architecture
 

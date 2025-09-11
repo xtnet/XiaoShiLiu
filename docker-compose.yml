@@ -12,11 +12,13 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-xiaoshiliu}
       MYSQL_USER: ${DB_USER:-xiaoshiliu_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-123456}
+      TZ: Asia/Shanghai
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./express-project/scripts/init-database.sql:/docker-entrypoint-initdb.d/init.sql
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - xiaoshiliu-network
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -50,10 +52,12 @@ services:
       LOCAL_BASE_URL: ${LOCAL_BASE_URL:-http://localhost:3001}
       IMAGEHOST_API_URL: ${IMAGEHOST_API_URL:-https://api.xinyew.cn/api/jdtc}
       IMAGEHOST_TIMEOUT: ${IMAGEHOST_TIMEOUT:-60000}
+      TZ: Asia/Shanghai
     ports:
       - "3001:3001"
     volumes:
       - backend_uploads:/app/uploads
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - xiaoshiliu-network
     depends_on:
@@ -75,8 +79,12 @@ services:
         VITE_API_BASE_URL: http://localhost:3001/api
     container_name: xiaoshiliu-frontend
     restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
     ports:
       - "8080:80"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - xiaoshiliu-network
     depends_on:
