@@ -184,7 +184,6 @@ async function uploadFile(fileBuffer, filename, mimetype) {
   }
 }
 
-// 已移除统一base64上传接口，直接使用文件上传
 
 module.exports = {
   uploadToImageHost,

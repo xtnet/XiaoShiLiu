@@ -802,7 +802,9 @@ Authorization: Bearer <your_jwt_token>
 |------|------|------|------|
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
-| category_id | int | 否 | 分类ID筛选 |
+| category | string | 否 | 分类ID筛选，支持"recommend"推荐频道 |
+| is_draft | int | 否 | 是否获取草稿，1=草稿，0=已发布（默认） |
+| user_id | int | 否 | 用户ID筛选（查看草稿时会强制为当前用户） |
 
 **响应示例**:
 ```json
@@ -863,11 +865,12 @@ Authorization: Bearer <your_jwt_token>
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| title | string | 是 | 笔记标题 |
-| content | string | 是 | 笔记内容 |
+| title | string | 否* | 笔记标题（发布时必填，草稿时可选） |
+| content | string | 否* | 笔记内容（发布时必填，草稿时可选） |
 | category_id | int | 否 | 分类ID |
 | images | array | 否 | 图片URL数组 |
-| tags | array | 否 | 标签ID数组 |
+| tags | array | 否 | 标签名称数组（字符串数组） |
+| is_draft | boolean | 否 | 是否为草稿，默认false |
 
 **请求示例**:
 ```json
@@ -879,7 +882,8 @@ Authorization: Bearer <your_jwt_token>
     "https://example.com/image1.jpg",
     "https://example.com/image2.jpg"
   ],
-  "tags": [1, 2, 3]
+  "tags": ["生活", "摄影", "分享"],
+  "is_draft": false
 }
 ```
 
@@ -976,22 +980,24 @@ Authorization: Bearer <your_jwt_token>
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| title | string | 否 | 笔记标题 |
-| content | string | 否 | 笔记内容 |
-| category_id | int | 否 | 分类ID |
+| title | string | 否 | 笔记标题（发布时必填，草稿时可选） |
+| content | string | 否 | 笔记内容（发布时必填，草稿时可选） |
+| category_id | int | 否 | 分类ID（发布时必填，草稿时可选） |
 | images | array | 否 | 图片URL数组 |
-| tags | array | 否 | 标签ID数组 |
+| tags | array | 否 | 标签名称数组（字符串数组） |
+| is_draft | int | 否 | 是否为草稿，1=草稿，0=发布（默认0） |
 
 **请求示例**:
 ```json
 {
   "title": "更新后的标题",
   "content": "更新后的内容",
-  "category": "生活",
+  "category_id": 2,
   "images": [
     "https://example.com/new_image1.jpg"
   ],
-  "tags": [1, 3, 5]
+  "tags": ["生活", "日常", "分享"],
+  "is_draft": 0
 }
 ```
 
@@ -1083,106 +1089,6 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 11. 保存草稿
-**接口地址**: `POST /api/posts/drafts`
-**需要认证**: 是
-
-**请求参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| title | string | 否 | 草稿标题 |
-| content | string | 否 | 草稿内容 |
-| category_id | int | 否 | 分类ID |
-| images | array | 否 | 图片URL数组 |
-| tags | array | 否 | 标签数组 |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "草稿保存成功",
-  "data": {
-    "id": 1,
-    "title": "草稿标题",
-    "content": "草稿内容",
-    "category": "生活",
-    "images": ["image1.jpg"],
-    "tags": ["标签1"],
-    "created_at": "2025-01-16T00:00:00.000Z"
-  }
-}
-```
-
-### 12. 更新草稿
-**接口地址**: `PUT /api/posts/drafts/:id`
-**需要认证**: 是
-
-**路径参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| id | int | 是 | 草稿ID |
-
-**请求参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| title | string | 否 | 草稿标题 |
-| content | string | 否 | 草稿内容 |
-| category | string | 否 | 分类 |
-| images | array | 否 | 图片URL数组 |
-| tags | array | 否 | 标签数组 |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "草稿更新成功",
-  "data": {
-    "id": 1,
-    "title": "更新后的草稿标题",
-    "content": "更新后的草稿内容",
-    "updated_at": "2025-01-16T00:00:00.000Z"
-  }
-}
-```
-
-### 13. 删除草稿
-**接口地址**: `DELETE /api/posts/drafts/:id`
-**需要认证**: 是
-
-**路径参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| id | int | 是 | 草稿ID |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "草稿删除成功"
-}
-```
-
-### 14. 发布草稿
-**接口地址**: `POST /api/posts/drafts/:id/publish`
-**需要认证**: 是
-
-**路径参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| id | int | 是 | 草稿ID |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "草稿发布成功",
-  "data": {
-    "post_id": 123,
-    "title": "发布的笔记标题",
-    "published_at": "2025-01-16T00:00:00.000Z"
-  }
-}
-```
 
 ---
 ### 4. 删除评论
@@ -1745,56 +1651,7 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 3. Base64图片上传
-**接口地址**: `POST /api/upload/base64`
-**需要认证**: 是
 
-**请求参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| images | array | 是 | Base64编码的图片数组 |
-
-**请求示例**:
-```json
-{
-  "images": [
-    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...",
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB..."
-  ]
-}
-```
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "图片上传成功",
-  "data": {
-    "count": 2,
-    "urls": [
-      "https://img.example.com/1640995200000_base64_image1.jpg",
-      "https://img.example.com/1640995200001_base64_image2.png"
-    ]
-  }
-}
-```
-
-### 4. 删除文件
-**接口地址**: `DELETE /api/upload/:filename`
-**需要认证**: 是
-
-**路径参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| filename | string | 是 | 文件名 |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "message": "文件删除成功"
-}
-```
 
 ---
 

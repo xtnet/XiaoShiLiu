@@ -443,7 +443,6 @@ const getAllImageData = async () => {
   return allImageData
 }
 
-// fileToBase64方法已移除，现在直接使用uploadAllImages方法上传文件
 
 // 压缩图片
 const compressImage = (file, maxSizeMB = 0.8, quality = 0.4) => {

@@ -436,12 +436,14 @@ const apiGroups = ref([
         method: 'GET',
         path: '/api/posts',
         title: '获取笔记列表',
-        description: '分页获取笔记列表，支持分类筛选',
+        description: '分页获取笔记列表，支持分类筛选和草稿查看',
         expanded: false,
         params: [
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
-          { name: 'category_id', type: 'int', required: false, description: '分类ID筛选' }
+          { name: 'category', type: 'string', required: false, description: '分类ID筛选，支持"recommend"推荐频道' },
+          { name: 'is_draft', type: 'int', required: false, description: '是否获取草稿，1=草稿，0=已发布（默认）' },
+          { name: 'user_id', type: 'int', required: false, description: '用户ID筛选（查看草稿时会强制为当前用户）' }
         ]
       },
       {
@@ -458,15 +460,16 @@ const apiGroups = ref([
         method: 'POST',
         path: '/api/posts',
         title: '创建笔记',
-        description: '发布新笔记，支持图片和标签',
+        description: '发布新笔记或保存草稿，支持图片和标签',
         auth: true,
         expanded: false,
         params: [
-          { name: 'title', type: 'string', required: true, description: '笔记标题' },
-          { name: 'content', type: 'string', required: true, description: '笔记内容' },
-          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
+          { name: 'title', type: 'string', required: false, description: '笔记标题（发布时必填，草稿时可选）' },
+          { name: 'content', type: 'string', required: false, description: '笔记内容（发布时必填，草稿时可选）' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID（发布时必填，草稿时可选）' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
-          { name: 'tags', type: 'array', required: false, description: '标签数组' }
+          { name: 'tags', type: 'array', required: false, description: '标签名称数组（字符串数组）' },
+          { name: 'is_draft', type: 'int', required: false, description: '是否为草稿，1=草稿，0=发布（默认0）' }
         ]
       },
       {
@@ -524,11 +527,12 @@ const apiGroups = ref([
         expanded: false,
         params: [
           { name: 'id', type: 'int', required: true, description: '笔记ID' },
-          { name: 'title', type: 'string', required: false, description: '笔记标题' },
-          { name: 'content', type: 'string', required: false, description: '笔记内容' },
-          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
+          { name: 'title', type: 'string', required: false, description: '笔记标题（发布时必填，草稿时可选）' },
+          { name: 'content', type: 'string', required: false, description: '笔记内容（发布时必填，草稿时可选）' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID（发布时必填，草稿时可选）' },
           { name: 'images', type: 'array', required: false, description: '图片URL数组' },
-          { name: 'tags', type: 'array', required: false, description: '标签数组' }
+          { name: 'tags', type: 'array', required: false, description: '标签名称数组（字符串数组）' },
+          { name: 'is_draft', type: 'int', required: false, description: '是否为草稿，1=草稿，0=发布（默认0）' }
         ]
       },
       {
@@ -540,72 +544,6 @@ const apiGroups = ref([
         expanded: false,
         params: [
           { name: 'id', type: 'int', required: true, description: '笔记ID' }
-        ]
-      },
-      {
-        method: 'GET',
-        path: '/api/posts/drafts',
-        title: '获取草稿列表',
-        description: '获取当前用户的草稿列表',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
-          { name: 'keyword', type: 'string', required: false, description: '搜索关键词' }
-        ]
-      },
-      {
-        method: 'POST',
-        path: '/api/posts/drafts',
-        title: '保存草稿',
-        description: '保存笔记为草稿状态',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'title', type: 'string', required: false, description: '草稿标题' },
-          { name: 'content', type: 'string', required: false, description: '草稿内容' },
-          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
-          { name: 'images', type: 'array', required: false, description: '图片URL数组' },
-          { name: 'tags', type: 'array', required: false, description: '标签数组' }
-        ]
-      },
-      {
-        method: 'PUT',
-        path: '/api/posts/drafts/:id',
-        title: '更新草稿',
-        description: '更新指定草稿的内容',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'id', type: 'int', required: true, description: '草稿ID' },
-          { name: 'title', type: 'string', required: false, description: '草稿标题' },
-          { name: 'content', type: 'string', required: false, description: '草稿内容' },
-          { name: 'category_id', type: 'int', required: false, description: '分类ID' },
-          { name: 'images', type: 'array', required: false, description: '图片URL数组' },
-          { name: 'tags', type: 'array', required: false, description: '标签数组' }
-        ]
-      },
-      {
-        method: 'DELETE',
-        path: '/api/posts/drafts/:id',
-        title: '删除草稿',
-        description: '删除指定草稿',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'id', type: 'int', required: true, description: '草稿ID' }
-        ]
-      },
-      {
-        method: 'POST',
-        path: '/api/posts/drafts/:id/publish',
-        title: '发布草稿',
-        description: '将草稿发布为正式笔记',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'id', type: 'int', required: true, description: '草稿ID' }
         ]
       }
     ]
@@ -1079,28 +1017,6 @@ const apiGroups = ref([
       "url": "https://img.example.com/1234567891.jpg"
     }
   ]
-}`
-      },
-      {
-        method: 'POST',
-        path: '/api/upload/base64',
-        title: 'Base64图片上传',
-        description: '上传Base64编码的图片',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'images', type: 'array', required: true, description: 'Base64编码的图片数组' }
-        ],
-        example: `{
-  "code": 200,
-  "message": "图片上传成功",
-  "data": {
-    "count": 2,
-    "urls": [
-      "https://img.example.com/1640995200000_base64_image1.jpg",
-      "https://img.example.com/1640995200001_base64_image2.png"
-    ]
-  }
 }`
       }
     ]
