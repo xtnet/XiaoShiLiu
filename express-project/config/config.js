@@ -5,7 +5,7 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description Express应用的核心配置管理
- * @version v1.1.2
+ * @version v1.1.3
  */
 
 const mysql = require('mysql2/promise');

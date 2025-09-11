@@ -23,12 +23,14 @@ show_help() {
     echo -e "  --clean    清理所有容器、镜像和数据卷"
     echo -e "  --logs     查看服务日志"
     echo -e "  --status   查看服务状态"
+    echo -e "  --seed     初始化数据库并生成测试数据"
     echo -e "  --help     显示此帮助信息"
     echo ""
     echo -e "${GREEN}示例:${NC}"
     echo -e "  ./deploy.sh          # 启动服务"
     echo -e "  ./deploy.sh --build  # 重新构建并启动"
     echo -e "  ./deploy.sh --stop   # 停止服务"
+    echo -e "  ./deploy.sh --seed   # 生成测试数据"
 }
 
 # 检查Docker是否安装
@@ -131,6 +133,42 @@ show_status() {
     docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
 }
 
+# 初始化数据库并生成测试数据
+seed_database() {
+    echo -e "${YELLOW}初始化数据库并生成测试数据...${NC}"
+    
+    # 检查后端容器是否运行
+    if ! docker-compose ps | grep -q "xiaoshiliu-backend.*Up"; then
+        echo -e "${RED}错误: 后端服务未运行，请先启动服务${NC}"
+        echo -e "${YELLOW}使用 './deploy.sh' 启动服务${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}步骤1: 初始化数据库结构...${NC}"
+    docker-compose exec backend node scripts/init-database.js
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}数据库初始化成功!${NC}"
+        echo -e "${CYAN}步骤2: 生成测试数据...${NC}"
+        docker-compose exec backend node scripts/generate-data.js
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}测试数据生成成功!${NC}"
+            echo -e "${CYAN}数据库已包含:${NC}"
+            echo -e "  - 50个测试用户"
+            echo -e "  - 200篇测试笔记"
+            echo -e "  - 800条测试评论"
+            echo -e "  - 完整的分类和标签数据"
+        else
+            echo -e "${RED}测试数据生成失败!${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}数据库初始化失败!${NC}"
+        exit 1
+    fi
+}
+
 # 主逻辑
 case "$1" in
     --help)
@@ -152,6 +190,10 @@ case "$1" in
     --status)
         check_docker
         show_status
+        ;;
+    --seed)
+        check_docker
+        seed_database
         ;;
     --build)
         check_docker
