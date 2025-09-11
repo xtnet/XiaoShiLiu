@@ -130,6 +130,7 @@ import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import messageManager from '@/utils/messageManager'
 import { uploadApi } from '@/api/index.js'
 import { useScrollLock } from '@/composables/useScrollLock'
+import { sanitizeContent } from '@/utils/contentSecurity'
 // import { getFriendsList } from '@/api/friends'
 
 const props = defineProps({
@@ -553,40 +554,7 @@ const removeInterest = (fieldKey, index) => {
   emit('update:formData', newData)
 }
 
-// 内容安全过滤函数
-const sanitizeContent = (content) => {
-  if (!content) return ''
 
-  // 保留mention链接和<br>标签，但移除其他危险标签
-  // 先保存mention链接
-  const mentionLinks = []
-  let processedContent = content.replace(/<a[^>]*class="mention-link"[^>]*>.*?<\/a>/g, (match) => {
-    const placeholder = `__MENTION_${mentionLinks.length}__`
-    mentionLinks.push(match)
-    return placeholder
-  })
-
-  // 将其他换行元素转换为<br>标签
-  processedContent = processedContent.replace(/<\/div><div[^>]*>/gi, '<br>')
-  processedContent = processedContent.replace(/<\/p><p[^>]*>/gi, '<br>')
-  processedContent = processedContent.replace(/<div[^>]*>/gi, '')
-  processedContent = processedContent.replace(/<\/div>/gi, '')
-  processedContent = processedContent.replace(/<p[^>]*>/gi, '')
-  processedContent = processedContent.replace(/<\/p>/gi, '')
-
-  // 移除其他HTML标签，但保留<br>标签
-  processedContent = processedContent.replace(/<(?!br\s*\/?)[^>]*>/gi, '').replace(/&nbsp;/g, ' ')
-
-  // 恢复mention链接
-  mentionLinks.forEach((link, index) => {
-    processedContent = processedContent.replace(`__MENTION_${index}__`, link)
-  })
-
-  // 清理多余的<br>标签
-  processedContent = processedContent.replace(/(<br\s*\/?\s*){2,}/gi, '<br>')
-
-  return processedContent.trim()
-}
 
 const handleSubmit = async () => {
   if (isSubmitting.value) {

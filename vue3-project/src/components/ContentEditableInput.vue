@@ -7,6 +7,7 @@
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { parseMentions } from '@/utils/mentionParser'
+import { sanitizeText } from '@/utils/contentSecurity'
 
 const props = defineProps({
   modelValue: {
@@ -72,10 +73,7 @@ onMounted(() => {
   updateHtmlContent(props.modelValue)
 })
 
-const sanitizeContent = (content) => {
-  if (!content) return ''
-  return content.replace(/<[^>]*>/g, '')
-}
+
 
 // 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持<br>标签用于换行
 const convertMentionLinksToText = (html) => {
@@ -364,7 +362,7 @@ const handlePaste = (event) => {
   const pastedText = clipboardData.getData('text/plain')
   if (!pastedText) return
 
-  const sanitizedText = sanitizeContent(pastedText)
+  const sanitizedText = sanitizeText(pastedText)
   const selection = window.getSelection()
   if (selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
