@@ -174,7 +174,7 @@ onUnmounted(() => {
     <header>
         <div class="header-container">
             <template v-if="displaySearch">
-                <div class="logo" @click="router.push('/')">
+                <div v-if="isLargeScreen" class="logo" @click="router.push('/')">
                     <img :src="logoUrl" alt="小石榴" />
                 </div>
                 <div class="search-row" :class="{ 'large-screen': isLargeScreen, 'small-screen': !isLargeScreen }">
