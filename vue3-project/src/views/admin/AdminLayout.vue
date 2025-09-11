@@ -972,7 +972,7 @@ const goBack = () => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--button-text-color);
     background: var(--primary-color);
     border-radius: 50%;
     cursor: pointer;

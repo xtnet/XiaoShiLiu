@@ -208,7 +208,7 @@ onMounted(() => {
 .add-tag-btn {
   padding: 8px 16px;
   background: var(--primary-color);
-  color: #fff;
+  color: var(--button-text-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -260,7 +260,7 @@ onMounted(() => {
 
 .tag-item.selected {
   background: var(--primary-color);
-  color: #e7e7e7;
+  color: var(--button-text-color);
   cursor: default;
 }
 
@@ -302,7 +302,7 @@ onMounted(() => {
 .remove-tag-btn {
   background: none;
   border: none;
-  color: #e7e7e7;
+  color: var(--button-text-color);
   cursor: pointer;
   padding: 2px;
   margin-left: 8px;

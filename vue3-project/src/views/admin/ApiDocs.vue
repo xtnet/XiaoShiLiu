@@ -2001,13 +2001,13 @@ const filteredApiGroups = computed(() => {
   outline: none;
   transition: all 0.3s ease;
   box-sizing: border-box;
-  caret-color: #fe2843;
+  caret-color: var(--primary-color);
   background-color: var(--bg-color-secondary);
 }
 
 .search-input:focus {
-  border-color: #fe2843;
-  box-shadow: 0 0 5px rgba(254, 40, 67, 0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 5px var(--primary-color-shadow);
 }
 
 .search-icon {
@@ -2044,8 +2044,8 @@ const filteredApiGroups = computed(() => {
 }
 
 .clear-btn:hover {
-  background-color: var(--bg-color-secondary);
-  color: #fe2843;
+  background-color: var(--bg-color-tertiary);
+  color: var(--text-color-primary);
 }
 
 .no-results {

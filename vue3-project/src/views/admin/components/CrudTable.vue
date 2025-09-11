@@ -1522,12 +1522,12 @@ const handleImageError = (event) => {
 }
 
 .btn-danger {
-  background-color: #f61c1c;
+  background-color: var(--danger-color);
   color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #c82333;
+  background-color: var(--danger-color-dark);
 }
 
 .btn-sm {

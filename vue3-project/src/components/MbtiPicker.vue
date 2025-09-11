@@ -181,7 +181,7 @@ watch(() => props.modelValue, (newValue) => {
 .dimension-label {
   text-align: center;
   font-size: 12px;
-  color: #666;
+  color: var(--text-color-secondary);
   margin-bottom: 8px;
   font-weight: 500;
 }

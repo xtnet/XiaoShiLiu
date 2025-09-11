@@ -174,7 +174,7 @@ onUnmounted(() => {
 }
 
 .dropdown-toggle.active {
-  border-color: #ff4757;
+  border-color: var(--primary-color);
 }
 
 .dropdown-toggle:disabled {

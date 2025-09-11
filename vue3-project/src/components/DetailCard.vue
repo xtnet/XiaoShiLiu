@@ -301,7 +301,7 @@
                 <div class="send-cancel-buttons">
                   <button class="send-btn" @click="handleSendComment"
                     :disabled="(!commentInput || !commentInput.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()) && uploadedImages.length === 0 || !allImagesUploaded">
-                    {{ replyingTo ? '回复' : '发送' }}
+                    {{ uploadedImages.length > 0 && !allImagesUploaded ? '上传中' : '发送'}}
                   </button>
                   <button class="cancel-btn" @click="handleCancelInput">
                     取消
@@ -3352,12 +3352,11 @@ function handleAvatarError(event) {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #e01e3c;
+  background: var(--primary-color-dark);
 }
 
 .send-btn:disabled {
-  background: #892030;
-  color: #b0b0b0;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
