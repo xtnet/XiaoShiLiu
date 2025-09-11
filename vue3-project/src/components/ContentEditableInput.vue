@@ -269,6 +269,11 @@ const handleKeydown = (event) => {
     // 普通Enter键允许默认换行行为，不阻止
   }
 
+  // 阻止左右箭头键事件冒泡，避免触发父级的图片翻页功能
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.stopPropagation()
+  }
+
   if (event.key === 'Backspace') {
     const selection = window.getSelection()
     if (selection.rangeCount > 0) {
