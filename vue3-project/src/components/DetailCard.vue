@@ -125,7 +125,8 @@
               </div>
 
               <div v-else class="comments-list">
-                <div v-if="enhancedComments.length === 0 && commentCount === 0 && !hasMoreCommentsToShow" class="no-comments">
+                <div v-if="enhancedComments.length === 0 && commentCount === 0 && !hasMoreCommentsToShow"
+                  class="no-comments">
                   <span>暂无评论，快来抢沙发吧~</span>
                 </div>
 
@@ -301,7 +302,7 @@
                 <div class="send-cancel-buttons">
                   <button class="send-btn" @click="handleSendComment"
                     :disabled="(!commentInput || !commentInput.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()) && uploadedImages.length === 0 || !allImagesUploaded">
-                    {{ uploadedImages.length > 0 && !allImagesUploaded ? '上传中' : '发送'}}
+                    {{ uploadedImages.length > 0 && !allImagesUploaded ? '上传中' : '发送' }}
                   </button>
                   <button class="cancel-btn" @click="handleCancelInput">
                     取消
@@ -3818,6 +3819,9 @@ function handleAvatarError(event) {
   .emoji-panel-overlay {
     padding: 0;
     z-index: 2500;
+  }
+  .action-buttons {
+    gap: 1px;
   }
 }
 
