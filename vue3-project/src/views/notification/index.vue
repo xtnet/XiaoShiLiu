@@ -5,8 +5,7 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import MessageToast from '@/components/MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
-import MentionText from '@/components/mention/MentionText.vue'
-import CommentImage from '@/components/commentImage/CommentImage.vue'
+import ContentRenderer from '@/components/ContentRenderer.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import NotificationTab from './components/NotificationTab.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -1048,6 +1047,14 @@ const toggleMentionPanel = (item) => {
 }
 
 const closeMentionPanel = () => {
+  // 当关闭艾特选择模态框时，将输入框中带标记的@符号转换为纯文本
+  if (currentMentionItem.value) {
+    const item = currentMentionItem.value
+    const inputRef = replyInputRefs.value[item.notificationId]
+    if (inputRef && inputRef.convertAtMarkerToText) {
+      inputRef.convertAtMarkerToText()
+    }
+  }
   showMentionPanel.value = false
   currentMentionItem.value = null
 }
@@ -1210,10 +1217,10 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       <span class="time">{{ item.time }}</span>
                     </div>
                     <div class="notification-text" @click.stop="onCommentClick(item)">
-                      <CommentImage :content="item.content" />
+                      <ContentRenderer :content="item.content" />
 
                       <div v-if="item.isReplyComment && item.parentCommentContent" class="replied-comment">
-                        <CommentImage :content="item.parentCommentContent" />
+                        <ContentRenderer :content="item.parentCommentContent" />
                       </div>
                     </div>
 

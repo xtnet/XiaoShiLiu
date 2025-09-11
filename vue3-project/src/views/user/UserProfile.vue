@@ -10,7 +10,7 @@ import WaterfallFlow from '@/components/WaterfallFlow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import UserPersonalityTags from './components/UserPersonalityTags.vue'
-import MentionText from '@/components/mention/MentionText.vue'
+import ContentRenderer from '@/components/ContentRenderer.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 
@@ -272,7 +272,7 @@ onMounted(async () => {
         </div>
       </div>
       <div class="user-desc">
-        <MentionText v-if="userInfo.bio" :text="userInfo.bio" />
+        <ContentRenderer v-if="userInfo.bio" :text="userInfo.bio" />
         <span v-else>用户没有任何简介</span>
       </div>
 

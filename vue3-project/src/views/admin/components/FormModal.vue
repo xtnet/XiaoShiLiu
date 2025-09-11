@@ -217,35 +217,18 @@ const toggleMentionPanel = (fieldKey) => {
 }
 
 const closeMentionPanel = () => {
+  // 当关闭艾特选择模态框时，将输入框中带标记的@符号转换为纯文本
+  const fieldKey = currentMentionField.value
+  if (fieldKey) {
+    const contentEditableRef = contentEditableRefs.value[fieldKey]
+    if (contentEditableRef && contentEditableRef.convertAtMarkerToText) {
+      contentEditableRef.convertAtMarkerToText()
+    }
+  }
   showMentionPanel.value = false
   currentMentionField.value = null
 }
 
-const handleMentionSelect = (friend) => {
-  // 创建包含用户信息的mention标记，格式：[@nickname:user_id]
-  const userId = friend.user_id || friend.username || friend.id
-  const nickname = friend.nickname || friend.username || friend.user_id
-  const mentionText = `[@${nickname}:${userId}] `
-  const fieldKey = currentMentionField.value
-  const inputElement = textareaRefs.value[fieldKey]
-
-  if (inputElement && fieldKey) {
-    const start = inputElement.selectionStart || 0
-    const end = inputElement.selectionEnd || 0
-    const currentValue = formData.value[fieldKey] || ''
-
-    const newValue = currentValue.slice(0, start) + mentionText + currentValue.slice(end)
-    updateField(fieldKey, newValue)
-
-    nextTick(() => {
-      const newPosition = start + mentionText.length
-      inputElement.setSelectionRange(newPosition, newPosition)
-      inputElement.focus()
-    })
-  }
-
-  closeMentionPanel()
-}
 
 const handleEmojiSelect = (emoji) => {
   const emojiChar = emoji.i

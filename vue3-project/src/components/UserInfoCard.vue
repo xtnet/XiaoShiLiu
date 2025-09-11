@@ -15,7 +15,7 @@
     <div class="card-content">
 
       <div class="bio" v-if="userInfo.bio">
-        <MentionText :text="userInfo.bio" />
+        <ContentRenderer :text="userInfo.bio" />
       </div>
       <div class="bio" v-else>
         还没有简介
@@ -53,7 +53,7 @@ import { useRouter } from 'vue-router'
 import { useFollowStore } from '@/stores/follow'
 import { useUserStore } from '@/stores/user'
 import FollowButton from './FollowButton.vue'
-import MentionText from './mention/MentionText.vue'
+import ContentRenderer from './ContentRenderer.vue'
 
 const router = useRouter()
 const followStore = useFollowStore()

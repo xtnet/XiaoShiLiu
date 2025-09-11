@@ -92,6 +92,13 @@ const convertMentionLinksToText = (html) => {
     link.parentNode.replaceChild(mentionText, link)
   })
 
+  // 查找所有@符号标记并替换为纯文本@符号
+  const atMarkers = tempDiv.querySelectorAll('span[data-at-marker]')
+  atMarkers.forEach(marker => {
+    const atText = document.createTextNode('@')
+    marker.parentNode.replaceChild(atText, marker)
+  })
+
   // 将其他换行元素转换为<br>标签，统一换行格式
   let content = tempDiv.innerHTML
   // 处理<div>标签（contenteditable中的换行通常生成div）
@@ -661,13 +668,31 @@ const insertEmoji = (emojiChar) => {
   resetUserTypingFlag()
 }
 
+// 将带有data-at-marker属性的span标签转换为纯文本@符号
+const convertAtMarkerToText = () => {
+  if (!inputRef.value) return
+
+  const atMarkers = inputRef.value.querySelectorAll('span[data-at-marker]')
+  atMarkers.forEach(marker => {
+    const atText = document.createTextNode('@')
+    marker.parentNode.replaceChild(atText, marker)
+  })
+
+  // 触发更新事件
+  if (atMarkers.length > 0) {
+    const textContent = convertMentionLinksToText(inputRef.value.innerHTML)
+    emit('update:modelValue', textContent)
+  }
+}
+
 // 暴露方法给父组件
 defineExpose({
   focus,
   blur,
   selectMentionUser,
   insertAtSymbol,
-  insertEmoji
+  insertEmoji,
+  convertAtMarkerToText
 })
 </script>
 

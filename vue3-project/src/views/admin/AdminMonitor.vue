@@ -21,9 +21,9 @@
               <div class="activity-title">
                 <template v-if="activity.type === 'comment_publish'">
                   <div class="comment-description">{{ activity.description }}</div>
-                  <CommentImage :content="activity.content" />
+                  <ContentRenderer :content="activity.content" />
                 </template>
-                <MentionText v-else :text="activity.description || activity.content" />
+                <ContentRenderer v-else :text="activity.description || activity.content" />
               </div>
               <div class="activity-meta">
                 <span class="activity-type">{{ getActivityTypeText(activity.type) }}</span>
@@ -45,10 +45,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminApi } from '@/api'
-import CommentImage from '@/components/commentImage/CommentImage.vue'
-import MentionText from '@/components/mention/MentionText.vue'
 import defaultAvatar from '@/assets/imgs/avatar.png'
-
+import ContentRenderer from '@/components/ContentRenderer.vue'
 const router = useRouter()
 const activities = ref([])
 // const loading = ref(false) // 已移除，使用AdminLayout的全局加载状态

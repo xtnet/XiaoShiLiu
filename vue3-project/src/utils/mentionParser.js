@@ -4,6 +4,18 @@
  */
 
 /**
+ * HTML转义函数，防止XSS攻击
+ * @param {string} text - 需要转义的文本
+ * @returns {string} - 转义后的文本
+ */
+function escapeHtml(text) {
+  if (!text) return ''
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
+}
+
+/**
  * 解析文本中的mention标记，转换为HTML超链接
  * @param {string} text - 包含mention标记的文本
  * @returns {string} - 转换后的HTML字符串
@@ -11,13 +23,32 @@
 export function parseMentions(text) {
   if (!text) return ''
 
+  // 先提取并保护data-at-marker的span标签
+  const atMarkerRegex = /<span[^>]*data-at-marker[^>]*>@<\/span>/g
+  const atMarkers = []
+  let protectedText = text.replace(atMarkerRegex, (match) => {
+    const placeholder = `__AT_MARKER_${atMarkers.length}__`
+    atMarkers.push(match)
+    return placeholder
+  })
+
+  // 对剩余文本进行HTML转义，防止用户输入的HTML标签被渲染
+  const escapedText = escapeHtml(protectedText)
+
   // 匹配[@nickname:user_id]格式的正则表达式
   const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
 
-  return text.replace(mentionRegex, (match, nickname, userId) => {
+  let result = escapedText.replace(mentionRegex, (match, nickname, userId) => {
     // 生成用户主页链接，使用小石榴号作为路由参数
     return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${nickname}</a>`
   })
+
+  // 恢复data-at-marker的span标签
+  atMarkers.forEach((marker, index) => {
+    result = result.replace(`__AT_MARKER_${index}__`, marker)
+  })
+
+  return result
 }
 
 /**

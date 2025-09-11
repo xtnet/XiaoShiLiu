@@ -87,7 +87,7 @@
             <div class="post-content">
               <h2 class="post-title">{{ postData.title }}</h2>
               <p class="post-text">
-                <MentionText :text="postData.content" />
+                <ContentRenderer :text="postData.content" />
               </p>
               <div class="post-tags">
                 <span v-for="tag in postData.tags" :key="tag" class="tag clickable-tag" @click="handleTagClick(tag)">#{{
@@ -149,7 +149,7 @@
                       </button>
                     </div>
                     <div class="comment-text">
-                      <CommentImage :content="comment.content" @image-click="handleCommentImageClick" />
+                      <ContentRenderer :content="comment.content" @image-click="handleCommentImageClick" />
                     </div>
                     <span class="comment-time">{{ comment.time }} {{ comment.location }}</span>
                     <div class="comment-actions">
@@ -187,7 +187,7 @@
                           </div>
                           <div class="reply-text">
                             回复 <span class="reply-to">{{ reply.replyTo }}</span>：
-                            <CommentImage :content="reply.content" @image-click="handleCommentImageClick" />
+                            <ContentRenderer :content="reply.content" @image-click="handleCommentImageClick" />
                           </div>
                           <span class="reply-time">{{ reply.time }} {{ reply.location }}</span>
                           <div class="reply-actions">
@@ -243,7 +243,7 @@
                         回复 <span class="reply-username">{{ replyingTo.username }}</span>
                       </div>
                       <div class="reply-second-line">
-                        <CommentImage :content="replyingTo.content" @image-click="handleCommentImageClick" />
+                        <ContentRenderer :content="replyingTo.content" @image-click="handleCommentImageClick" />
                       </div>
                     </div>
                   </div>
@@ -349,8 +349,7 @@ import LikeButton from './LikeButton.vue'
 import MessageToast from './MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
-import MentionText from './mention/MentionText.vue'
-import CommentImage from './commentImage/CommentImage.vue'
+import ContentRenderer from './ContentRenderer.vue'
 import ContentEditableInput from './ContentEditableInput.vue'
 import ImageUploadModal from './commentImage/ImageUploadModal.vue'
 import ImageViewer from './ImageViewer.vue'
@@ -1148,6 +1147,10 @@ const toggleMentionPanel = () => {
 }
 
 const closeMentionPanel = () => {
+  // 当关闭艾特选择模态框时，将输入框中带标记的@符号转换为纯文本
+  if (focusedInput.value && focusedInput.value.convertAtMarkerToText) {
+    focusedInput.value.convertAtMarkerToText()
+  }
   showMentionPanel.value = false
 }
 
@@ -2088,6 +2091,16 @@ const handleKeydown = (event) => {
 
   // 如果图片查看器打开，不处理这些快捷键（图片查看器有自己的键盘处理）
   if (showImageViewer.value) return
+
+  // 检查当前焦点是否在input、textarea或contenteditable元素上
+  const activeElement = document.activeElement
+  if (activeElement && (
+    activeElement.tagName === 'INPUT' ||
+    activeElement.tagName === 'TEXTAREA' ||
+    activeElement.contentEditable === 'true'
+  )) {
+    return // 不拦截用户在输入框中的操作
+  }
 
   switch (event.key) {
     case 'ArrowLeft':

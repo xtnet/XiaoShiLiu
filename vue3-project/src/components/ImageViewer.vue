@@ -229,6 +229,16 @@ const handleImageClick = (event) => {
 
 // 处理键盘事件
 const handleKeydown = (event) => {
+  // 检查当前焦点是否在输入框元素上
+  const activeElement = document.activeElement
+  if (activeElement && (
+    activeElement.tagName === 'INPUT' ||
+    activeElement.tagName === 'TEXTAREA' ||
+    activeElement.contentEditable === 'true'
+  )) {
+    return // 不拦截用户在输入框中的操作
+  }
+
   switch (event.key) {
     case 'Escape':
       closeViewer()

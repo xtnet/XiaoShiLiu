@@ -530,6 +530,10 @@ const toggleMentionPanel = () => {
 }
 
 const closeMentionPanel = () => {
+  // 当关闭艾特选择模态框时，将输入框中带标记的@符号转换为纯文本
+  if (bioTextarea.value && bioTextarea.value.convertAtMarkerToText) {
+    bioTextarea.value.convertAtMarkerToText()
+  }
   showMentionPanel.value = false
   currentMentionField.value = ''
 }
@@ -804,6 +808,7 @@ const handleSave = async () => {
   background-color: var(--bg-color-primary);
   color: var(--text-color-primary);
   box-sizing: border-box;
+  caret-color: var(--primary-color);
 }
 
 .form-group input:focus,

@@ -1,12 +1,12 @@
 <template>
-  <div class="comment-image-container">
+  <div class="content-renderer">
     <!-- 文字内容 -->
-    <div v-if="text" class="comment-text">
-      <MentionText :text="text" />
+    <div v-if="text" class="content-text">
+      <span class="mention-text" v-html="parsedText" @click="handleMentionClick"></span>
     </div>
     
     <!-- 图片内容 -->
-    <div v-if="images && images.length > 0" class="comment-images">
+    <div v-if="images && images.length > 0" class="content-images">
       <div class="images-grid" :class="getGridClass()">
         <div 
           v-for="(image, index) in images" 
@@ -17,7 +17,7 @@
           <img 
             :src="image" 
             :alt="`图片${index + 1}`" 
-            class="comment-image"
+            class="content-image"
             @error="handleImageError"
           />
         </div>
@@ -28,10 +28,15 @@
 
 <script setup>
 import { computed } from 'vue'
-import MentionText from '../mention/MentionText.vue'
+import { parseMentions } from '@/utils/mentionParser'
 
 const props = defineProps({
   content: {
+    type: String,
+    default: ''
+  },
+  // 兼容旧的text属性
+  text: {
     type: String,
     default: ''
   }
@@ -39,13 +44,18 @@ const props = defineProps({
 
 const emit = defineEmits(['image-click'])
 
+// 获取实际内容，优先使用content，其次使用text
+const actualContent = computed(() => {
+  return props.content || props.text || ''
+})
+
 // 解析content内容，提取文字和图片
 const parsedContent = computed(() => {
-  if (!props.content) return { text: '', images: [] }
+  if (!actualContent.value) return { text: '', images: [] }
   
   // 创建临时DOM元素来解析HTML
   const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = props.content
+  tempDiv.innerHTML = actualContent.value
   
   // 提取图片
   const imgElements = tempDiv.querySelectorAll('img')
@@ -75,6 +85,28 @@ const parsedContent = computed(() => {
 const text = computed(() => parsedContent.value.text)
 const images = computed(() => parsedContent.value.images)
 
+// 解析文本中的mention标记
+const parsedText = computed(() => {
+  return parseMentions(text.value)
+})
+
+// 处理mention链接点击事件
+const handleMentionClick = (event) => {
+  const target = event.target
+  
+  // 检查点击的是否是mention链接
+  if (target.classList.contains('mention-link')) {
+    event.preventDefault()
+    const userId = target.getAttribute('data-user-id')
+    
+    if (userId) {
+      // 在新标签页中打开用户主页
+      const userUrl = `${window.location.origin}/user/${userId}`
+      window.open(userUrl, '_blank')
+    }
+  }
+}
+
 // 根据图片数量决定网格布局
 const getGridClass = () => {
   const count = images.value.length
@@ -94,17 +126,49 @@ const handleImageError = (event) => {
 </script>
 
 <style scoped>
-.comment-image-container {
+.content-renderer {
   width: 100%;
 }
 
-.comment-text {
+.content-text {
   margin-bottom: 8px;
   line-height: 1.5;
   word-wrap: break-word;
 }
 
-.comment-images {
+.mention-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+:deep(.mention-link) {
+  color: var(--text-color-tag);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+:deep(.mention-link:hover) {
+  color: var(--text-color-tag);
+  opacity: 0.8;
+}
+
+:deep(.mention-link:active) {
+  color: var(--text-color-tag);
+  opacity: 0.6;
+}
+
+:deep(.mention-link:focus) {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.content-images {
   margin-top: 8px;
 }
 
@@ -153,7 +217,7 @@ const handleImageError = (event) => {
   transform: scale(1.02);
 }
 
-.comment-image {
+.content-image {
   width: 100%;
   height: 100%;
   object-fit: cover;

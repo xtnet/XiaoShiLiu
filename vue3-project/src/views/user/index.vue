@@ -9,7 +9,7 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus.js'
 import EditProfileModal from './components/EditProfileModal.vue'
 import UserPersonalityTags from './components/UserPersonalityTags.vue'
-import MentionText from '@/components/mention/MentionText.vue'
+import ContentRenderer from '@/components/ContentRenderer.vue'
 import { userApi } from '@/api/index.js'
 import BackToTopButton from '@/components/BackToTopButton.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
@@ -329,7 +329,7 @@ function handleCollect(data) {
         </div>
       </div>
       <div class="user-desc">
-        <MentionText v-if="userStore.userInfo?.bio" :text="userStore.userInfo.bio" />
+        <ContentRenderer v-if="userStore.userInfo?.bio" :text="userStore.userInfo.bio" />
         <span v-else>用户没有任何简介</span>
       </div>
 

@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         <div class="detail-content">
-          <pre><CommentImage :content="content" /></pre>
+          <pre><ContentRenderer :content="content" /></pre>
         </div>
       </div>
     </div>
@@ -18,7 +18,7 @@
 
 <script setup>
 import SvgIcon from '@/components/SvgIcon.vue'
-import CommentImage from '@/components/commentImage/CommentImage.vue'
+import ContentRenderer from '@/components/ContentRenderer.vue'
 
 const props = defineProps({
   visible: {
