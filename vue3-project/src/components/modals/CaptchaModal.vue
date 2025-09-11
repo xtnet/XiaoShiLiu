@@ -21,7 +21,7 @@
         <div class="captcha-inputs">
           <input v-for="(char, index) in captchaInputs" :key="index" type="text" :value="char"
             @input="handleInputChange($event, index)" @keydown="handleKeyDown($event, index)"
-            @paste="handlePaste($event, index)" @focus="handleFocus(index)" @click="handleClick(index)"
+            @paste="handlePaste($event, index)"
             class="captcha-input-box" maxlength="1" :ref="el => inputRefs[index] = el" />
         </div>
       </div>
@@ -313,7 +313,7 @@ const handlePaste = (event, index) => {
 .captcha-input-box {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--border-color-primary);
+  border: 1.5px solid var(--border-color-primary);
   border-radius: 5px;
   font-size: 18px;
   font-weight: 600;
@@ -329,7 +329,6 @@ const handlePaste = (event, index) => {
   outline: none;
   border-color: var(--primary-color);
   background: var(--bg-color-primary);
-  box-shadow: 0 0 0 2px var(--shadow-color);
 }
 
 
