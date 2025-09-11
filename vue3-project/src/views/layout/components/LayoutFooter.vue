@@ -172,12 +172,12 @@ onMounted(() => {
 
 .notification-item .count {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background-color: var(--primary-color);
+    background-color: var(--danger-color);
     color: white;
-    font-size: 12px;
+    font-size: 11px;
     display: flex;
     align-items: center;
     justify-content: center;

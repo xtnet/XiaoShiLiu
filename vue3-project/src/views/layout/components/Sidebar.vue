@@ -277,7 +277,7 @@ onMounted(() => {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: var(--primary-color);
+  background-color: var(--danger-color);
   color: white;
   font-size: 10px;
   display: flex;
