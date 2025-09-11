@@ -23,9 +23,59 @@ const keyboardShortcutsStore = useKeyboardShortcutsStore()
 const accountSecurityStore = useAccountSecurityStore()
 const { confirmState, handleConfirm, handleCancel } = useConfirm()
 
-// 应用启动时初始化用户信息
+// 恢复保存的主题色
+const restoreThemeColor = () => {
+  const savedColor = localStorage.getItem('theme-color')
+  if (savedColor) {
+    const root = document.documentElement
+    
+    // 将hex颜色转换为RGB
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null
+    }
+    
+    // 调整颜色亮度
+    const adjustBrightness = (hex, percent) => {
+      const rgb = hexToRgb(hex)
+      if (!rgb) return hex
+      
+      const adjust = (color) => {
+        const adjusted = Math.round(color * (1 + percent / 100))
+        return Math.max(0, Math.min(255, adjusted))
+      }
+      
+      const r = adjust(rgb.r)
+      const g = adjust(rgb.g)
+      const b = adjust(rgb.b)
+      
+      return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+    }
+    
+    // 设置主色
+    root.style.setProperty('--primary-color', savedColor)
+    
+    // 设置深一些的主色（降低亮度10%）
+    const darkColor = adjustBrightness(savedColor, -10)
+    root.style.setProperty('--primary-color-dark', darkColor)
+    
+    // 设置半透明深一些的主色
+    const rgb = hexToRgb(darkColor)
+    if (rgb) {
+      const shadowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`
+      root.style.setProperty('--primary-color-shadow', shadowColor)
+    }
+  }
+}
+
+// 应用启动时初始化用户信息和主题色
 onMounted(() => {
   userStore.initUserInfo()
+  restoreThemeColor()
 })
 </script>
 

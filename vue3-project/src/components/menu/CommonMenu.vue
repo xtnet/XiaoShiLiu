@@ -2,6 +2,7 @@
 import DropdownItem from '@/components/menu/DropdownItem.vue'
 import DropdownDivider from '@/components/menu/DropdownDivider.vue'
 import ThemeSwitcherMenuItem from '@/components/menu/ThemeSwitcherMenuItem.vue'
+import ColorPickerMenuItem from '@/components/menu/ColorPickerMenuItem.vue'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
@@ -60,6 +61,7 @@ const handleMenuClick = (action) => {
     账号与安全
   </DropdownItem>
   <DropdownDivider />
+  <ColorPickerMenuItem />
   <ThemeSwitcherMenuItem />
   <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('logout')">
     退出登录

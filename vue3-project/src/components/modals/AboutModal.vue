@@ -5,8 +5,8 @@
       <div class="about-header">
         <div class="header-content">
           <div class="logo-section">
-            <div class="about-logo"><img :src="logoUrl" alt="小石榴"" /></div>
-            
+            <div class="about-logo"><img :src="logoUrl" alt="小石榴" /></div>
+
             <h2 class="about-title">关于小石榴</h2>
           </div>
           <p class="version">v1.1.3</p>
@@ -244,11 +244,13 @@ onMounted(() => {
   justify-content: center;
   background: var(--primary-color);
 }
+
 .about-logo img {
   width: 120%;
   height: 100%;
   object-fit: contain;
 }
+
 .about-title {
   font-size: 28px;
   font-weight: 700;
@@ -316,7 +318,7 @@ onMounted(() => {
 }
 
 .author-link:hover {
-  background-color: rgba(255, 95, 95, 0.05);
+  background-color: var(--bg-color-secondary);
 }
 
 .author-info {
