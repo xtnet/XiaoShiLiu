@@ -57,8 +57,7 @@ const formFields = computed(() => [
   { key: 'is_draft', label: '草稿', type: 'checkbox', required: false, description: '勾选表示保存为草稿，不勾选表示发布' },
   { key: 'view_count', label: '浏览量', type: 'number', required: false, placeholder: '请输入浏览量', min: 0 },
   { key: 'tags', label: '标签', type: 'tags', maxTags: 10 },
-  { key: 'images', label: '图片上传', type: 'multi-image-upload', maxImages: 9 },
-  { key: 'image_urls', label: '图片URL', type: 'dynamic-image-urls', maxImages: 9 }
+  { key: 'images', label: '图片上传', type: 'multi-image-upload', maxImages: 9 }
 ])
 
 const searchFields = computed(() => [

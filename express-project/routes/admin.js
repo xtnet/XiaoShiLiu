@@ -80,8 +80,7 @@ const postsCrudConfig = {
       if (image_urls && Array.isArray(image_urls)) {
         const validUrls = image_urls.filter(url =>
           url &&
-          typeof url === 'string' &&
-          !url.startsWith('[待上传]')
+          typeof url === 'string'
         )
         allImages.push(...validUrls)
       }
@@ -190,10 +189,7 @@ const postsCrudConfig = {
       if (image_urls && Array.isArray(image_urls)) {
         for (const url of image_urls) {
           if (url && typeof url === 'string') {
-            // 只处理有效URL
-            if (!url.startsWith('[待上传:')) {
-              allImagesSet.add(url)
-            }
+            allImagesSet.add(url)
           }
         }
       }

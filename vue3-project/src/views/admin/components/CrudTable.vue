@@ -721,10 +721,8 @@ const editItem = async (item) => {
               newFormData[key] = []
             }
           } else if (key === 'images') {
-            // 对于MultiImageUpload组件，将images数组设置为image_urls
-            const images = Array.isArray(fullItem[key]) ? fullItem[key] : []
-            newFormData['image_urls'] = images
-            // 不设置images字段，避免重复数据
+            // 对于MultiImageUpload组件，直接设置images字段
+            newFormData[key] = Array.isArray(fullItem[key]) ? fullItem[key] : []
           } else {
             newFormData[key] = fullItem[key]
           }
@@ -747,10 +745,8 @@ const editItem = async (item) => {
               newFormData[key] = []
             }
           } else if (key === 'images') {
-            // 对于MultiImageUpload组件，将images数组设置为image_urls
-            const images = Array.isArray(item[key]) ? item[key] : []
-            newFormData['image_urls'] = images
-            // 不设置images字段，避免重复数据
+            // 对于MultiImageUpload组件，直接设置images字段
+            newFormData[key] = Array.isArray(item[key]) ? item[key] : []
           } else {
             newFormData[key] = item[key]
           }

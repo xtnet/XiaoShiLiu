@@ -67,9 +67,6 @@
             <MultiImageUpload v-else-if="field.type === 'multi-image-upload'"
               :ref="el => setMultiImageUploadRef(field.key, el)" :model-value="getMultiImageUploadValue(field.key)"
               @update:model-value="handleImageUploadChange" :max-images="field.maxImages || 9" />
-            <DynamicImageUrls v-else-if="field.type === 'dynamic-image-urls'" :model-value="formData[field.key] || []"
-              @update:model-value="updateField(field.key, $event)" @remove-image="handleRemoveImageById"
-              :max-images="field.maxImages || 9" />
             <TagSelector v-else-if="field.type === 'tags'" :model-value="formData[field.key] || []"
               @update:model-value="updateField(field.key, $event)" :max-tags="field.maxTags || 10" />
             <div v-else-if="field.type === 'interest-input'" class="interest-input-container">
@@ -95,8 +92,8 @@
       <div class="modal-footer">
         <div class="form-actions">
           <button type="button" @click="handleClose" class="btn btn-outline">取消</button>
-          <button type="submit" @click="handleSubmit" class="btn btn-primary" :disabled="loading || isSubmitting">
-            {{ loading || isSubmitting ? '提交中...' : confirmText }}
+          <button type="submit" @click="handleSubmit" class="btn btn-primary" :disabled="props.loading || isSubmitting || isUploadingImages">
+            {{ getButtonText() }}
           </button>
         </div>
       </div>
@@ -120,7 +117,6 @@ import { computed, ref, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import AvatarUpload from './AvatarUpload.vue'
 import MultiImageUpload from '@/components/MultiImageUpload.vue'
-import DynamicImageUrls from './DynamicImageUrls.vue'
 import TagSelector from '@/components/TagSelector.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
 import MbtiPicker from '@/components/MbtiPicker.vue'
@@ -128,7 +124,7 @@ import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import messageManager from '@/utils/messageManager'
-import { uploadApi } from '@/api/index.js'
+// 移除uploadApi导入，改用MultiImageUpload组件的uploadAllImages方法
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
 // import { getFriendsList } from '@/api/friends'
@@ -152,6 +148,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:visible', 'update:formData', 'submit', 'close', 'asyncUpdate'])
+
+// 图片上传状态管理
+const hasNewImages = ref(false)
+const isUploadingImages = ref(false)
+const uploadCompleted = ref(false)
 
 // 防滚动穿透
 const { lock, unlock } = useScrollLock()
@@ -288,14 +289,6 @@ const hasImageUploadField = (key) => {
 }
 
 const getMultiImageUploadValue = (fieldKey) => {
-  if (fieldKey === 'images') {
-    const imageUrls = formData.value['image_urls']
-    if (Array.isArray(imageUrls)) {
-      return imageUrls.filter(url => url && typeof url === 'string' && url.trim()).map(url => url.trim())
-    }
-    return []
-  }
-
   const value = formData.value[fieldKey]
   return Array.isArray(value) ? value : []
 }
@@ -319,18 +312,11 @@ const getTextareaValue = (field) => {
 }
 
 // 更新输入框字段
-const updateInputField = (field, value) => {
-  const newData = { ...props.formData }
-
-  // 如果是头像URL字段，直接更新
-  if (field.key === 'avatar' && hasImageUploadField('avatar') && field.type === 'text') {
+  const updateInputField = (field, value) => {
+    const newData = { ...props.formData }
     newData[field.key] = value
-  } else {
-    newData[field.key] = value
+    emit('update:formData', newData)
   }
-
-  emit('update:formData', newData)
-}
 
 // 更新文本域字段
 const updateTextareaField = (field, value) => {
@@ -341,19 +327,7 @@ const updateTextareaField = (field, value) => {
 
 const updateField = (key, value) => {
   const newData = { ...props.formData }
-
-  // 如果是image_urls字段（URL输入），确保清理所有URL
-  if (key === 'image_urls' && Array.isArray(value)) {
-    newData[key] = value.map(url => {
-      if (typeof url === 'string') {
-        return url.trim().replace(/\`/g, '').replace(/\s+/g, '')
-      }
-      return url
-    })
-  } else {
-    newData[key] = value
-  }
-
+  newData[key] = value
   emit('update:formData', newData)
 }
 
@@ -397,15 +371,19 @@ const handleContentEditableMentionInput = () => {
 // 监听模态框可见性变化
 watch(() => props.visible, (newVisible) => {
   if (newVisible) {
+    // 重置上传状态
+    hasNewImages.value = false
+    isUploadingImages.value = false
+    uploadCompleted.value = false
     // 锁定滚动
     lock()
 
     // 当模态框打开时，根据是否有数据来决定处理方式
     nextTick(() => {
-      const imageUrls = formData.value['image_urls'] || []
+      const images = formData.value['images'] || []
 
       // 如果没有图片数据，说明是新增操作，需要重置
-      if (imageUrls.length === 0) {
+      if (images.length === 0) {
         Object.values(multiImageUploadRefs.value).forEach(ref => {
           if (ref && ref.reset) {
             ref.reset()
@@ -415,7 +393,7 @@ watch(() => props.visible, (newVisible) => {
         // 如果有图片数据，说明是编辑操作，需要同步数据
         Object.values(multiImageUploadRefs.value).forEach(ref => {
           if (ref && ref.syncWithUrls) {
-            ref.syncWithUrls(imageUrls)
+            ref.syncWithUrls(images)
           }
         })
       }
@@ -426,22 +404,22 @@ watch(() => props.visible, (newVisible) => {
   }
 }, { immediate: true })
 
-// 监听image_urls字段的变化，同步更新图片组件
-watch(() => formData.value['image_urls'], (newUrls, oldUrls) => {
+// 监听images字段的变化，同步更新图片组件
+watch(() => formData.value['images'], (newImages, oldImages) => {
   // 如果是从图片组件触发的更新，跳过同步
   if (isUpdatingFromImageComponent) {
     return
   }
 
-  // 如果是初始化阶段（oldUrls为undefined），跳过同步，让组件自己初始化
-  if (oldUrls === undefined) {
+  // 如果是初始化阶段（oldImages为undefined），跳过同步，让组件自己初始化
+  if (oldImages === undefined) {
     return
   }
 
   // 获取图片组件引用
   const imagesUploadRef = multiImageUploadRefs.value['images']
   if (imagesUploadRef && imagesUploadRef.syncWithUrls) {
-    imagesUploadRef.syncWithUrls(newUrls || [])
+    imagesUploadRef.syncWithUrls(newImages || [])
   }
 }, { deep: true })
 
@@ -450,24 +428,38 @@ const handleImageUploadChange = (value) => {
   // 设置标志，防止循环更新
   isUpdatingFromImageComponent = true
 
+  // 检测是否有新图片需要上传
+  let hasNewImagesFlag = false
+  if (value && Array.isArray(value) && value.length > 0) {
+    hasNewImagesFlag = value.some(imageItem => 
+      imageItem.file && !imageItem.uploaded
+    )
+  }
+  hasNewImages.value = hasNewImagesFlag
+  
+  // 如果没有新图片，重置上传状态
+  if (!hasNewImagesFlag) {
+    uploadCompleted.value = false
+  }
+
   // 创建新的数据对象，一次性更新多个字段
   const newData = { ...props.formData }
 
   if (value && Array.isArray(value) && value.length > 0) {
-    const newImageUrls = []
+    const newImages = []
 
     value.forEach((imageItem) => {
       if (imageItem.uploaded && imageItem.url) {
         // 已上传的图片，直接使用其URL
-        newImageUrls.push(imageItem.url)
+        newImages.push(imageItem.url)
       }
-      // 新选择的图片文件不在这里处理，留给上传时处理
+      // 移除占位符逻辑，因为现在直接使用uploadAllImages方法上传
     })
 
-    newData['image_urls'] = newImageUrls
+    newData['images'] = newImages
   } else {
     // 如果没有图片，清空相关字段
-    newData['image_urls'] = []
+    newData['images'] = []
   }
 
   // 一次性emit更新，避免多次触发
@@ -480,12 +472,18 @@ const handleImageUploadChange = (value) => {
 }
 
 // 处理从URL组件删除图片的请求
-const handleRemoveImageById = (imageId) => {
-  // 获取图片组件引用
-  const imagesUploadRef = multiImageUploadRefs.value['images']
-  if (imagesUploadRef && imagesUploadRef.removeImageById) {
-    imagesUploadRef.removeImageById(imageId)
+// 获取按钮文本
+const getButtonText = () => {
+  if (isUploadingImages.value) {
+    return '上传中...'
   }
+  if (props.loading || isSubmitting.value) {
+    return '提交中...'
+  }
+  if (hasNewImages.value && !uploadCompleted.value) {
+    return '上传'
+  }
+  return props.confirmText
 }
 
 const handleClose = () => {
@@ -543,92 +541,111 @@ const handleSubmit = async () => {
   if (isSubmitting.value) {
     return
   }
+  
+  // 如果有新图片需要上传，先上传图片
+  if (hasNewImages.value && !uploadCompleted.value) {
+    await handleImageUpload()
+    return
+  }
+  
+  // 如果没有新图片或图片已上传完成，直接提交表单
+  await handleFormSubmit()
+}
+
+// 处理图片上传
+const handleImageUpload = async () => {
+  if (isUploadingImages.value) {
+    return
+  }
+  
+  isUploadingImages.value = true
   isSubmitting.value = true
+  
   try {
-    // 处理图片数据和内容安全过滤
+    // 处理图片数据
     const processedData = { ...props.formData }
-    // 对可能包含用户输入内容的字段进行安全过滤
+    
+    // 获取所有图片组件并上传图片
+    for (const [fieldKey, ref] of Object.entries(multiImageUploadRefs.value)) {
+      if (ref && ref.uploadAllImages) {
+        try {
+          // 检查是否有图片需要上传
+          if (ref.getImageCount() > 0) {
+            // 显示上传进度提示
+            const imageCount = ref.getImageCount()
+            if (imageCount > 3) {
+              messageManager.info(`正在上传 ${imageCount} 张图片，请耐心等待...`)
+            }
+
+            // 使用MultiImageUpload组件的uploadAllImages方法上传图片
+            const uploadedUrls = await ref.uploadAllImages()
+            
+            if (uploadedUrls && uploadedUrls.length > 0) {
+              // 图片上传完成
+              if (imageCount > 3) {
+                messageManager.success(`成功上传 ${uploadedUrls.length} 张图片`)
+              }
+              
+              // 更新对应的字段
+              if (fieldKey === 'images') {
+                // 设置images字段，用于后台管理系统
+                processedData['images'] = uploadedUrls
+              } else {
+                processedData[fieldKey] = uploadedUrls
+              }
+            } else {
+              // 如果没有上传成功的图片，设置为空数组
+              processedData[fieldKey] = []
+            }
+          } else {
+            // 如果没有图片，设置为空数组
+            processedData[fieldKey] = []
+          }
+        } catch (error) {
+          console.error(`${fieldKey} 图片上传失败:`, error)
+          messageManager.error(`图片上传失败: ${error.message}`)
+          throw new Error(`图片上传失败: ${error.message}`)
+        }
+      }
+    }
+    
+    // 更新表单数据
+    emit('update:formData', processedData)
+    
+    // 标记上传完成
+    uploadCompleted.value = true
+    hasNewImages.value = false
+    
+    // 自动提交表单
+    await handleFormSubmit()
+    
+  } catch (error) {
+    console.error('图片上传失败:', error)
+    messageManager.error(`图片上传失败: ${error.message}`)
+  } finally {
+    isUploadingImages.value = false
+    isSubmitting.value = false
+  }
+}
+
+// 处理表单提交
+const handleFormSubmit = async () => {
+  if (isSubmitting.value) {
+    return
+  }
+  
+  isSubmitting.value = true
+  
+  try {
+    // 处理内容安全过滤
+    const processedData = { ...props.formData }
     const contentFields = ['content', 'description', 'bio', 'introduction', 'summary']
     contentFields.forEach(field => {
       if (processedData[field]) {
         processedData[field] = sanitizeContent(processedData[field])
       }
     })
-
-    // 获取所有图片组件的图片数据（包括已有URL和新图片的base64）
-    for (const [fieldKey, ref] of Object.entries(multiImageUploadRefs.value)) {
-      if (ref && ref.getAllImageData) {
-        try {
-          const imageData = await ref.getAllImageData()
-          // 收集base64数据准备上传
-
-          // 分离已有URL和base64数据，同时保持原有顺序
-          const base64Images = []
-          const base64IndexMap = new Map() // 记录base64数据在原数组中的位置
-
-          imageData.forEach((item, index) => {
-            if (typeof item === 'string' && item.startsWith('data:image/')) {
-              base64Images.push(item)
-              base64IndexMap.set(base64Images.length - 1, index)
-            }
-          })
-
-          // 准备上传图片到图床
-
-          // 如果有base64图片需要上传
-          let uploadedUrls = []
-          if (base64Images.length > 0) {
-            // 显示上传进度提示
-            if (base64Images.length > 3) {
-              messageManager.info(`正在上传 ${base64Images.length} 张图片，请耐心等待...`)
-            }
-
-            const uploadResult = await uploadApi.uploadBase64Images(base64Images)
-            if (uploadResult.success) {
-              uploadedUrls = uploadResult.data
-              // 图片上传完成
-              if (base64Images.length > 3) {
-                messageManager.success(`成功上传 ${uploadedUrls.length} 张图片`)
-              }
-            } else {
-              console.error('❌ 上传base64图片到图床失败:', uploadResult.message)
-              messageManager.error(`图片上传失败: ${uploadResult.message}`)
-              throw new Error(`图片上传失败: ${uploadResult.message}`)
-            }
-          }
-
-          // 按原有顺序合并URL，将base64数据替换为上传后的URL
-          const allImageUrls = []
-          let uploadedIndex = 0
-
-          imageData.forEach((item, index) => {
-            if (typeof item === 'string') {
-              if (item.startsWith('data:image/')) {
-                // 用上传后的URL替换base64数据
-                if (uploadedIndex < uploadedUrls.length) {
-                  allImageUrls.push(uploadedUrls[uploadedIndex])
-                  uploadedIndex++
-                }
-              } else {
-                // 已有的URL直接使用
-                allImageUrls.push(item)
-              }
-            }
-          })
-          // 更新对应的字段
-          if (fieldKey === 'images') {
-            processedData['images'] = allImageUrls
-            processedData['image_urls'] = allImageUrls // 同时更新image_urls字段以兼容后端
-          } else {
-            processedData[fieldKey] = allImageUrls
-          }
-        } catch (error) {
-          console.error(`${fieldKey} 获取图片数据失败:`, error)
-          messageManager.error(`图片处理失败: ${error.message}`)
-          throw new Error(`图片处理失败: ${error.message}`)
-        }
-      }
-    }
+    
     emit('submit', processedData)
 
     // 如果有图片上传，在提交后触发异步更新

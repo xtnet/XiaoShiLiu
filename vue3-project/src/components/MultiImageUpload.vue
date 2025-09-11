@@ -428,7 +428,7 @@ const getTouchTargetIndex = (clientX, clientY) => {
   return targetIndex >= 0 ? targetIndex : -1
 }
 
-// 获取所有图片数据（包括已有URL和新图片文件）
+// 获取所有已上传图片的URL
 const getAllImageData = async () => {
   const allImageData = []
 
@@ -436,14 +436,14 @@ const getAllImageData = async () => {
     if (item.uploaded && item.url && !item.url.startsWith('data:')) {
       // 已上传的图片，直接使用URL
       allImageData.push(item.url)
-    } else if (item.file && !item.uploaded) {
-      // 新选择的图片，直接使用文件对象
-      allImageData.push(item.file)
     }
+    // 不再处理未上传的图片，因为现在使用uploadAllImages方法直接上传
   }
 
   return allImageData
 }
+
+// fileToBase64方法已移除，现在直接使用uploadAllImages方法上传文件
 
 // 压缩图片
 const compressImage = (file, maxSizeMB = 0.8, quality = 0.4) => {
@@ -532,8 +532,6 @@ const uploadAllImages = async () => {
     const result = await imageUploadApi.uploadImages(files)
 
     if (result.success && result.data && result.data.uploaded && result.data.uploaded.length > 0) {
-
-
       // 更新上传成功的图片状态
       let uploadIndex = 0
       for (let i = 0; i < imageList.value.length; i++) {

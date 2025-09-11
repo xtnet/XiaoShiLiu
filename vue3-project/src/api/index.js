@@ -257,17 +257,15 @@ export const uploadApi = {
   uploadImages(files) {
     const formData = new FormData()
     files.forEach(file => {
-      formData.append('images', file)
+      formData.append('files', file)
     })
-    return request.post('/upload/images', formData, {
+    return request.post('/upload/multiple', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
   },
 
-  // 上传base64图片到图床（新接口）
-  uploadBase64Images: imageUploadApi.uploadBase64Images,
 
   // 上传图片到图床（新接口）
   uploadToImageHost: imageUploadApi.uploadImage,
