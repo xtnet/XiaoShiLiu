@@ -3,8 +3,10 @@
 
     <div class="tag-input-container">
       <input v-model="tagInput" @keydown.enter.prevent="addTag" @keydown.comma.prevent="addTag" @input="onTagInput"
-        class="tag-input" placeholder="输入标签名称，按回车添加" maxlength="8" />
-      <button type="button" @click="addTag" class="add-tag-btn" :disabled="!tagInput.trim()">
+        class="tag-input" placeholder="输入标签名称，按回车添加" maxlength="8" 
+        :disabled="isInputDisabled" 
+        :class="{ 'input-disabled': isInputDisabled }" />
+      <button type="button" @click="addTag" class="add-tag-btn" :disabled="isAddButtonDisabled">
         添加
       </button>
     </div>
@@ -90,6 +92,19 @@ const filteredSuggestions = computed(() => {
       !isTagSelected(tag)
     )
     .slice(0, 10)
+})
+
+// 计算输入框是否应该被禁用
+const isInputDisabled = computed(() => {
+  return selectedTags.value.length >= props.maxTags
+})
+
+// 计算添加按钮是否应该被禁用
+const isAddButtonDisabled = computed(() => {
+  const input = tagInput.value.trim()
+  return !input || 
+         selectedTags.value.length >= props.maxTags || 
+         selectedTags.value.includes(input)
 })
 
 const loadAllTags = async () => {
@@ -205,6 +220,19 @@ onMounted(() => {
   border-color: var(--primary-color);
 }
 
+.tag-input:disabled,
+.tag-input.input-disabled {
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color-quaternary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tag-input:disabled::placeholder,
+.tag-input.input-disabled::placeholder {
+  color: var(--text-color-quaternary);
+}
+
 .add-tag-btn {
   padding: 8px 16px;
   background: var(--primary-color);
@@ -223,6 +251,7 @@ onMounted(() => {
 .add-tag-btn:disabled {
   background: var(--text-color-quaternary);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .selected-tags,

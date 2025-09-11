@@ -1978,12 +1978,10 @@ watch(isLoggedIn, async (newValue, oldValue) => {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #e01e3c;
+  background: var(--primary-color-dark);
 }
 
 .send-btn:disabled {
-  background: #892030;
-  color: #b0b0b0;
   cursor: not-allowed;
 }
 

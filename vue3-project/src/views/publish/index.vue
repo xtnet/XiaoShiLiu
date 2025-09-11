@@ -952,7 +952,7 @@ const handleSaveDraft = async () => {
   gap: 0.25rem;
   padding: 0.4rem 0.6rem;
   background: var(--primary-color);
-  color: #fff;
+  color: var(--button-text-color);
   border-radius: 16px;
   font-size: 0.8rem;
   animation: fadeIn 0.2s ease;
@@ -1008,7 +1008,7 @@ const handleSaveDraft = async () => {
 }
 
 .tag-input:disabled {
-  opacity: 0.5;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 

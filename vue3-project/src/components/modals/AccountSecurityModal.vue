@@ -202,7 +202,7 @@ watch(() => props.visible, (newVisible) => {
 
 .security-item.danger:hover {
   background: rgba(239, 68, 68, 0.05);
-  border-color: #ff2e4d;
+  border-color: var(--danger-color);
 }
 
 

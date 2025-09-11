@@ -18,11 +18,9 @@
                   <img :src="form.avatar" alt="头像" class="avatar-image" />
                   <SvgIcon class="overlay-icon" name="edit" width="30" height="30" />
                 </div>
-                <div v-else class="upload-progress">
-                  <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
-                  </div>
-                  <span class="progress-text">{{ uploadProgress }}%</span>
+                <div v-else class="upload-loading">
+                  <div class="loading-spinner"></div>
+                  <span class="loading-text">上传中...</span>
                 </div>
               </div>
               <input ref="fileInput" type="file" accept="image/*" @change="handleFileSelect" style="display: none;" />
@@ -227,7 +225,6 @@ const mentionUsers = ref([
 // 头像上传相关
 const fileInput = ref(null)
 const uploading = ref(false)
-const uploadProgress = ref(0)
 const avatarError = ref('')
 const saving = ref(false)
 
@@ -660,7 +657,6 @@ const handleSave = async () => {
     delete formData.avatarBlob
     delete formData.location
     if (form.avatarBlob) {
-      uploadProgress.value = 0
       uploading.value = true
 
       try {
@@ -682,7 +678,6 @@ const handleSave = async () => {
         return
       } finally {
         uploading.value = false
-        uploadProgress.value = 0
       }
     }
 
@@ -1024,7 +1019,7 @@ const handleSave = async () => {
 }
 
 .add-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -1079,12 +1074,12 @@ const handleSave = async () => {
 .overlay-icon {
   position: absolute;
   opacity: 0;
-  color: #dee2e6;
   transition: all 0.3s ease;
 }
 
 .avatar-upload-area:hover .overlay-icon {
-  opacity: 1;
+  opacity: 0.7;
+  color: var(--button-text-color);
   transform: scale(1.2);
 }
 
@@ -1092,32 +1087,33 @@ const handleSave = async () => {
   filter: brightness(0.6);
 }
 
-.upload-progress {
+.upload-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-color-secondary);
 }
 
-.progress-bar {
-  width: 80px;
-  height: 4px;
-  background-color: #f3f3f3;
-  border-radius: 2px;
-  overflow: hidden;
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-color-primary);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
   margin-bottom: 8px;
 }
 
-.progress-fill {
-  height: 100%;
-  background-color: var(--primary-color);
-  transition: width 0.3s;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.progress-text {
+.loading-text {
   font-size: 12px;
+  color: var(--text-color-secondary);
 }
 
 .form-actions {

@@ -868,7 +868,7 @@ const handleFormSubmit = async () => {
 .add-interest-btn {
   padding: 8px 16px;
   background-color: var(--primary-color);
-  color: white;
+  color: var(--button-text-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -882,7 +882,7 @@ const handleFormSubmit = async () => {
 }
 
 .add-interest-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
