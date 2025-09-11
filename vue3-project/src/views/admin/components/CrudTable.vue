@@ -515,10 +515,10 @@ const loadData = async (targetPage = null, useCache = true) => {
       const responseData = {
         data: result.data.data || result.data,
         pagination: result.data.pagination || {
-          page: pageToLoad,
-          limit: pagination.limit,
-          total: pagination.total,
-          pages: pagination.pages
+          page: result.data.page || pageToLoad,
+          limit: result.data.limit || pagination.limit,
+          total: result.data.total || 0,
+          pages: result.data.totalPages || Math.ceil((result.data.total || 0) / (result.data.limit || pagination.limit))
         }
       }
 
@@ -1391,8 +1391,8 @@ const handleImageError = (event) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  padding: 20px 30px;
+  gap: 8px;
+  padding: 8px 30px;
   border-top: 1px solid var(--border-color-primary);
   background-color: var(--bg-color-secondary);
   transition: background-color 0.3s ease, border-color 0.3s ease;
@@ -1401,6 +1401,7 @@ const handleImageError = (event) => {
 .pagination-info {
   color: var(--text-color-secondary);
   font-size: 14px;
+  user-select: none;
 }
 
 .pagination-controls {
@@ -1424,7 +1425,6 @@ const handleImageError = (event) => {
 .page-numbers button:hover:not(:disabled) {
   background-color: var(--primary-color);
   color: var(--text-color-inverse);
-  transform: translateY(-1px);
 }
 
 .page-numbers button.btn-primary:hover:not(:disabled) {
@@ -1511,6 +1511,7 @@ const handleImageError = (event) => {
   background-color: transparent;
   color: var(--text-color-secondary);
   border: 1px solid var(--border-color-primary);
+  transition: border-color 0.3s ease;
 }
 
 .btn-outline:hover:not(:disabled) {
@@ -1604,13 +1605,14 @@ const handleImageError = (event) => {
 }
 
 .sort-btn:hover {
-  color: var(--primary-color);
   background-color: var(--bg-color-tertiary);
 }
 
 .sort-btn.active {
   color: var(--primary-color);
-  background-color: var(--bg-color-tertiary);
+  background-color: var(--primary-color-shadow);
+  opacity: 0.8;
+  transition: background-color 0.3s ease;
 }
 
 /* 移动端筛选样式 - 参考FormModal设计 */
