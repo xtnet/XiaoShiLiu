@@ -174,7 +174,9 @@ onUnmounted(() => {
     <header>
         <div class="header-container">
             <template v-if="displaySearch">
-                <img v-if="isLargeScreen" :src="logoUrl" alt="小石榴" @click="router.push('/')">
+                <div class="logo" @click="router.push('/')">
+                    <img :src="logoUrl" alt="小石榴" />
+                </div>
                 <div class="search-row" :class="{ 'large-screen': isLargeScreen, 'small-screen': !isLargeScreen }">
                     <div class="search-bar-container">
                         <div class="search-bar">
@@ -212,7 +214,9 @@ onUnmounted(() => {
             </template>
 
             <template v-else>
-                <img :src="logoUrl" alt="小石榴" @click="router.push('/')">
+                <div class="logo" @click="router.push('/')">
+                    <img :src="logoUrl" alt="小石榴" />
+                </div>
                 <div class="header-right">
                     <div @click="openSearch" class="circle-btn">
                         <SvgIcon name="search" class="btn-icon" height="20" width="20" />
@@ -256,6 +260,17 @@ header {
     justify-content: space-between;
     box-sizing: border-box;
     width: 100%;
+}
+
+.logo {
+    width: 68.32px;
+    height: 32px;
+    color: var(--button-text-color);
+    background: var(--primary-color);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 img {

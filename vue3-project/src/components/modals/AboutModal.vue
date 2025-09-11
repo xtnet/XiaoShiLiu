@@ -5,7 +5,8 @@
       <div class="about-header">
         <div class="header-content">
           <div class="logo-section">
-            <img :src="logoUrl" alt="小石榴" class="about-logo" />
+            <div class="about-logo"><img :src="logoUrl" alt="小石榴"" /></div>
+            
             <h2 class="about-title">关于小石榴</h2>
           </div>
           <p class="version">v1.1.3</p>
@@ -121,7 +122,7 @@ const emit = defineEmits(['close'])
 const { lock, unlock } = useScrollLock()
 
 // 静态资源URL
-const logoUrl = new URL('@/assets/imgs/logo.ico', import.meta.url).href
+const logoUrl = new URL('@/assets/imgs/小石榴.png', import.meta.url).href
 const ztmyoUrl = new URL('@/assets/imgs/ztmyo.png', import.meta.url).href
 const liciUrl = new URL('@/assets/imgs/栗次元.ico', import.meta.url).href
 const xiaRouUrl = new URL('@/assets/imgs/夏柔.ico', import.meta.url).href
@@ -238,8 +239,16 @@ onMounted(() => {
   width: 48px;
   height: 48px;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
 }
-
+.about-logo img {
+  width: 120%;
+  height: 100%;
+  object-fit: contain;
+}
 .about-title {
   font-size: 28px;
   font-weight: 700;

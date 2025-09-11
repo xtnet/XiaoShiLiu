@@ -5,7 +5,9 @@
         @mouseleave="handleMouseLeave">
         <div class="sidebar-header">
           <div class="logo">
-            <img :src="logoUrl" alt="" style="height: 40px;">
+            <div class="logo-icon">
+              <img :src="logoUrl" alt="logo">
+            </div>
             <h2 class="logo-text">小石榴管理后台</h2>
           </div>
         </div>
@@ -137,7 +139,7 @@ const themeStore = useThemeStore()
 const { confirmState, handleConfirm, handleCancel, confirmLogout } = useConfirm()
 const { lock, unlock } = useScrollLock()
 
-const logoUrl = new URL('@/assets/imgs/logo.ico', import.meta.url).href
+const logoUrl = new URL('@/assets/imgs/小石榴.png', import.meta.url).href
 
 const indicatorPosition = computed(() => {
   const index = themeStore.themeOptions.findIndex(option => option.value === themeStore.currentTheme)
@@ -418,18 +420,19 @@ const goBack = () => {
   white-space: nowrap;
 }
 
-.logo img {
-  margin-left: 10px;
-  height: 32px;
-  width: auto;
-  flex-shrink: 0;
-}
-
 .logo-icon {
-  width: 32px;
-  height: 32px;
-  color: var(--primary-color);
-  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-icon img{
+  width: 120%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .logo-text {
