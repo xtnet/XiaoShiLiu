@@ -11,6 +11,8 @@ import { useLikeStore } from '@/stores/like.js'
 import { useCollectStore } from '@/stores/collect.js'
 import { useAuthStore } from '@/stores/auth'
 import { getPostList } from '@/api/posts.js'
+import defaultAvatar from '@/assets/imgs/avatar.png'
+import defaultPlaceholder from '@/assets/imgs/未加载.png'
 
 const props = defineProps({
     refreshKey: {
@@ -662,8 +664,8 @@ const loadImageDirectly = (imgElement, src) => {
         img.onerror = null
         // 根据图片类型选择不同的占位图
         const isAvatar = imgElement.classList.contains('lazy-avatar')
-        const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-        imgElement.src = new URL(placeholderImg, import.meta.url).href
+        const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+        imgElement.src = placeholderImg
         imgElement.alt = '图片加载超时'
         imgElement.style.opacity = '1'
         imgElement.style.visibility = 'visible'
@@ -683,8 +685,8 @@ const loadImageDirectly = (imgElement, src) => {
         clearTimeout(timeout)
         // 根据图片类型选择不同的占位图
         const isAvatar = imgElement.classList.contains('lazy-avatar')
-        const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-        imgElement.src = new URL(placeholderImg, import.meta.url).href
+        const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+        imgElement.src = placeholderImg
         imgElement.alt = '图片加载失败'
         imgElement.style.opacity = '1'
         imgElement.style.visibility = 'visible'

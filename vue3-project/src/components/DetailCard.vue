@@ -367,6 +367,7 @@ import { getPostDetail } from '@/api/posts.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { formatTime } from '@/utils/timeFormat'
 import { sanitizeContent } from '@/utils/contentSecurity'
+import defaultAvatar from '@/assets/imgs/avatar.png'
 
 const router = useRouter()
 
@@ -448,9 +449,6 @@ const showImageUpload = ref(false)
 const uploadedImages = ref([])
 
 
-
-// 默认头像
-const defaultAvatar = new URL('@/assets/imgs/avatar.png', import.meta.url).href
 
 // 评论排序相关
 const showSortMenu = ref(false)
@@ -2241,9 +2239,7 @@ const goToImage = (index) => {
 
 // 头像加载失败处理
 function handleAvatarError(event) {
-  import('@/assets/imgs/avatar.png').then(module => {
-    event.target.src = module.default
-  })
+  event.target.src = defaultAvatar
 }
 
 
