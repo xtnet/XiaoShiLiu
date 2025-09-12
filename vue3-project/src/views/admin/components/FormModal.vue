@@ -158,6 +158,7 @@ import MentionModal from '@/components/mention/MentionModal.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import messageManager from '@/utils/messageManager'
 // 移除uploadApi导入，改用MultiImageUpload组件的uploadAllImages方法
+import { imageUploadApi } from '@/api/index.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
 // import { getFriendsList } from '@/api/friends'
@@ -785,26 +786,27 @@ const handleAvatarCropConfirm = async (blob) => {
   avatarErrors.value[fieldKey] = ''
 
   try {
-    // 这里应该调用实际的上传API
-    // 暂时使用模拟上传
-    const formData = new FormData()
-    formData.append('file', blob, 'avatar.png')
-    
-    // 模拟上传延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 生成临时URL用于预览
-    const tempUrl = URL.createObjectURL(blob)
-    
-    // 更新表单数据
-    updateField(fieldKey, tempUrl)
+    // 调用实际的上传API
+    const result = await imageUploadApi.uploadCroppedImage(blob, {
+      filename: 'avatar.png'
+    })
+
+    if (result.success) {
+      // 使用服务器返回的URL
+      updateField(fieldKey, result.data.url)
+      console.log('头像上传成功:', result.data.url)
+    } else {
+      console.error('头像上传失败:', result.message)
+      avatarErrors.value[fieldKey] = result.message || '头像上传失败，请重试'
+      return
+    }
     
     showAvatarCropModal.value = false
     avatarCropImageSrc.value = ''
     currentAvatarField.value = ''
   } catch (err) {
-    console.error('上传失败:', err)
-    avatarErrors.value[fieldKey] = '上传失败，请重试'
+    console.error('头像上传异常:', err)
+    avatarErrors.value[fieldKey] = '头像上传失败，请重试'
   } finally {
     avatarCropUploading.value = false
   }
