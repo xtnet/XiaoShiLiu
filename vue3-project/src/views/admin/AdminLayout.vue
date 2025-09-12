@@ -40,7 +40,7 @@
             </div>
           </div>
           <div class="logout-btn" @click="handleLogout">
-            <SvgIcon name="leftArrow" />
+            <SvgIcon name="logout" />
             <span class="logout-text">退出登录</span>
           </div>
         </div>
@@ -89,17 +89,24 @@
           </button>
 
           <!-- 小屏菜单按钮（代替侧边栏） -->
-          <DropdownMenu class="mobile-only" direction="down">
+          <DropdownMenu class="mobile-only" direction="down" menu-class="mobile-admin-menu">
             <template #trigger>
               <button class="mobile-menu-btn" aria-label="打开菜单">
                 <SvgIcon name="menu" width="20" height="20" />
               </button>
             </template>
             <template #menu>
-              <DropdownItem v-for="item in menuItems" :key="item.path" @click="() => $router.push(item.path)">
-                <SvgIcon :name="item.icon" class="mobile-menu-icon" />
-                <span class="mobile-menu-text">{{ item.title }}</span>
-              </DropdownItem>
+              <div class="mobile-menu-content">
+                <DropdownItem v-for="item in menuItems" :key="item.path" @click="() => $router.push(item.path)">
+                  <SvgIcon :name="item.icon" class="mobile-menu-icon" />
+                  <span class="mobile-menu-text">{{ item.title }}</span>
+                </DropdownItem>
+                <div class="mobile-menu-divider"></div>
+                <DropdownItem @click="handleLogout">
+                  <SvgIcon name="logout" class="mobile-menu-icon" />
+                  <span class="mobile-menu-text">退出登录</span>
+                </DropdownItem>
+              </div>
             </template>
           </DropdownMenu>
         </div>
@@ -1066,6 +1073,41 @@ const goBack = () => {
 
 .mobile-menu-text {
   font-size: 14px;
+}
+
+/* 移动端管理菜单样式 */
+.mobile-admin-menu {
+  max-height: 70vh;
+  overflow-y: auto;
+  min-width: 220px;
+}
+
+.mobile-menu-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mobile-menu-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-menu-content::-webkit-scrollbar-track {
+  background: var(--bg-color-secondary);
+}
+
+.mobile-menu-content::-webkit-scrollbar-thumb {
+  background: var(--border-color-primary);
+  border-radius: 2px;
+}
+
+.mobile-menu-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-color-quaternary);
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: var(--border-color-primary);
+  margin: 8px 16px;
 }
 
 
