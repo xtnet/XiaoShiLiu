@@ -62,6 +62,13 @@
                 {{ field.checkboxLabel || '是' }}
               </label>
             </div>
+            <div v-else-if="field.type === 'radio'" class="radio-group">
+              <label v-for="option in field.options" :key="option.value" class="radio-label">
+                <input type="radio" :name="field.key" :value="option.value"
+                  :checked="formData[field.key] === option.value" @change="updateField(field.key, option.value)" />
+                {{ option.label }}
+              </label>
+            </div>
             <AvatarUpload v-else-if="field.type === 'avatar-upload'" :model-value="formData[field.key]"
               @update:model-value="updateField(field.key, $event)" :placeholder="field.placeholder" />
             <MultiImageUpload v-else-if="field.type === 'multi-image-upload'"
@@ -92,7 +99,8 @@
       <div class="modal-footer">
         <div class="form-actions">
           <button type="button" @click="handleClose" class="btn btn-outline">取消</button>
-          <button type="submit" @click="handleSubmit" class="btn btn-primary" :disabled="props.loading || isSubmitting || isUploadingImages">
+          <button type="submit" @click="handleSubmit" class="btn btn-primary"
+            :disabled="props.loading || isSubmitting || isUploadingImages">
             {{ getButtonText() }}
           </button>
         </div>
@@ -312,11 +320,11 @@ const getTextareaValue = (field) => {
 }
 
 // 更新输入框字段
-  const updateInputField = (field, value) => {
-    const newData = { ...props.formData }
-    newData[field.key] = value
-    emit('update:formData', newData)
-  }
+const updateInputField = (field, value) => {
+  const newData = { ...props.formData }
+  newData[field.key] = value
+  emit('update:formData', newData)
+}
 
 // 更新文本域字段
 const updateTextareaField = (field, value) => {
@@ -431,12 +439,12 @@ const handleImageUploadChange = (value) => {
   // 检测是否有新图片需要上传
   let hasNewImagesFlag = false
   if (value && Array.isArray(value) && value.length > 0) {
-    hasNewImagesFlag = value.some(imageItem => 
+    hasNewImagesFlag = value.some(imageItem =>
       imageItem.file && !imageItem.uploaded
     )
   }
   hasNewImages.value = hasNewImagesFlag
-  
+
   // 如果没有新图片，重置上传状态
   if (!hasNewImagesFlag) {
     uploadCompleted.value = false
@@ -541,13 +549,13 @@ const handleSubmit = async () => {
   if (isSubmitting.value) {
     return
   }
-  
+
   // 如果有新图片需要上传，先上传图片
   if (hasNewImages.value && !uploadCompleted.value) {
     await handleImageUpload()
     return
   }
-  
+
   // 如果没有新图片或图片已上传完成，直接提交表单
   await handleFormSubmit()
 }
@@ -557,14 +565,14 @@ const handleImageUpload = async () => {
   if (isUploadingImages.value) {
     return
   }
-  
+
   isUploadingImages.value = true
   isSubmitting.value = true
-  
+
   try {
     // 处理图片数据
     const processedData = { ...props.formData }
-    
+
     // 获取所有图片组件并上传图片
     for (const [fieldKey, ref] of Object.entries(multiImageUploadRefs.value)) {
       if (ref && ref.uploadAllImages) {
@@ -579,13 +587,13 @@ const handleImageUpload = async () => {
 
             // 使用MultiImageUpload组件的uploadAllImages方法上传图片
             const uploadedUrls = await ref.uploadAllImages()
-            
+
             if (uploadedUrls && uploadedUrls.length > 0) {
               // 图片上传完成
               if (imageCount > 3) {
                 messageManager.success(`成功上传 ${uploadedUrls.length} 张图片`)
               }
-              
+
               // 更新对应的字段
               if (fieldKey === 'images') {
                 // 设置images字段，用于后台管理系统
@@ -608,17 +616,17 @@ const handleImageUpload = async () => {
         }
       }
     }
-    
+
     // 更新表单数据
     emit('update:formData', processedData)
-    
+
     // 标记上传完成
     uploadCompleted.value = true
     hasNewImages.value = false
-    
+
     // 自动提交表单
     await handleFormSubmit()
-    
+
   } catch (error) {
     console.error('图片上传失败:', error)
     messageManager.error(`图片上传失败: ${error.message}`)
@@ -633,9 +641,9 @@ const handleFormSubmit = async () => {
   if (isSubmitting.value) {
     return
   }
-  
+
   isSubmitting.value = true
-  
+
   try {
     // 处理内容安全过滤
     const processedData = { ...props.formData }
@@ -645,7 +653,7 @@ const handleFormSubmit = async () => {
         processedData[field] = sanitizeContent(processedData[field])
       }
     })
-    
+
     emit('submit', processedData)
 
     // 如果有图片上传，在提交后触发异步更新
@@ -794,6 +802,31 @@ const handleFormSubmit = async () => {
 }
 
 .checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  transform: scale(1.1);
+  accent-color: var(--primary-color);
+}
+
+.radio-group {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.radio-label input[type="radio"] {
   width: auto;
   margin: 0;
   padding: 0;

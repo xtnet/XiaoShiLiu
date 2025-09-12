@@ -83,7 +83,11 @@ const formFields = [
   { key: 'major', label: '专业', type: 'text', placeholder: '请输入专业' },
   { key: 'interests', label: '兴趣爱好', type: 'interest-input', placeholder: '请输入兴趣爱好' },
   { key: 'is_active', label: '激活状态', type: 'checkbox', checkboxLabel: '激活' },
-  { key: 'verified', label: '认证状态', type: 'checkbox', checkboxLabel: '已认证' }
+  { key: 'verified', label: '认证状态', type: 'radio', options: [
+    { value: 0, label: '无认证' },
+    { value: 1, label: '官方认证' },
+    { value: 2, label: '个人认证' }
+  ] }
 ]
 
 const searchFields = [

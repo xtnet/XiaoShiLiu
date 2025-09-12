@@ -1,7 +1,11 @@
 <template>
-  <div class="verified-badge" v-if="verified" :class="sizeClass">
-    <SvgIcon name="verified"/>
-    <div class="tooltip">{{ title }}</div>
+  <div v-if="verified === 1" class="verified-badge verified-badge--official" :class="sizeClass">
+    <SvgIcon name="official" />
+    <div class="tooltip">{{ badgeTitle }}</div>
+  </div>
+  <div v-else-if="verified === 2" class="verified-badge" :class="sizeClass">
+    <SvgIcon name="verified" />
+    <div class="tooltip">{{ badgeTitle }}</div>
   </div>
 </template>
 
@@ -11,8 +15,8 @@ import SvgIcon from '@/components/SvgIcon.vue'
 
 const props = defineProps({
   verified: {
-    type: [Boolean, Number],
-    default: false
+    type: [Number, String],
+    default: 0
   },
   title: {
     type: String,
@@ -28,6 +32,15 @@ const props = defineProps({
 const sizeClass = computed(() => {
   return `verified-badge--${props.size}`
 })
+
+const badgeTitle = computed(() => {
+  if (props.verified === 1) {
+    return '官方认证账号'
+  } else if (props.verified === 2) {
+    return '个人认证账号'
+  }
+  return props.title
+})
 </script>
 
 <style scoped>
@@ -37,12 +50,13 @@ const sizeClass = computed(() => {
   align-items: center;
   justify-content: center;
   background-color: var(--primary-color);
-  border: 1px solid var(--primary-color);
+  border: 1.5px solid var(--primary-color);
   border-radius: 50%;
   margin-left: 4px;
   flex-shrink: 0;
   cursor: pointer;
   color: #fff;
+
 }
 
 .verified-badge--small {
@@ -62,7 +76,32 @@ const sizeClass = computed(() => {
   height: 16px;
 }
 
-/* Tooltip */
+.verified-badge--official {
+  background-image: linear-gradient(120deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.15),
+      transparent);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: reflect 3.5s ease-in-out infinite;
+}
+
+@keyframes reflect {
+  0% {
+    background-position: -100% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.verified-badge--personal {
+  background-color: var(--secondary-color);
+}
+
 .verified-badge .tooltip {
   position: absolute;
   left: 50%;
