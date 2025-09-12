@@ -2264,7 +2264,7 @@ function handleAvatarError(event) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.333);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3321,7 +3321,7 @@ function handleAvatarError(event) {
   right: 4px;
   width: 20px;
   height: 20px;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   border: none;
   border-radius: 50%;
   color: white;
@@ -3528,7 +3528,7 @@ function handleAvatarError(event) {
   }
 
   .close-btn:hover {
-    background: rgba(144, 144, 144, 0.292);
+    background: var(--bg-color-secondary);
   }
 
   .detail-content {
@@ -3830,231 +3830,6 @@ function handleAvatarError(event) {
   }
 }
 
-/* 图片查看器样式 */
-.image-viewer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: zoom-out;
-}
-
-.image-viewer-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 评论图片查看器样式 */
-.comment-image-viewer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: zoom-out;
-}
-
-.comment-image-viewer-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.image-viewer-close {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 3001;
-  background: rgba(152, 152, 152, 0.5);
-  border: none;
-  color: white;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
-}
-
-.image-viewer-close:hover {
-  background: rgba(87, 87, 87, 0.7);
-}
-
-.image-viewer-counter {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 3001;
-  background: rgba(152, 152, 152, 0.5);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 500;
-  backdrop-filter: blur(4px);
-}
-
-.image-viewer-content {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-out;
-}
-
-.image-viewer-slider {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.viewer-image {
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  user-select: none;
-  cursor: zoom-out;
-}
-
-.image-viewer-nav {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 3001;
-}
-
-.viewer-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(152, 152, 152, 0.5);
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 3001;
-  pointer-events: auto;
-  opacity: 0.8;
-}
-
-.viewer-nav-btn:hover {
-  background: rgba(87, 87, 87, 0.7);
-  opacity: 1;
-  transform: translateY(-50%);
-}
-
-.viewer-nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  transform: translateY(-50%);
-}
-
-.viewer-prev-btn {
-  left: 20px;
-}
-
-.viewer-next-btn {
-  right: 20px;
-}
-
-/* 移动端图片查看器样式 */
-@media (max-width: 768px) {
-  .image-viewer-close {
-    top: 16px;
-    left: 16px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .image-viewer-counter {
-    top: 16px;
-    right: 16px;
-    padding: 6px 12px;
-    font-size: 14px;
-  }
-
-  .viewer-nav-btn {
-    width: 48px;
-    height: 48px;
-  }
-
-  .image-viewer-nav {
-    padding: 0 16px;
-  }
-}
-
-/* 图片查看器动画 */
-.image-viewer-enter-active,
-.image-viewer-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.image-viewer-enter-from,
-.image-viewer-leave-to {
-  opacity: 0;
-}
-
-.image-viewer-enter-to,
-.image-viewer-leave-from {
-  opacity: 1;
-}
-
-/* 评论图片查看器动画 */
-.comment-image-viewer-enter-active,
-.comment-image-viewer-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.comment-image-viewer-enter-from,
-.comment-image-viewer-leave-to {
-  opacity: 0;
-}
-
-.comment-image-viewer-enter-to,
-.comment-image-viewer-leave-from {
-  opacity: 1;
-}
 
 /* 加载更多按钮样式 */
 .load-more-container {

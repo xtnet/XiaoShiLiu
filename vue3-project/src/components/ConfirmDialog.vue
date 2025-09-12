@@ -96,7 +96,7 @@ watch(() => props.visible, (newVisible) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.21);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,7 +106,6 @@ watch(() => props.visible, (newVisible) => {
 .confirm-dialog {
   background: var(--bg-color-primary);
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 400px;
   width: 90%;
   max-height: 90vh;

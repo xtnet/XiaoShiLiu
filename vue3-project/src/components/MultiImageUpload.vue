@@ -2,16 +2,13 @@
   <div class="multi-image-upload">
     <div class="upload-grid" @dragover.prevent @drop.prevent="handleDrop">
 
-      <div v-for="(imageItem, index) in imageList" :key="imageItem.id" class="image-item"
-        :class="{ 
-          'dragging': dragIndex === index, 
-          'touch-dragging': isTouchDragging && touchStartIndex === index,
-          'long-pressing': isLongPressed && touchStartIndex === index && !isTouchDragging
-        }" 
-        draggable="true" @dragstart="handleDragStart(index, $event)"
-        @dragenter.prevent="handleDragEnter(index)" @dragover.prevent @dragend="handleDragEnd"
-        @touchstart="handleTouchStart(index, $event)" @touchmove="handleTouchMove($event)"
-        @touchend="handleTouchEnd($event)">
+      <div v-for="(imageItem, index) in imageList" :key="imageItem.id" class="image-item" :class="{
+        'dragging': dragIndex === index,
+        'touch-dragging': isTouchDragging && touchStartIndex === index,
+        'long-pressing': isLongPressed && touchStartIndex === index && !isTouchDragging
+      }" draggable="true" @dragstart="handleDragStart(index, $event)" @dragenter.prevent="handleDragEnter(index)"
+        @dragover.prevent @dragend="handleDragEnd" @touchstart="handleTouchStart(index, $event)"
+        @touchmove="handleTouchMove($event)" @touchend="handleTouchEnd($event)">
         <div class="image-preview">
           <img :src="imageItem.preview" alt="预览图片" />
           <div class="image-overlay">
@@ -318,7 +315,7 @@ const handleTouchStart = (index, event) => {
   touchCurrentY.value = touch.clientY
   isTouchDragging.value = false
   isLongPressed.value = false
-  
+
   // 设置长按定时器
   longPressTimer.value = setTimeout(() => {
     isLongPressed.value = true
@@ -331,7 +328,7 @@ const handleTouchStart = (index, event) => {
 
 const handleTouchMove = (event) => {
   if (touchStartIndex.value === -1) return
-  
+
   const touch = event.touches[0]
   touchCurrentY.value = touch.clientY
   const deltaX = Math.abs(touch.clientX - touchStartX.value)
@@ -342,13 +339,13 @@ const handleTouchMove = (event) => {
     clearTimeout(longPressTimer.value)
     longPressTimer.value = null
   }
-  
+
   // 只有在长按后才允许拖拽（使用总移动距离判定）
   if (isLongPressed.value && totalDelta > touchThreshold && !isTouchDragging.value) {
     isTouchDragging.value = true
     dragIndex.value = touchStartIndex.value
   }
-  
+
   // 只有在实际拖拽状态下才阻止默认滚动行为
   if (isTouchDragging.value) {
     event.preventDefault() // 防止页面滚动
@@ -366,31 +363,31 @@ const handleTouchEnd = (event) => {
     clearTimeout(longPressTimer.value)
     longPressTimer.value = null
   }
-  
+
   // 如果正在拖拽状态，尝试执行排序
   if (isTouchDragging.value && dragIndex.value !== -1) {
     // 始终根据最终触摸位置重新计算目标索引，确保准确性
     const touch = event.changedTouches[0]
     let finalTargetIndex = -1
-    
+
     if (touch) {
       // 尝试使用clientX和clientY计算
       finalTargetIndex = getTouchTargetIndex(touch.clientX, touch.clientY)
     }
-    
+
     // 执行排序（如果有有效的目标位置且不同于起始位置）
     if (finalTargetIndex !== -1 && finalTargetIndex !== dragIndex.value) {
       const draggedItem = imageList.value[dragIndex.value]
       imageList.value.splice(dragIndex.value, 1)
       imageList.value.splice(finalTargetIndex, 0, draggedItem)
-      
+
       // 排序成功后的触觉反馈
       if (navigator.vibrate) {
         navigator.vibrate(30)
       }
     }
   }
-  
+
   // 重置触摸状态
   touchStartIndex.value = -1
   touchStartX.value = 0
@@ -409,20 +406,20 @@ const getTouchTargetIndex = (clientX, clientY) => {
   if (!elementAtPoint) {
     return -1
   }
-  
+
   // 查找最近的 .image-item 元素
   let imageItem = elementAtPoint.closest('.image-item')
-  
+
   if (!imageItem) {
     return -1
   }
-  
+
   // 获取所有图片项来确定索引
   const uploadGrid = document.querySelector('.upload-grid')
   if (!uploadGrid) {
     return -1
   }
-  
+
   const imageItems = uploadGrid.querySelectorAll('.image-item')
   const targetIndex = Array.from(imageItems).indexOf(imageItem)
   return targetIndex >= 0 ? targetIndex : -1
@@ -714,7 +711,7 @@ defineExpose({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -832,28 +829,33 @@ defineExpose({
 /* 移动端优化 */
 @media (max-width: 768px) {
   .image-item {
-    touch-action: pan-y; /* 允许垂直滚动，但禁用其他手势 */
+    touch-action: pan-y;
+    /* 允许垂直滚动，但禁用其他手势 */
   }
-  
+
   .image-item.touch-dragging {
-    touch-action: none; /* 拖拽时完全禁用默认触摸行为 */
+    touch-action: none;
+    /* 拖拽时完全禁用默认触摸行为 */
     transform: rotate(2deg);
   }
-  
+
   .image-item.long-pressing {
     transform: scale(0.9);
   }
-  
+
   .image-overlay {
-    pointer-events: none; /* 移动端让overlay不干扰触摸事件 */
+    pointer-events: none;
+    /* 移动端让overlay不干扰触摸事件 */
   }
-  
+
   .image-overlay .action-btn {
-    pointer-events: auto; /* 但保持按钮可点击 */
+    pointer-events: auto;
+    /* 但保持按钮可点击 */
   }
-  
+
   .upload-grid {
-    user-select: none; /* 防止文本选择 */
+    user-select: none;
+    /* 防止文本选择 */
   }
 }
 
@@ -941,7 +943,7 @@ defineExpose({
   .drag-tip .mobile-tip {
     display: inline;
   }
-  
+
   .drag-tip .desktop-tip {
     display: none;
   }

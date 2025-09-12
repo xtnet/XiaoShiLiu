@@ -17,10 +17,9 @@
               'dragging': dragIndex === index,
               'touch-dragging': isTouchDragging && touchStartIndex === index,
               'long-pressing': isLongPressed && touchStartIndex === index && !isTouchDragging
-            }" draggable="true" @dragstart="handleDragStart(index, $event)"
-              @dragenter.prevent="handleDragEnter(index)" @dragover.prevent @dragend="handleDragEnd"
-              @touchstart="handleTouchStart(index, $event)" @touchmove="handleTouchMove($event)"
-              @touchend="handleTouchEnd($event)">
+            }" draggable="true" @dragstart="handleDragStart(index, $event)" @dragenter.prevent="handleDragEnter(index)"
+              @dragover.prevent @dragend="handleDragEnd" @touchstart="handleTouchStart(index, $event)"
+              @touchmove="handleTouchMove($event)" @touchend="handleTouchEnd($event)">
               <div class="image-preview">
                 <img :src="imageItem.preview" alt="预览图片" />
                 <div class="image-overlay">
@@ -581,7 +580,7 @@ const getTouchTargetIndex = (clientX, clientY) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
