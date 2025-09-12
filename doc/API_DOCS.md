@@ -74,7 +74,8 @@ Authorization: Bearer <your_jwt_token>
       "nickname": "小石榴",
       "avatar": "https://example.com/avatar.jpg",
       "bio": "这是个人简介",
-      "location": "北京"
+      "location": "北京",
+      "verified": 0
     },
     "tokens": {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -109,7 +110,8 @@ Authorization: Bearer <your_jwt_token>
       "location": "北京",
       "follow_count": 10,
       "fans_count": 20,
-      "like_count": 100
+      "like_count": 100,
+      "verified": 0
     },
     "tokens": {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -173,6 +175,7 @@ Authorization: Bearer <your_jwt_token>
     "fans_count": 20,
     "like_count": 100,
     "is_active": 1,
+    "verified": 0,
     "created_at": "2025-08-30T00:00:00.000Z"
   }
 }
@@ -208,6 +211,7 @@ Authorization: Bearer <your_jwt_token>
         "follow_count": 10,
         "fans_count": 20,
         "like_count": 100,
+        "verified": 0,
         "created_at": "2025-08-30T00:00:00.000Z"
       }
     ],
@@ -244,6 +248,7 @@ Authorization: Bearer <your_jwt_token>
     "follow_count": 10,
     "fans_count": 20,
     "like_count": 100,
+    "verified": 0,
     "created_at": "2025-08-30T00:00:00.000Z"
   }
 }
@@ -326,6 +331,7 @@ Authorization: Bearer <your_jwt_token>
         "bio": "个人简介",
         "follow_count": 5,
         "fans_count": 10,
+        "verified": 0,
         "followed_at": "2025-08-30T00:00:00.000Z"
       }
     ],
@@ -368,6 +374,7 @@ Authorization: Bearer <your_jwt_token>
         "bio": "个人简介",
         "follow_count": 8,
         "fans_count": 15,
+        "verified": 0,
         "followed_at": "2025-08-30T00:00:00.000Z"
       }
     ],
@@ -409,6 +416,7 @@ Authorization: Bearer <your_jwt_token>
         "fans_count": 20,
         "like_count": 100,
         "post_count": 5,
+        "verified": 0,
         "isFollowing": false,
         "isMutual": false,
         "buttonType": "follow",
@@ -494,7 +502,8 @@ Authorization: Bearer <your_jwt_token>
           "id": 1,
           "user_id": "user_001",
           "nickname": "小石榴",
-          "avatar": "https://example.com/avatar.jpg"
+          "avatar": "https://example.com/avatar.jpg",
+          "verified": 0
         }
       }
     ],
@@ -613,6 +622,7 @@ Authorization: Bearer <your_jwt_token>
         "bio": "个人简介",
         "follow_count": 8,
         "fans_count": 15,
+        "verified": 0,
         "followed_at": "2025-08-30T00:00:00.000Z"
       }
     ],
@@ -826,6 +836,7 @@ Authorization: Bearer <your_jwt_token>
         "created_at": "2025-08-30T00:00:00.000Z",
         "nickname": "小石榴",
         "user_avatar": "https://example.com/avatar.jpg",
+        "verified": 0,
         "images": [
           "https://example.com/image1.jpg",
           "https://example.com/image2.jpg"
@@ -1156,6 +1167,7 @@ Authorization: Bearer <your_jwt_token>
         "user_id": 1,
         "nickname": "张三",
         "user_avatar": "https://img.example.com/avatar1.jpg",
+        "verified": 0,
         "user_auto_id": 1,
         "user_display_id": "user123",
         "post_id": 1,
@@ -1170,6 +1182,7 @@ Authorization: Bearer <your_jwt_token>
         "user_id": 2,
         "nickname": "李四",
         "user_avatar": "https://img.example.com/avatar2.jpg",
+        "verified": 0,
         "user_auto_id": 2,
         "user_display_id": "user456",
         "post_id": 1,
@@ -1282,6 +1295,7 @@ Authorization: Bearer <your_jwt_token>
         "user_id": 2,
         "nickname": "李四",
         "user_avatar": "https://img.example.com/avatar2.jpg",
+        "verified": 0,
         "parent_id": 1,
         "created_at": "2025-08-30T01:00:00.000Z",
         "liked": false
@@ -1341,6 +1355,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_id": 2,
         "sender_nickname": "用户2",
         "sender_avatar": "https://example.com/avatar2.jpg",
+        "sender_verified": 0,
         "post_id": 1,
         "post_title": "笔记标题",
         "comment_content": "评论内容",
@@ -1381,6 +1396,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_id": 3,
         "sender_nickname": "用户3",
         "sender_avatar": "https://example.com/avatar3.jpg",
+        "sender_verified": 0,
         "target_type": "post",
         "post_id": 1,
         "post_title": "笔记标题",
@@ -1421,6 +1437,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_id": 4,
         "sender_nickname": "用户4",
         "sender_avatar": "https://example.com/avatar4.jpg",
+        "sender_verified": 0,
         "is_read": 0,
         "created_at": "2025-08-30T00:00:00.000Z"
       }
@@ -1475,6 +1492,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_id": 5,
         "sender_nickname": "用户5",
         "sender_avatar": "https://example.com/avatar5.jpg",
+        "sender_verified": 0,
         "post_id": 1,
         "post_title": "笔记标题",
         "post_image": "https://example.com/post_image.jpg",
@@ -1515,6 +1533,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_id": 2,
         "sender_nickname": "用户2",
         "sender_avatar": "https://example.com/avatar2.jpg",
+        "sender_verified": 0,
         "post_id": 1,
         "post_title": "笔记标题",
         "comment_content": "评论内容",

@@ -211,7 +211,8 @@ const apiGroups = ref([
       "nickname": "测试用户",
       "avatar": null,
       "bio": null,
-      "location": "北京市"
+      "location": "北京市",
+      "verified": 0
     },
     "tokens": {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -238,7 +239,8 @@ const apiGroups = ref([
     "user": {
       "id": 1,
       "user_id": "test123",
-      "nickname": "测试用户"
+      "nickname": "测试用户",
+      "verified": 0
     },
     "tokens": {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
