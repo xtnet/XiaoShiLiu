@@ -4,7 +4,7 @@
     <div class="detail-card" @click="handleDetailCardClick"
       :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
       :class="{ 'scale-in': isAnimating && !pageMode, 'page-mode': pageMode }">
-      <button v-if="!pageMode" class="close-btn" @click="closeModal" @mouseenter="showTooltip = true"
+      <button v-if="!pageMode && windowWidth > 768" class="close-btn" @click="closeModal" @mouseenter="showTooltip = true"
         @mouseleave="showTooltip = false">
         <SvgIcon name="close" />
         <div v-if="showTooltip" class="tooltip">
@@ -46,6 +46,13 @@
 
         <div class="content-section" :style="windowWidth > 768 ? { width: contentSectionWidth + 'px' } : {}">
           <div class="author-wrapper">
+            <button v-if="!pageMode && windowWidth <= 768" class="close-btn mobile-close-btn" @click="closeModal" @mouseenter="showTooltip = true"
+              @mouseleave="showTooltip = false">
+              <SvgIcon name="close" />
+              <div v-if="showTooltip" class="tooltip">
+                关闭 <span class="key-hint">Esc</span>
+              </div>
+            </button>
             <div class="author-info">
               <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
                 @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
@@ -3515,18 +3522,27 @@ function handleAvatarError(event) {
     flex: 1;
   }
 
-  .close-btn {
-    position: fixed;
-    top: 16px;
+  .mobile-close-btn {
+    position: absolute;
     left: 16px;
-    z-index: 1001;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1002;
     background: transparent;
     color: var(--text-color-secondary);
     width: 36px;
     height: 36px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    /* 确保按钮在安全区域内可见且居中 */
   }
 
-  .close-btn:hover {
+  .mobile-close-btn:hover {
     background: rgba(144, 144, 144, 0.292);
   }
 
@@ -3559,16 +3575,20 @@ function handleAvatarError(event) {
     left: 0;
     right: 0;
     z-index: 1000;
+    min-height: 72px;
     height: calc(72px + constant(safe-area-inset-top));
     height: calc(72px + env(safe-area-inset-top));
     padding: 12px 16px;
-    padding-left: 60px;
-    padding-top: constant(safe-area-inset-top);
-    /* iOS 旧版 */
-    padding-top: env(safe-area-inset-top);
-    /* 现代浏览器 */
+    padding-left: 68px; /* 为close-btn留出更多空间 */
+    padding-top: calc(12px + constant(safe-area-inset-top));
+    padding-top: calc(12px + env(safe-area-inset-top));
+    /* 确保在安全区域内显示 */
     background: var(--bg-color-primary);
     border-bottom: 1px solid var(--border-color-primary);
+    position: relative; /* 为内部绝对定位的close-btn提供定位上下文 */
+    /* 支持刘海屏和状态栏 */
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
 
   /* 可滚动内容区域包含图片和文本 */
@@ -3576,15 +3596,16 @@ function handleAvatarError(event) {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-top: calc(100px + constant(safe-area-inset-top));
-    padding-top: calc(100px + env(safe-area-inset-top));
-    padding-bottom: calc(110px + constant(safe-area-inset-bottom));
-    padding-bottom: calc(110px + env(safe-area-inset-bottom));
     max-width: 100vw;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     touch-action: auto;
     overscroll-behavior: contain;
+    /* 确保内容不被固定header遮挡，考虑安全区域 */
+    padding-top: calc(72px + constant(safe-area-inset-top));
+    padding-top: calc(72px + env(safe-area-inset-top));
+    margin-top: calc(-72px - constant(safe-area-inset-top));
+    margin-top: calc(-72px - env(safe-area-inset-top));
   }
 
   /* 在可滚动内容的开头添加图片 */
@@ -3805,6 +3826,7 @@ function handleAvatarError(event) {
   .comment-item,
   .reply-item {
     margin-bottom: 16px;
+    gap:2px;
   }
 
   .comment-avatar,
