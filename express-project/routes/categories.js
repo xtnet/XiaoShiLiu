@@ -268,4 +268,69 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @api {delete} /api/categories 批量删除分类
+ * @apiName BatchDeleteCategories
+ * @apiGroup Categories
+ * @apiDescription 批量删除分类（需要管理员权限）
+ * 
+ * @apiHeader {String} Authorization Bearer token
+ * 
+ * @apiParam {Array} ids 分类ID数组
+ * 
+ * @apiSuccess {Number} code 状态码
+ * @apiSuccess {String} message 响应消息
+ * @apiSuccess {Object} data 删除结果
+ * @apiSuccess {Number} data.deletedCount 删除数量
+ */
+router.delete('/', authenticateToken, async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return error(res, '请提供要删除的分类ID数组', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 验证所有ID都是有效的数字
+    const validIds = ids.filter(id => !isNaN(parseInt(id)));
+    if (validIds.length === 0) {
+      return error(res, '无效的分类ID', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 检查哪些分类存在
+    const placeholders = validIds.map(() => '?').join(',');
+    const [existing] = await pool.execute(
+      `SELECT id FROM categories WHERE id IN (${placeholders})`,
+      validIds
+    );
+
+    if (existing.length === 0) {
+      return error(res, '没有找到要删除的分类', HTTP_STATUS.NOT_FOUND);
+    }
+
+    const existingIds = existing.map(row => row.id);
+
+    // 检查是否有笔记使用这些分类
+    const [posts] = await pool.execute(
+      `SELECT DISTINCT category_id FROM posts WHERE category_id IN (${placeholders}) LIMIT 1`,
+      existingIds
+    );
+
+    if (posts.length > 0) {
+      return error(res, '部分分类下还有笔记，无法删除', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 批量删除分类
+    const [result] = await pool.execute(
+      `DELETE FROM categories WHERE id IN (${placeholders})`,
+      existingIds
+    );
+
+    success(res, { deletedCount: result.affectedRows }, `成功删除${result.affectedRows}个分类`);
+  } catch (err) {
+    console.error('批量删除分类失败:', err);
+    error(res, '批量删除分类失败');
+  }
+});
+
 module.exports = router;

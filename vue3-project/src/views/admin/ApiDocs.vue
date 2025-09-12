@@ -625,6 +625,24 @@ const apiGroups = ref([
   "code": 200,
   "message": "分类删除成功"
 }`
+      },
+      {
+        method: 'DELETE',
+        path: '/api/categories',
+        title: '批量删除分类（管理员）',
+        description: '管理员批量删除多个分类',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'ids', type: 'array', required: true, description: '分类ID数组' }
+        ],
+        example: `{
+  "code": 200,
+  "message": "成功删除3个分类",
+  "data": {
+    "deletedCount": 3
+  }
+}`
       }
     ]
   },
