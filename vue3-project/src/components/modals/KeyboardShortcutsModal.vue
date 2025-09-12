@@ -86,7 +86,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +214,7 @@ onMounted(() => {
 .plus {
   margin: 0 4px;
 }
+
 @media (max-width: 768px) {
   .shortcuts-modal {
     width: 300px;

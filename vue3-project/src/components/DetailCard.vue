@@ -50,7 +50,8 @@
               <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
                 @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
               <div class="author-name-container">
-                <span class="author-name" @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
+                <span class="author-name" @click="onUserClick(authorData.id)"
+                  v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
                 <VerifiedBadge :verified="authorData.verified" />
               </div>
             </div>
@@ -2342,7 +2343,7 @@ function handleAvatarError(event) {
   width: 40px;
   height: 40px;
   border: none;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -3666,7 +3667,7 @@ function handleAvatarError(event) {
   }
 
   .mobile-nav-btn:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-bg);
     opacity: 1;
   }
 
@@ -3823,6 +3824,7 @@ function handleAvatarError(event) {
     padding: 0;
     z-index: 2500;
   }
+
   .action-buttons {
     gap: 1px;
   }

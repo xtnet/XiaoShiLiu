@@ -1080,7 +1080,7 @@ const goBack = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   z-index: 1000;
   display: flex;
   align-items: flex-end;
@@ -1096,7 +1096,6 @@ const goBack = () => {
   max-height: 70dvh;
   overflow-y: auto;
   animation: slideUp 0.3s ease-out;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   min-height: 200px;
   transition: background-color 0.3s ease;
 }

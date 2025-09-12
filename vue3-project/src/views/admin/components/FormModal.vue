@@ -11,9 +11,9 @@
         <form @submit.prevent="handleSubmit">
           <div v-for="field in formFields" :key="field.key" class="form-group">
             <label>{{ field.label }}{{ field.required ? ' *' : '' }}:</label>
-            <input v-if="field.type === 'text' || field.type === 'password'"
-              :value="getInputValue(field)" @input="updateInputField(field, $event.target.value)" :type="field.type"
-              :placeholder="field.placeholder" :required="field.required" :maxlength="field.maxlength" />
+            <input v-if="field.type === 'text' || field.type === 'password'" :value="getInputValue(field)"
+              @input="updateInputField(field, $event.target.value)" :type="field.type" :placeholder="field.placeholder"
+              :required="field.required" :maxlength="field.maxlength" />
             <textarea v-else-if="field.type === 'textarea'" :value="getTextareaValue(field)"
               @input="updateTextareaField(field, $event.target.value)" :placeholder="field.placeholder"
               :required="field.required" rows="4"></textarea>
@@ -684,7 +684,7 @@ const handleFormSubmit = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1122,7 +1122,7 @@ const handleFormSubmit = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;

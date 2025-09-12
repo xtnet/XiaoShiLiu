@@ -260,7 +260,7 @@ const handleSubmit = async () => {
 }
 
 .login-button:hover:not(:disabled) {
-  background: #e02a44;
+  background: var(--primary-color-dark);
 }
 
 .login-button:disabled {
