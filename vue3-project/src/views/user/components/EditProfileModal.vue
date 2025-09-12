@@ -125,28 +125,8 @@
   </div>
 
 
-  <div v-if="showCropModal" class="modal-overlay" v-click-outside.mousedown="closeCropModal"
-    v-escape-key="closeCropModal">
-    <div class="modal crop-modal" @mousedown.stop>
-      <div class="modal-header">
-        <h4>裁剪头像</h4>
-        <button @click="closeCropModal" class="close-btn">
-          <SvgIcon name="close" width="16" height="16" />
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="crop-container">
-          <img ref="cropImage" :src="cropImageSrc" alt="待裁剪图片" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <div class="form-actions">
-          <button type="button" @click="closeCropModal" class="btn btn-outline">取消</button>
-          <button type="button" @click="confirmCrop" class="btn btn-primary">确认裁剪</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <CropModal :visible="showCropModal" :image-src="cropImageSrc" :uploading="uploading" @close="closeCropModal"
+    @confirm="handleCropConfirm" />
 
 
   <div v-if="showEmojiPanel" class="emoji-panel-overlay" v-click-outside.mousedown="closeEmojiPanel"
@@ -171,6 +151,7 @@ import DropdownSelect from '@/components/DropdownSelect.vue'
 import MbtiPicker from '@/components/MbtiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
+import CropModal from './CropModal.vue'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
 
@@ -456,40 +437,12 @@ const showCropDialog = async (file) => {
 const closeCropModal = () => {
   showCropModal.value = false
   cropImageSrc.value = ''
-  if (cropper.value) {
-    cropper.value.destroy()
-    cropper.value = null
-  }
   if (fileInput.value) {
     fileInput.value.value = ''
   }
 }
 
-const confirmCrop = async () => {
-  if (!cropper.value) return
-
-  uploading.value = true
-  avatarError.value = ''
-
-  try {
-    const canvas = cropper.value.getCroppedCanvas({
-      width: 300,
-      height: 300,
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: 'high',
-    })
-
-    canvas.toBlob((blob) => {
-      uploadCroppedImage(blob)
-    }, 'image/png', 0.9)
-  } catch (error) {
-    console.error('裁剪失败:', error)
-    avatarError.value = '裁剪失败，请重试'
-    uploading.value = false
-  }
-}
-
-const uploadCroppedImage = async (blob) => {
+const handleCropConfirm = async (blob) => {
   try {
     // 将裁剪后的图片转换为base64，暂存在form中
     const reader = new FileReader()
@@ -497,13 +450,11 @@ const uploadCroppedImage = async (blob) => {
       form.avatar = e.target.result
       form.avatarBlob = blob // 保存blob用于后续上传
       closeCropModal()
-      uploading.value = false
     }
     reader.readAsDataURL(blob)
   } catch (error) {
     console.error('处理图片失败:', error)
     avatarError.value = '处理图片失败，请重试'
-    uploading.value = false
   }
 }
 
@@ -1169,17 +1120,7 @@ const handleSave = async () => {
 
 
 
-/* 裁剪模态框样式 */
-.crop-container {
-  max-height: 400px;
-  overflow: hidden;
-  text-align: center;
-}
 
-.crop-container img {
-  max-width: 100%;
-  max-height: 400px;
-}
 
 /* 表情选择器面板样式 */
 .emoji-panel-overlay {

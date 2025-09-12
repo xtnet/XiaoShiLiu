@@ -1,144 +1,177 @@
 <template>
-  <div v-if="visible" class="crop-modal-overlay" @click="handleClose">
-    <div class="crop-modal" @click.stop>
-      <div class="crop-header">
-        <h3>裁剪头像</h3>
+  <div v-if="visible" class="modal-overlay" v-click-outside.mousedown="handleClose" v-escape-key="handleClose">
+    <div class="modal crop-modal" @mousedown.stop>
+      <div class="modal-header">
+        <h4>裁剪头像</h4>
         <button @click="handleClose" class="close-btn">
-          <SvgIcon name="close" width="24" height="24" />
+          <SvgIcon name="close" width="16" height="16" />
         </button>
       </div>
-      <div class="crop-body">
+      <div class="modal-body">
         <div class="crop-container">
-          <img ref="cropImage" :src="imageSrc" alt="裁剪图片" style="max-width: 100%; max-height: 400px;" />
+          <img ref="cropImage" :src="imageSrc" alt="待裁剪图片" />
         </div>
       </div>
-      <div class="crop-footer">
-        <button @click="handleClose" class="cancel-btn">取消</button>
-        <button @click="handleConfirm" class="confirm-btn" :disabled="uploading">
-          {{ uploading ? '上传中...' : '确认裁剪' }}
-        </button>
+      <div class="modal-footer">
+        <div class="form-actions">
+          <button type="button" @click="handleClose" class="btn btn-outline">取消</button>
+          <button type="button" @click="handleConfirm" class="btn btn-primary" :disabled="uploading">
+            {{ uploading ? '上传中...' : '确认裁剪' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, watch, nextTick } from 'vue'
+<script>
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import Cropper from 'cropperjs'
-import 'cropperjs/src/css/cropper.css'
+import 'cropperjs/dist/cropper.css'
 import SvgIcon from '@/components/SvgIcon.vue'
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
+export default {
+  name: 'CropModal',
+  components: {
+    SvgIcon
   },
-  imageSrc: {
-    type: String,
-    default: ''
+  props: {
+    visible: {
+      type: Boolean,
+      default: false
+    },
+    imageSrc: {
+      type: String,
+      default: ''
+    },
+    uploading: {
+      type: Boolean,
+      default: false
+    }
   },
-  uploading: {
-    type: Boolean,
-    default: false
-  }
-})
+  emits: ['close', 'confirm'],
+  setup(props, { emit }) {
+    const cropImage = ref(null)
+    let cropper = null
 
-const emit = defineEmits(['close', 'confirm'])
-
-const cropImage = ref(null)
-const cropper = ref(null)
-
-// 监听模态框显示状态，初始化和销毁Cropper实例
-watch(() => props.visible, async (newValue) => {
-  if (newValue) {
-    await nextTick()
-    if (cropImage.value) {
-      cropper.value = new Cropper(cropImage.value, {
-        aspectRatio: 1, // 正方形裁剪
-        viewMode: 1,
-        dragMode: 'move',
-        autoCropArea: 0.8,
-        restore: false,
-        guides: false,
-        center: false,
-        highlight: false,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-      })
+    // 初始化裁剪器
+    const initCropper = () => {
+      if (cropImage.value && props.imageSrc) {
+        cropper = new Cropper(cropImage.value, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.65,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+          background: false,
+          modal: true,
+          responsive: true,
+          checkCrossOrigin: false
+        })
+      }
     }
-  } else {
-    if (cropper.value) {
-      cropper.value.destroy()
-      cropper.value = null
+
+    // 销毁裁剪器
+    const destroyCropper = () => {
+      if (cropper) {
+        cropper.destroy()
+        cropper = null
+      }
     }
-  }
-})
 
-const handleClose = () => {
-  emit('close')
-}
-
-const handleConfirm = () => {
-  if (!cropper.value) return
-
-  try {
-    // 获取裁剪后的canvas
-    const canvas = cropper.value.getCroppedCanvas({
-      width: 300,
-      height: 300,
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: 'high',
+    // 监听visible变化
+    watch(() => props.visible, (newVal) => {
+      if (newVal && props.imageSrc) {
+        nextTick(() => {
+          initCropper()
+        })
+      } else {
+        destroyCropper()
+      }
     })
 
-    // 将canvas转换为blob
-    canvas.toBlob((blob) => {
-      emit('confirm', blob)
-    }, 'image/png', 0.9)
-  } catch (error) {
-    console.error('裁剪失败:', error)
-    emit('error', '裁剪失败，请重试')
+    // 关闭模态框
+    const handleClose = () => {
+      emit('close')
+    }
+
+    // 确认裁剪
+    const handleConfirm = () => {
+      if (cropper) {
+        const canvas = cropper.getCroppedCanvas({
+          width: 200,
+          height: 200,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high'
+        })
+        
+        canvas.toBlob((blob) => {
+          emit('confirm', blob)
+        }, 'image/jpeg', 0.9)
+      }
+    }
+
+    // 组件卸载时清理
+    onUnmounted(() => {
+      destroyCropper()
+    })
+
+    return {
+      cropImage,
+      handleClose,
+      handleConfirm
+    }
   }
 }
 </script>
 
 <style scoped>
-/* 裁剪模态框样式 */
-.crop-modal-overlay {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background-color: var(--overlay-bg);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-color-primary);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .crop-modal {
-  background: var(--bg-color-primary);
-  border-radius: 12px;
-  width: 90%;
   max-width: 600px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.crop-header {
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 20px 30px;
   border-bottom: 1px solid var(--border-color-primary);
+  flex-shrink: 0;
+  background: var(--bg-color-primary);
 }
 
-.crop-header h3 {
+.modal-header h4 {
   margin: 0;
-  font-size: 18px;
-  font-weight: bold;
   color: var(--text-color-primary);
 }
 
@@ -146,74 +179,85 @@ const handleConfirm = () => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  padding: 5px;
+  color: var(--text-color-secondary);
 }
 
 .close-btn:hover {
-  background: var(--bg-color-secondary);
-}
-
-.crop-body {
-  padding: 24px;
-  max-height: 500px;
-  overflow: hidden;
-}
-
-.crop-container {
-  width: 100%;
-  height: 400px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.crop-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid var(--border-color-primary);
-}
-
-.cancel-btn {
-  padding: 10px 20px;
-  border: 1px solid var(--border-color-primary);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--bg-color-primary);
   color: var(--text-color-primary);
 }
 
-.cancel-btn:hover {
-  background: var(--bg-color-secondary);
+.close-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.confirm-btn {
-  padding: 10px 20px;
+.modal-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.modal-footer {
+  flex-shrink: 0;
+  background: var(--bg-color-primary);
+  border-top: 1px solid var(--border-color-primary);
+  padding: 20px 30px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+}
+
+.btn {
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--primary-color);
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
   color: white;
 }
 
-.confirm-btn:hover:not(:disabled) {
-  background: var(--primary-color-dark);
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-color-dark);
 }
 
-.confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-color-secondary);
+  border: 1px solid var(--border-color-primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--bg-color-secondary);
+}
+
+.crop-container {
+  max-height: 400px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.crop-container img {
+  max-width: 100%;
+  max-height: 400px;
 }
 </style>

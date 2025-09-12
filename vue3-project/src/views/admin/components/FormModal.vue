@@ -69,8 +69,30 @@
                 {{ option.label }}
               </label>
             </div>
-            <AvatarUpload v-else-if="field.type === 'avatar-upload'" :model-value="formData[field.key]"
-              @update:model-value="updateField(field.key, $event)" :placeholder="field.placeholder" />
+            <div v-else-if="field.type === 'avatar-upload'" class="avatar-upload-field">
+              <div class="avatar-upload-area" @click="triggerAvatarFileInput(field.key)" @dragover.prevent @drop.prevent="handleAvatarDrop($event, field.key)">
+                <input :ref="el => setAvatarFileInputRef(field.key, el)" type="file" accept="image/*" @change="handleAvatarFileSelect($event, field.key)" style="display: none" />
+                
+                <div v-if="!avatarUploading[field.key] && !formData[field.key]" class="avatar-upload-placeholder">
+                  <SvgIcon name="publish" width="40" height="40" />
+                  <p>点击或拖拽上传头像</p>
+                  <p class="upload-hint">支持 JPG、PNG、GIF 格式，将自动裁剪为正方形</p>
+                </div>
+                
+                <div v-if="avatarUploading[field.key]" class="avatar-upload-loading">
+                  <SvgIcon name="loading" class="loading-icon" />
+                  <p>上传中...</p>
+                </div>
+                
+                <div v-if="formData[field.key] && !avatarUploading[field.key]" class="avatar-image-preview">
+                  <img :src="formData[field.key]" alt="头像预览" />
+                </div>
+              </div>
+              
+              <div v-if="avatarErrors[field.key]" class="avatar-error-message">
+                {{ avatarErrors[field.key] }}
+              </div>
+            </div>
             <MultiImageUpload v-else-if="field.type === 'multi-image-upload'"
               :ref="el => setMultiImageUploadRef(field.key, el)" :model-value="getMultiImageUploadValue(field.key)"
               @update:model-value="handleImageUploadChange" :max-images="field.maxImages || 9" />
@@ -118,12 +140,15 @@
 
 
   <MentionModal :visible="showMentionPanel" @close="closeMentionPanel" @select="handleContentEditableMentionSelect" />
+  
+  <CropModal :visible="showAvatarCropModal" :image-src="avatarCropImageSrc" :uploading="avatarCropUploading" 
+    @close="closeAvatarCropModal" @confirm="handleAvatarCropConfirm" />
 </template>
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import AvatarUpload from './AvatarUpload.vue'
+import CropModal from '@/views/user/components/CropModal.vue'
 import MultiImageUpload from '@/components/MultiImageUpload.vue'
 import TagSelector from '@/components/TagSelector.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
@@ -173,6 +198,15 @@ const showEmojiPanel = ref(false)
 const showMentionPanel = ref(false)
 const currentEmojiField = ref('')
 const currentMentionField = ref('')
+
+// 头像上传相关
+const avatarFileInputRefs = ref({})
+const avatarUploading = ref({})
+const avatarErrors = ref({})
+const showAvatarCropModal = ref(false)
+const avatarCropImageSrc = ref('')
+const avatarCropUploading = ref(false)
+const currentAvatarField = ref('')
 // 提及用户数据（实际使用中应该从 API 获取）
 const mentionUsers = ref([])
 const isSubmitting = ref(false)
@@ -675,6 +709,107 @@ const handleFormSubmit = async () => {
     isSubmitting.value = false
   }
 }
+// 头像上传相关方法
+const setAvatarFileInputRef = (fieldKey, el) => {
+  if (el) {
+    avatarFileInputRefs.value[fieldKey] = el
+  }
+}
+
+const triggerAvatarFileInput = (fieldKey) => {
+  avatarFileInputRefs.value[fieldKey]?.click()
+}
+
+const handleAvatarFileSelect = (event, fieldKey) => {
+  const file = event.target.files[0]
+  if (file) {
+    showAvatarCropDialog(file, fieldKey)
+  }
+}
+
+const handleAvatarDrop = (event, fieldKey) => {
+  const files = event.dataTransfer.files
+  if (files.length > 0) {
+    showAvatarCropDialog(files[0], fieldKey)
+  }
+}
+
+const showAvatarCropDialog = async (file, fieldKey) => {
+  // 验证文件
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  const maxSize = 5 * 1024 * 1024
+
+  if (!validTypes.includes(file.type)) {
+    avatarErrors.value[fieldKey] = '请选择有效的图片格式 (JPEG, PNG, GIF, WebP)'
+    return
+  }
+
+  if (file.size > maxSize) {
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
+    avatarErrors.value[fieldKey] = `图片大小为 ${fileSizeMB}MB，超过 5MB 限制，请选择更小的图片`
+    return
+  }
+
+  avatarErrors.value[fieldKey] = ''
+  currentAvatarField.value = fieldKey
+
+  try {
+    // 生成预览
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      avatarCropImageSrc.value = e.target.result
+      showAvatarCropModal.value = true
+    }
+    reader.readAsDataURL(file)
+  } catch (err) {
+    console.error('生成预览失败:', err)
+    avatarErrors.value[fieldKey] = '文件读取失败，请重试'
+  }
+}
+
+const closeAvatarCropModal = () => {
+  showAvatarCropModal.value = false
+  avatarCropImageSrc.value = ''
+  currentAvatarField.value = ''
+  // 清空文件输入框
+  if (currentAvatarField.value && avatarFileInputRefs.value[currentAvatarField.value]) {
+    avatarFileInputRefs.value[currentAvatarField.value].value = ''
+  }
+}
+
+const handleAvatarCropConfirm = async (blob) => {
+  const fieldKey = currentAvatarField.value
+  if (!fieldKey) return
+
+  avatarCropUploading.value = true
+  avatarErrors.value[fieldKey] = ''
+
+  try {
+    // 这里应该调用实际的上传API
+    // 暂时使用模拟上传
+    const formData = new FormData()
+    formData.append('file', blob, 'avatar.png')
+    
+    // 模拟上传延迟
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 生成临时URL用于预览
+    const tempUrl = URL.createObjectURL(blob)
+    
+    // 更新表单数据
+    updateField(fieldKey, tempUrl)
+    
+    showAvatarCropModal.value = false
+    avatarCropImageSrc.value = ''
+    currentAvatarField.value = ''
+  } catch (err) {
+    console.error('上传失败:', err)
+    avatarErrors.value[fieldKey] = '上传失败，请重试'
+  } finally {
+    avatarCropUploading.value = false
+  }
+}
+
 </script>
 
 <style scoped>
@@ -1136,5 +1271,82 @@ const handleFormSubmit = async () => {
   max-width: 90vw;
   max-height: 90vh;
   overflow: hidden;
+}
+
+/* 头像上传样式 */
+.avatar-upload-field {
+  width: 100%;
+}
+
+.avatar-upload-area {
+  border: 2px dashed var(--border-color-primary);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.avatar-upload-area:hover {
+  border-color: var(--primary-color);
+  background-color: var(--bg-color-secondary);
+}
+
+.avatar-upload-placeholder {
+  color: var(--text-color-secondary);
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+  margin: 5px 0 0 0;
+}
+
+.avatar-upload-loading {
+  color: var(--primary-color);
+}
+
+.loading-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.avatar-image-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.avatar-error-message {
+  color: var(--primary-color);
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
 }
 </style>
