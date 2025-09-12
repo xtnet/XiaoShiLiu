@@ -11,7 +11,7 @@
         <form @submit.prevent="handleSubmit">
           <div v-for="field in formFields" :key="field.key" class="form-group">
             <label>{{ field.label }}{{ field.required ? ' *' : '' }}:</label>
-            <input v-if="field.type === 'text' || field.type === 'email' || field.type === 'password'"
+            <input v-if="field.type === 'text' || field.type === 'password'"
               :value="getInputValue(field)" @input="updateInputField(field, $event.target.value)" :type="field.type"
               :placeholder="field.placeholder" :required="field.required" :maxlength="field.maxlength" />
             <textarea v-else-if="field.type === 'textarea'" :value="getTextareaValue(field)"

@@ -5,7 +5,7 @@
 - **版本**: v1.1.3
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-09
+- **更新时间**: 2025-09-12
 
 ## 通用说明
 
@@ -557,7 +557,8 @@ Authorization: Bearer <your_jwt_token>
           "id": 2,
           "user_id": "user_002",
           "nickname": "用户2",
-          "avatar": "https://example.com/avatar2.jpg"
+          "avatar": "https://example.com/avatar2.jpg",
+          "verified": 0
         }
       }
     ],
@@ -965,7 +966,8 @@ Authorization: Bearer <your_jwt_token>
           "id": 1,
           "user_id": "user_001",
           "nickname": "小石榴",
-          "avatar": "https://example.com/avatar.jpg"
+          "avatar": "https://example.com/avatar.jpg",
+          "verified": 0
         }
       }
     ],
@@ -1932,6 +1934,7 @@ Authorization: Bearer <your_jwt_token>
           "nickname": "小张",
           "avatar": "https://img.example.com/avatar1.jpg",
           "bio": "热爱生活",
+          "verified": 0,
           "is_following": false
         }
       ]
@@ -1996,8 +1999,7 @@ curl -X POST "http://localhost:3001/api/auth/register" \
   -d '{
     "user_id": "test_user",
     "nickname": "测试用户",
-    "password": "123456",
-    "email": "test@example.com"
+    "password": "123456"
   }'
 
 # 用户登录
@@ -2094,8 +2096,7 @@ async function register() {
     body: JSON.stringify({
       user_id: 'test_user',
       nickname: '测试用户',
-      password: '123456',
-      email: 'test@example.com'
+      password: '123456'
     })
   });
   

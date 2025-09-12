@@ -5,7 +5,7 @@
 - **Version**: v1.1.3
 - **Basic URL**: `http://localhost:3001`
 - **Database**: xiaoshiliu (MySQL)
-- **Update Time**: 2025-09-09
+- **Update Time**: 2025-09-12
 
 ## General Instructions
 
@@ -1311,8 +1311,7 @@ curl -X POST "http://localhost:3001/api/auth/register" \
   -d '{
     "user_id": "test_user",
     "nickname": "Test User",
-    "password": "123456",
-    "email": "test@example.com"
+    "password": "123456"
   }'
 
 # User Login
@@ -1408,8 +1407,7 @@ async function register() {
     body: JSON.stringify({
       user_id: 'test_user',
       nickname: 'Test User',
-      password: '123456',
-      email: 'test@example.com'
+      password: '123456'
     })
   });
   

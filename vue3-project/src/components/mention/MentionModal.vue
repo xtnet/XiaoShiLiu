@@ -389,6 +389,7 @@ defineExpose({
   color: var(--text-color-primary);
   transition: border-color 0.2s ease;
   box-sizing: border-box;
+  caret-color: var(--primary-color);
 }
 
 .search-input:focus {

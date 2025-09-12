@@ -229,6 +229,7 @@ const handleSubmit = async () => {
   transition: border-color 0.2s ease;
   box-sizing: border-box;
   color: var(--text-color-primary);
+  caret-color: var(--primary-color);
 }
 
 .form-input:focus {

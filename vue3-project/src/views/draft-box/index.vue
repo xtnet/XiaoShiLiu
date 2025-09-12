@@ -438,6 +438,7 @@ onMounted(() => {
   font-size: 0.9rem;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  caret-color: var(--primary-color);
 }
 
 .search-box input:focus {
@@ -674,7 +675,7 @@ onMounted(() => {
 }
 
 .delete-btn:hover {
-  background: #c82333;
+  background: var(--primary-color-dark);
 }
 
 .pagination {

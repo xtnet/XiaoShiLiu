@@ -5,7 +5,7 @@
 - **版本**: v1.1.3
 - **基本URL**: `http://localhost:3001`
 - **數據庫**: xiaoshiliu (MySQL)
-- **更新時間**: 2025-09-09
+- **更新時間**: 2025-09-12
 
 ## 通用說明
 
@@ -1861,8 +1861,7 @@ curl -X POST "http://localhost:3001/api/auth/register" \
   -d '{
     "user_id": "test_user",
     "nickname": "測試用戶",
-    "password": "123456",
-    "email": "test@example.com"
+    "password": "123456"
   }'
 
 # 用戶登錄
@@ -1959,8 +1958,7 @@ async function register() {
     body: JSON.stringify({
       user_id: 'test_user',
       nickname: '測試用戶',
-      password: '123456',
-      email: 'test@example.com'
+      password: '123456'
     })
   });
   

@@ -5,7 +5,7 @@
       <div class="docs-info">
         <span class="version">版本: v1.1.3</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-09</span>
+        <span class="update-time">更新时间: 2025-09-12</span>
       </div>
     </div>
 
@@ -737,7 +737,44 @@ const apiGroups = ref([
           { name: 'type', type: 'string', required: false, description: '搜索类型（all, posts, users）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
-        ]
+        ],
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "posts": [
+      {
+        "id": 1,
+        "title": "美丽的风景",
+        "content": "今天拍摄的美丽风景照片",
+        "author": {
+          "id": 1,
+          "user_id": "user123",
+          "nickname": "摄影师",
+          "avatar": "https://example.com/avatar.jpg",
+          "verified": 0
+        },
+        "created_at": "2025-01-15T10:30:00.000Z"
+      }
+    ],
+    "users": [
+      {
+        "id": 2,
+        "user_id": "user456",
+        "nickname": "旅行者",
+        "avatar": "https://example.com/avatar2.jpg",
+        "bio": "热爱旅行的摄影爱好者",
+        "verified": 0
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 50,
+      "pages": 3
+    }
+  }
+}`
       }
     ]
   },
