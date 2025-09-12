@@ -36,7 +36,10 @@
             <img :src="getImageSrc(user.avatar || defaultAvatar, user.id)" :alt="user.nickname" class="friend-avatar"
               @load="onImageLoad(user.id)" @error="onImageError(user.id)" />
             <div class="friend-info">
-              <div class="friend-nickname">{{ user.nickname }}</div>
+              <div class="friend-nickname-container">
+                <div class="friend-nickname">{{ user.nickname }}</div>
+                <VerifiedBadge :verified="user.verified || 0" size="small" />
+              </div>
               <div class="friend-id">@{{ user.user_id }}</div>
             </div>
           </div>
@@ -57,6 +60,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import SkeletonList from '@/components/skeleton/SkeletonList.vue'
+import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import { userApi, authApi } from '@/api/index.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 
@@ -464,11 +468,17 @@ defineExpose({
   min-width: 0;
 }
 
+.friend-nickname-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
 .friend-nickname {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-color-primary);
-  margin-bottom: 2px;
 }
 
 .friend-id {

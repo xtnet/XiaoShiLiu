@@ -13,6 +13,7 @@ import ContentRenderer from '@/components/ContentRenderer.vue'
 import { userApi } from '@/api/index.js'
 import BackToTopButton from '@/components/BackToTopButton.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
+import VerifiedBadge from '@/components/VerifiedBadge.vue'
 
 const router = useRouter()
 const navigationStore = useNavigationStore()
@@ -316,7 +317,10 @@ function handleCollect(data) {
         <img :src="userStore.userInfo?.avatar || defaultAvatar" :alt="userStore.userInfo?.nickname || '用户头像'"
           class="avatar" @click="previewAvatar" @error="handleAvatarError">
         <div class="user-basic">
-          <div class="user-nickname">{{ userStore.userInfo?.nickname || '用户' }}</div>
+          <div class="user-nickname">
+            <span>{{ userStore.userInfo?.nickname || '用户' }}</span>
+            <VerifiedBadge v-if="userStore.userInfo?.verified" :verified="userStore.userInfo.verified" size="large"/>
+          </div>
           <div class="user-content">
             <div class="user-id text-ellipsis">小石榴号：{{ userStore.userInfo?.user_id || '' }}</div>
             <div class="user-IP text-ellipsis">IP属地：{{ userStore.userInfo?.location || '未知' }}</div>
@@ -407,18 +411,14 @@ function handleCollect(data) {
     </div>
 
     <BackToTopButton />
-     
-     <!-- EditProfileModal -->
-     <EditProfileModal :visible="showEditProfileModal" :user-info="userStore.userInfo"
-       @update:visible="showEditProfileModal = $event" @save="handleProfileSaved" />
-    
+
+    <!-- EditProfileModal -->
+    <EditProfileModal :visible="showEditProfileModal" :user-info="userStore.userInfo"
+      @update:visible="showEditProfileModal = $event" @save="handleProfileSaved" />
+
     <!-- ImageViewer -->
-    <ImageViewer 
-      :visible="showImageViewer" 
-      :images="[currentImageUrl]" 
-      :initial-index="0" 
-      @close="showImageViewer = false" 
-    />
+    <ImageViewer :visible="showImageViewer" :images="[currentImageUrl]" :initial-index="0"
+      @close="showImageViewer = false" />
   </div>
 </template>
 
@@ -524,6 +524,9 @@ function handleCollect(data) {
 }
 
 .user-nickname {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-color-primary);
   font-size: 18px;
   font-weight: bold;

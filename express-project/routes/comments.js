@@ -9,7 +9,7 @@ const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser')
 // 递归删除评论及其子评论，返回删除的评论总数
 async function deleteCommentRecursive(commentId) {
   let deletedCount = 0;
-  
+
   // 获取所有子评论
   const [children] = await pool.execute('SELECT id FROM comments WHERE parent_id = ?', [commentId.toString()]);
 
@@ -23,10 +23,10 @@ async function deleteCommentRecursive(commentId) {
 
   // 删除当前评论
   await pool.execute('DELETE FROM comments WHERE id = ?', [commentId.toString()]);
-  
+
   // 当前评论也算一个
   deletedCount += 1;
-  
+
   return deletedCount;
 }
 
@@ -45,7 +45,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     // 获取顶级评论（parent_id为NULL）
     const [rows] = await pool.execute(
-      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location
+      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location, u.verified
        FROM comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.post_id = ? AND c.parent_id IS NULL
@@ -193,12 +193,25 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
+    // 获取刚创建的评论的完整信息
+    const [commentRows] = await pool.execute(
+      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location, u.verified
+       FROM comments c
+       LEFT JOIN users u ON c.user_id = u.id
+       WHERE c.id = ?`,
+      [commentId.toString()]
+    );
+
+    const commentData = commentRows[0];
+    commentData.liked = false; // 新创建的评论默认未点赞
+    commentData.reply_count = 0; // 新创建的评论默认无回复
+
     console.log(`创建评论成功 - 用户ID: ${userId}, 评论ID: ${commentId}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '评论成功',
-      data: { id: commentId }
+      data: commentData
     });
   } catch (error) {
     console.error('创建评论失败:', error);
@@ -218,7 +231,7 @@ router.get('/:id/replies', optionalAuth, async (req, res) => {
 
     // 获取子评论
     const [rows] = await pool.execute(
-      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location
+      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location, u.verified
        FROM comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.parent_id = ?
@@ -303,7 +316,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '删除成功',
-      data: { 
+      data: {
         id: commentId,
         deletedCount: deletedCount
       }

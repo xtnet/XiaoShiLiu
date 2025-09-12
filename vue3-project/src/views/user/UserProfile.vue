@@ -13,6 +13,7 @@ import UserPersonalityTags from './components/UserPersonalityTags.vue'
 import ContentRenderer from '@/components/ContentRenderer.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
+import VerifiedBadge from '@/components/VerifiedBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -260,7 +261,10 @@ onMounted(async () => {
         <img :src="userInfo.avatar || defaultAvatar" :alt="userInfo.nickname || '用户头像'" class="avatar"
           @click="previewAvatar" @error="handleAvatarError">
         <div class="user-basic">
-          <div class="user-nickname">{{ userInfo?.nickname || '用户' }}</div>
+          <div class="user-nickname">
+            <span>{{ userInfo?.nickname || '用户' }}</span>
+            <VerifiedBadge :verified="userInfo?.verified" size="large" />
+          </div>
           <div class="user-content">
             <div class="user-id text-ellipsis">小石榴号：{{ userInfo?.user_id || '' }}</div>
             <div class="user-IP text-ellipsis">IP属地：{{ userInfo?.location || '未知' }}</div>
@@ -348,14 +352,10 @@ onMounted(async () => {
 
 
     <BackToTopButton />
-    
+
     <!-- ImageViewer -->
-    <ImageViewer 
-      :visible="showImageViewer" 
-      :images="[currentImageUrl]" 
-      :initial-index="0" 
-      @close="showImageViewer = false" 
-    />
+    <ImageViewer :visible="showImageViewer" :images="[currentImageUrl]" :initial-index="0"
+      @close="showImageViewer = false" />
   </div>
 </template>
 
@@ -425,10 +425,14 @@ onMounted(async () => {
   gap: 6px;
 }
 
+
 .user-nickname {
   color: var(--text-color-primary);
   font-size: 18px;
   font-weight: bold;
+  gap: 6px;
+  align-items: center;
+  display: flex;
 }
 
 .user-content {

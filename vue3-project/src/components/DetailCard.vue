@@ -49,8 +49,10 @@
             <div class="author-info">
               <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
                 @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
-              <span class="author-name" @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()">{{
-                authorData.name }}</span>
+              <div class="author-name-container">
+                <span class="author-name" @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
+                <VerifiedBadge :verified="authorData.verified" />
+              </div>
             </div>
             <FollowButton v-if="!isCurrentUserPost" :is-following="authorData.isFollowing" :user-id="authorData.id"
               @follow="handleFollow" @unfollow="handleUnfollow" />
@@ -143,6 +145,7 @@
                           <span v-if="isCurrentUserComment(comment)">我</span>
                           <span v-else>{{ comment.username }}</span>
                         </span>
+                        <VerifiedBadge :verified="comment.verified || 0" size="medium" />
                       </div>
                       <button v-if="isCurrentUserComment(comment)" class="comment-delete-btn"
                         @click="handleDeleteComment(comment)">
@@ -180,6 +183,7 @@
                                 <span v-if="isCurrentUserComment(reply)">我</span>
                                 <span v-else>{{ reply.username }}</span>
                               </span>
+                              <VerifiedBadge :verified="reply.verified || 0" size="small" />
                             </div>
                             <button v-if="isCurrentUserComment(reply)" class="comment-delete-btn"
                               @click="handleDeleteReply(reply, comment.id)">
@@ -354,6 +358,7 @@ import ContentRenderer from './ContentRenderer.vue'
 import ContentEditableInput from './ContentEditableInput.vue'
 import ImageUploadModal from './commentImage/ImageUploadModal.vue'
 import ImageViewer from './ImageViewer.vue'
+import VerifiedBadge from './VerifiedBadge.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
 import { useLikeStore } from '@/stores/like.js'
@@ -491,11 +496,11 @@ const authorData = computed(() => {
   // 使用小石榴号进行用户跳转
   const userId = props.item.author_account || props.item.user_id || props.item.originalData?.userId
   const followState = followStore.getUserFollowState(userId)
-
   return {
     id: userId,
     name: props.item.nickname || props.item.author || '匿名用户',
     avatar: props.item.user_avatar || props.item.avatar || new URL('@/assets/imgs/未加载.png', import.meta.url).href,
+    verified: props.item.verified || props.item.author_verified || 0,
     isFollowing: followState.followed,
     buttonType: followState.buttonType
   }
@@ -1406,6 +1411,7 @@ const getCommentUserHoverConfig = (comment) => {
         avatar: userInfo.avatar,
         nickname: userInfo.nickname,
         bio: userInfo.bio,
+        verified: comment.verified || false,
         followCount: userStats.follow_count || 0,
         fansCount: userStats.fans_count || 0,
         likeAndCollectCount: userStats.likes_and_collects || 0,
@@ -1560,6 +1566,7 @@ const getAuthorUserHoverConfig = () => {
         avatar: userInfo.avatar,
         nickname: userInfo.nickname,
         bio: userInfo.bio,
+        verified: authorData.value.verified || false,
         followCount: userStats.follow_count || 0,
         fansCount: userStats.fans_count || 0,
         likeAndCollectCount: userStats.likes_and_collects || 0,
@@ -1889,32 +1896,22 @@ const handleSendComment = async () => {
 
       // 如果有新评论ID，直接添加到评论列表并定位
       if (newCommentId) {
-        // 构造包含图片的完整内容
-        const imageUrls = savedUploadedImages
-          .filter(img => img.uploaded && img.url)
-          .map(img => img.url)
-
-        let finalContent = savedInput.trim()
-        if (imageUrls.length > 0) {
-          const imageHtml = imageUrls.map(url => `<img src="${url}" alt="评论图片" class="comment-image" />`).join('')
-          finalContent = finalContent ? `${finalContent}${imageHtml}` : imageHtml
-        }
-
-        // 构造新评论对象
+        // 使用后端返回的完整评论数据，确保包含verified字段
         const newComment = {
-          id: newCommentId,
-          user_id: userStore.userInfo?.user_id,
-          user_auto_id: userStore.userInfo?.id,
-          username: userStore.userInfo?.nickname || '匿名用户',
-          avatar: userStore.userInfo?.avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
-          content: finalContent,
-          time: '刚刚',
-          location: userStore.userInfo?.location || '',
-          likeCount: 0,
-          isLiked: false,
-          parent_id: savedReplyingTo?.id || null,
+          id: response.data.id,
+          user_id: response.data.user_display_id || response.data.user_id,
+          user_auto_id: response.data.user_auto_id || response.data.user_id,
+          username: response.data.nickname || '匿名用户',
+          avatar: response.data.user_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+          verified: response.data.verified || 0, // 认证状态
+          content: response.data.content,
+          time: formatTime(response.data.created_at) || '刚刚',
+          location: response.data.user_location || response.data.location || '',
+          likeCount: response.data.like_count || 0,
+          isLiked: response.data.liked || false,
+          parent_id: response.data.parent_id,
           replies: [],
-          reply_count: 0,
+          reply_count: response.data.reply_count || 0,
           isReply: !!savedReplyingTo,
           replyTo: savedReplyingTo?.username
         }
@@ -2588,6 +2585,12 @@ function handleAvatarError(event) {
   cursor: pointer;
 }
 
+
+.author-name-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 .author-name {
   font-weight: 600;

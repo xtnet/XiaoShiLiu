@@ -8,7 +8,7 @@ import { useAboutStore } from '@/stores/about'
 import { useChangePasswordStore } from '@/stores/changePassword'
 import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
 import { useAccountSecurityStore } from '@/stores/accountSecurity'
-
+import ColorPickerMenuItem from '@/components/menu/ColorPickerMenuItem.vue'
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
@@ -60,7 +60,9 @@ const handleMenuClick = (action) => {
     账号与安全
   </DropdownItem>
   <DropdownDivider />
+  <ColorPickerMenuItem />
   <ThemeSwitcherMenuItem />
+
   <DropdownItem v-if="userStore.isLoggedIn" @click="handleMenuClick('logout')">
     退出登录
   </DropdownItem>

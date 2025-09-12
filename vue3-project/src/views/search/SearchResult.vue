@@ -146,6 +146,7 @@ function handleUserResults(usersData) {
                 nickname: user.nickname,
                 userId: user.user_id,
                 avatar: user.avatar,
+                verified: user.verified || 0,
                 followers: user.fans_count || 0,
                 posts: user.post_count || 0,
                 isFollowing: user.isFollowing || false,

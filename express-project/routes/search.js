@@ -184,7 +184,7 @@ router.get('/', optionalAuth, async (req, res) => {
     if (type === 'users') {
       // 搜索用户
       const [userRows] = await pool.execute(
-        `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+        `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at, u.verified,
                 (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
          FROM users u
          WHERE u.nickname LIKE ? OR u.user_id LIKE ? 

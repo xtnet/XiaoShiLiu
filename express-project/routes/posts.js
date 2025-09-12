@@ -23,7 +23,7 @@ router.get('/', optionalAuth, async (req, res) => {
       const forcedUserId = currentUserId;
 
       let query = `
-        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
+        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, u.verified, c.name as category
         FROM posts p
         LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN categories c ON p.category_id = c.id
@@ -84,7 +84,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     let query = `
-      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
+      SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, u.verified, c.name as category
       FROM posts p
       LEFT JOIN users u ON p.user_id = u.id
       LEFT JOIN categories c ON p.category_id = c.id
@@ -226,7 +226,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     // 获取笔记基本信息
     const [rows] = await pool.execute(
-      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
+      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, u.verified, c.name as category
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        LEFT JOIN categories c ON p.category_id = c.id
@@ -381,7 +381,7 @@ router.get('/search', optionalAuth, async (req, res) => {
 
     // 搜索笔记：支持标题和内容搜索（只搜索已激活的笔记）
     const [rows] = await pool.execute(
-      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location
+      `SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, u.verified
        FROM posts p
        LEFT JOIN users u ON p.user_id = u.id
        WHERE p.is_draft = 0 AND (p.title LIKE ? OR p.content LIKE ?)
@@ -473,7 +473,7 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
     // 获取顶级评论（parent_id为NULL）
     const orderBy = sort === 'asc' ? 'ASC' : 'DESC';
     const [rows] = await pool.execute(
-      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location
+      `SELECT c.*, u.nickname, u.avatar as user_avatar, u.id as user_auto_id, u.user_id as user_display_id, u.location as user_location, u.verified
        FROM comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.post_id = ? AND c.parent_id IS NULL

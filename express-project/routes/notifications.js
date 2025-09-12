@@ -18,6 +18,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
              u.nickname as from_nickname, 
              u.avatar as from_avatar, 
              u.user_id as from_user_id,
+             u.verified as from_verified,
              p.title as post_title,
              (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image,
              c.content as comment_content,
@@ -84,6 +85,7 @@ router.get('/likes', authenticateToken, async (req, res) => {
              u.nickname as from_nickname, 
              u.avatar as from_avatar, 
              u.user_id as from_user_id,
+             u.verified as from_verified,
              p.title as post_title,
              (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image,
              CASE 
@@ -143,7 +145,8 @@ router.get('/follows', authenticateToken, async (req, res) => {
              u.id as from_user_auto_id,
              u.nickname as from_nickname, 
              u.avatar as from_avatar, 
-             u.user_id as from_user_id
+             u.user_id as from_user_id,
+             u.verified as from_verified
       FROM notifications n
       LEFT JOIN users u ON n.sender_id = u.id
       WHERE n.user_id = ? AND n.type = 6
@@ -192,6 +195,7 @@ router.get('/collections', authenticateToken, async (req, res) => {
              u.nickname as from_nickname, 
              u.avatar as from_avatar, 
              u.user_id as from_user_id,
+             u.verified as from_verified,
              p.title as post_title,
              (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image
       FROM notifications n
@@ -243,7 +247,8 @@ router.get('/', authenticateToken, async (req, res) => {
              u.id as from_user_auto_id,
              u.nickname as from_nickname, 
              u.avatar as from_avatar, 
-             u.user_id as from_user_id
+             u.user_id as from_user_id,
+             u.verified
       FROM notifications n
       LEFT JOIN users u ON n.sender_id = u.id
       WHERE n.user_id = ?

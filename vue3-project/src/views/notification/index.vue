@@ -12,6 +12,7 @@ import FollowButton from '@/components/FollowButton.vue'
 import LikeButton from '@/components/LikeButton.vue'
 import DetailCard from '@/components/DetailCard.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
+import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import { getCommentNotifications, getLikeNotifications, getFollowNotifications, getCollectionNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/api/notification.js'
 import { getPostDetail } from '@/api/posts.js'
 import { postApi, userApi, commentApi } from '@/api/index.js'
@@ -138,6 +139,7 @@ async function loadCommentsData(isLoadMore = false) {
         autoId: item.from_user_auto_id,
         username: item.from_nickname || '未知用户',
         avatar: item.from_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+        verified: item.from_verified || 0,
         action: item.title || '评论了你的笔记',
         time: formatTime(item.created_at),
         content: item.comment_content || '原评论已删除',
@@ -209,6 +211,7 @@ async function loadLikesData(isLoadMore = false) {
       autoId: item.from_user_auto_id, // 自增ID，用于API调用
       username: item.from_nickname || '未知用户',
       avatar: item.from_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+      verified: item.from_verified || 0,
       action: item.title || '点赞了你的内容', // 使用后端返回的正确标题
       time: formatTime(item.created_at),
       postImage: item.post_image || '/default-post.png',
@@ -304,6 +307,7 @@ async function loadFollowsData(isLoadMore = false) {
         autoId: item.from_user_auto_id, // 自增ID，用于API调用
         username: item.from_nickname || '未知用户',
         avatar: item.from_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+        verified: item.from_verified || 0,
         action: actionText,
         time: formatTime(item.created_at),
         followCount: item.follow_count || 0,
@@ -360,6 +364,7 @@ async function loadCollectionsData(isLoadMore = false) {
       autoId: item.from_user_auto_id, // 自增ID，用于API调用
       username: item.from_nickname || '未知用户',
       avatar: item.from_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
+      verified: item.from_verified || 0,
       action: item.title || '收藏了你的笔记', // 使用后端返回的正确标题
       time: formatTime(item.created_at),
       postImage: item.post_image || '/default-post.png',
@@ -736,7 +741,8 @@ const getUserHoverConfig = (userId) => {
         isFollowing: followStatus.followed,
         isMutual: followStatus.isMutual,
         buttonType: followStatus.buttonType,
-        images: userPostImages
+        images: userPostImages,
+        verified: 1
       }
 
       return baseInfo
@@ -1210,8 +1216,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                 </div>
                 <div class="right-section">
                   <div class="notification-content">
-                    <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
-                      @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                    <div class="username-container">
+                      <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
+                        @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                      <VerifiedBadge :verified="item.verified || 0" />
+                    </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
                       <span class="time">{{ item.time }}</span>
@@ -1295,8 +1304,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                 </div>
                 <div class="right-section">
                   <div class="notification-content">
-                    <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
-                      @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                    <div class="username-container">
+                      <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
+                        @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                      <VerifiedBadge :verified="item.verified || 0" />
+                    </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
                       <span class="time">{{ item.time }}</span>
@@ -1335,8 +1347,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                 </div>
                 <div class="right-section">
                   <div class="notification-content">
-                    <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
-                      @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                    <div class="username-container">
+                      <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
+                        @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                      <VerifiedBadge :verified="item.verified || 0" />
+                    </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
                       <span class="time">{{ item.time }}</span>
@@ -1372,8 +1387,11 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                 </div>
                 <div class="right-section">
                   <div class="notification-content">
-                    <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
-                      @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                    <div class="username-container">
+                      <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
+                        @click="onUserClick(item.id, $event)">{{ item.username }}</a>
+                      <VerifiedBadge :verified="item.verified || 0" />
+                    </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
                       <span class="time">{{ item.time }}</span>
@@ -1719,6 +1737,12 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.username-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .username {

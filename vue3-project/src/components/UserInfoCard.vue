@@ -4,11 +4,16 @@
     <div class="card-header">
       <div class="avatar-info">
         <img :src="userInfo.avatar" :alt="userInfo.nickname" class="avatar" @error="handleAvatarError" />
-        <span class="nickname">{{ userInfo.nickname }}</span>
+        <div class="nickname-container">
+          <span class="nickname">{{ userInfo.nickname }}</span>
+          <VerifiedBadge :verified="userInfo.verified" />
+        </div>
       </div>
-      <FollowButton v-if="!isCurrentUser" :user-id="mergedUserInfo.user_id || mergedUserInfo.userId || mergedUserInfo.id"
-        :is-following="mergedUserInfo.isFollowing" :follow-text="getFollowText(mergedUserInfo)" :following-text="getFollowingText(mergedUserInfo)" size="small" @follow="handleFollow" @unfollow="handleUnfollow"
-        @click.stop />
+      <FollowButton v-if="!isCurrentUser"
+        :user-id="mergedUserInfo.user_id || mergedUserInfo.userId || mergedUserInfo.id"
+        :is-following="mergedUserInfo.isFollowing" :follow-text="getFollowText(mergedUserInfo)"
+        :following-text="getFollowingText(mergedUserInfo)" size="small" @follow="handleFollow"
+        @unfollow="handleUnfollow" @click.stop />
     </div>
 
 
@@ -54,6 +59,7 @@ import { useFollowStore } from '@/stores/follow'
 import { useUserStore } from '@/stores/user'
 import FollowButton from './FollowButton.vue'
 import ContentRenderer from './ContentRenderer.vue'
+import VerifiedBadge from './VerifiedBadge.vue'
 
 const router = useRouter()
 const followStore = useFollowStore()
@@ -220,7 +226,7 @@ watch(() => props.userInfo, (newUserInfo) => {
     const userId = newUserInfo.user_id || newUserInfo.userId || newUserInfo.id
     const isFollowing = newUserInfo.isFollowing || false
     const isMutual = newUserInfo.isMutual || false
-    
+
     // 根据关注状态确定buttonType
     let buttonType = newUserInfo.buttonType
     if (!buttonType) {
@@ -232,7 +238,7 @@ watch(() => props.userInfo, (newUserInfo) => {
         buttonType = 'follow'
       }
     }
-    
+
     followStore.initUserFollowState(
       userId,
       isFollowing,
@@ -293,6 +299,12 @@ watch(() => props.userInfo, (newUserInfo) => {
   border: 1px solid var(--border-color-secondary);
 }
 
+.nickname-container {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .nickname {
   font-size: 16px;
   font-weight: bold;
@@ -301,6 +313,7 @@ watch(() => props.userInfo, (newUserInfo) => {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+  margin-right: 6px;
 }
 
 /* 第二部分：简介和统计数据 */

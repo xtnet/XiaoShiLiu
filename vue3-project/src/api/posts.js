@@ -34,6 +34,9 @@ function transformPostData(backendPost) {
     // 状态字段
     liked: liked,
     collected: backendPost.collected || false,
+    // 认证状态字段
+    verified: backendPost.verified || 0,
+    author_verified: backendPost.verified || 0,
     // 其他字段
     created_at: backendPost.created_at,
     path: `/post/${backendPost.id}`,

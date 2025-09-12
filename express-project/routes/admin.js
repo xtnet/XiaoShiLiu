@@ -1640,7 +1640,7 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
         avatar: comment.avatar,
         title: comment.post_title,
         content: comment.content, // 原始评论内容，用于CommentImage组件渲染
-        description: `${comment.nickname} 在《${comment.post_title}》中发表了评论`, 
+        description: `${comment.nickname} 在《${comment.post_title}》中发表了评论`,
         target_id: comment.post_id,
         created_at: comment.created_at
       })

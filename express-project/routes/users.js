@@ -20,7 +20,7 @@ router.get('/search', optionalAuth, async (req, res) => {
 
     // 搜索用户：支持昵称和小石榴号搜索
     const [rows] = await pool.execute(
-      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at, u.verified,
               (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM users u
        WHERE u.nickname LIKE ? OR u.user_id LIKE ? 
@@ -678,7 +678,7 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
 
     // 查询所有关注的用户（包括互相关注）
     const [rows] = await pool.execute(
-      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at, u.verified,
               f.created_at as followed_at,
               (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM follows f
@@ -773,7 +773,7 @@ router.get('/:id/followers', optionalAuth, async (req, res) => {
     const userId = userRows[0].id;
 
     const [rows] = await pool.execute(
-      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at, u.verified,
               f.created_at as followed_at,
               (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM follows f
@@ -864,7 +864,7 @@ router.get('/:id/mutual-follows', optionalAuth, async (req, res) => {
 
     // 查询互关用户
     const [rows] = await pool.execute(
-      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at,
+      `SELECT u.id, u.user_id, u.nickname, u.avatar, u.bio, u.location, u.follow_count, u.fans_count, u.like_count, u.created_at, u.verified,
               (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_draft = 0) as post_count
        FROM users u
        WHERE u.id IN (

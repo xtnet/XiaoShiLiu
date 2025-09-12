@@ -8,7 +8,10 @@
             </div>
             <div class="user-info">
                 <div class="user-main">
-                    <h3 class="user-nickname" v-user-hover="userHoverConfig">{{ user.nickname }}</h3>
+                    <div class="nickname-container">
+                        <h3 class="user-nickname" v-user-hover="userHoverConfig">{{ user.nickname }}</h3>
+                        <VerifiedBadge :verified="user.verified" />
+                    </div>
                     <div class="user-id">小石榴号：{{ user.userId }}</div>
                     <div class="user-stats">
                         <span class="stat-item">粉丝 · {{ formatNumber(user.followers) }}</span>
@@ -29,6 +32,7 @@ import { useFollowStore } from '@/stores/follow'
 import { useUserStore } from '@/stores/user'
 import FollowButton from '@/components/FollowButton.vue'
 import BaseSkeleton from '@/components/skeleton/BaseSkeleton.vue'
+import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import { userApi } from '@/api/index.js'
 
 const props = defineProps({
@@ -202,6 +206,7 @@ const userHoverConfig = computed(() => ({
             avatar: props.user.avatar || '',
             nickname: props.user.nickname || `用户${userId}`,
             bio: props.user.bio || '还没有简介',
+            verified: props.user.verified || false,
             followCount: userStats.follow_count || 0,
             fansCount: userStats.fans_count || 0,
             likeAndCollectCount: userStats.likes_and_collects || 0,
@@ -289,11 +294,17 @@ const userHoverConfig = computed(() => ({
     min-width: 0;
 }
 
+.nickname-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
 .user-nickname {
     font-size: 16px;
     font-weight: 600;
     color: var(--text-color-primary);
-    margin: 0 0 4px 0;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
