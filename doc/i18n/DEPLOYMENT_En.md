@@ -1,17 +1,17 @@
 # Deployment Guide
 
-This document provides detailed instructions for deploying the Xiaoshiliu Image-Text Community project, including deployment processes and configuration instructions.
+This document provides a detailed description of the deployment process and configuration instructions for the XiaoShiLiu image and text community project.
 
 ## Deployment Methods
 
 The project supports two deployment methods:
 
-1. **Docker One-Click Deployment** (Recommended) - Simple and fast, suitable for production environments
+1. **Docker One-click Deployment** (recommended) - Simple and quick, suitable for production environments
 2. **Traditional Deployment** - Manual configuration, suitable for development environments
 
 ---
 
-## 🐳 Docker One-Click Deployment (Recommended)
+## 🐳 Docker One-click Deployment (Recommended)
 
 ### Environment Requirements
 
@@ -20,18 +20,17 @@ The project supports two deployment methods:
 - Available Memory >= 2GB
 - Available Disk Space >= 5GB
 
-### Images and Version Information
+### Image and Version Description
 
 | Component | Image/Source | Version/Tag | Description |
 |-----------|--------------|-------------|-------------|
-| Database | mysql | 8.0 | Uses official image `mysql:8.0`, utf8mb4 default configuration |
+| Database | mysql | 8.0 | Uses the official image `mysql:8.0` with utf8mb4 default configuration |
 | Backend Runtime | node | 18-alpine | `express-project/Dockerfile` uses `node:18-alpine` |
-| Frontend Build | node | 18-alpine | `vue3-project/Dockerfile` build stage uses |
-| Frontend Runtime | nginx | alpine | Uses `nginx:alpine` to serve static files |
+| Frontend Build | node | 18-alpine | `vue3-project/Dockerfile` uses it during the build phase |
+| Frontend Runtime | nginx | alpine | Uses `nginx:alpine` to provide static files |
 | Compose Health Check | wget | - | Frontend health check uses `wget --spider http://localhost/` |
 
-> Note: The above versions are consistent with `docker-compose.yml` and frontend/backend `Dockerfile`; if changes are needed, please synchronize corresponding files and documentation.
-
+> Note: The above versions are consistent with `docker-compose.yml` and the front-end `Dockerfile`; if changes are required, please adjust the corresponding files and documentation accordingly.
 ### Quick Start
 
 #### 1. Clone the Project
@@ -45,12 +44,13 @@ cd XiaoShiLiu
 
 ```bash
 # Optional: If you have custom environment variables, you can create a .env file
-# This repository does not provide .env.docker, if no special requirements, you can skip directly and use default values in docker-compose.yml
+# This repository does not provide .env.docker, if there is no special need, you can skip it and use the default values in docker-compose.yml
 ```
 
-#### 3. One-Click Start
+#### 3. One-click Start
 
 **Windows Users:**
+
 ```powershell
 # Start services
 .\deploy.ps1
@@ -58,9 +58,9 @@ cd XiaoShiLiu
 # Rebuild and start
 .\deploy.ps1 -Build
 
-# Start and seed sample data (optional)
+# Start and seed example data (optional)
 .\deploy.ps1 -Build -Seed
-# Or seed separately after services are started
+# Or seed data separately after the service has started
 .\deploy.ps1 -Seed
 
 # Check service status
@@ -74,8 +74,9 @@ cd XiaoShiLiu
 ```
 
 **Linux/macOS Users:**
+
 ```bash
-# Give script execution permissions
+# Give the script execution permission
 chmod +x deploy.sh
 
 # Start services
@@ -96,7 +97,7 @@ chmod +x deploy.sh
 
 #### 4. Access the Application
 
-After services start successfully, you can access through the following addresses:
+After the service starts successfully, you can access the application through the following addresses:
 
 | Service | Address | Description |
 |---------|---------|-------------|
@@ -116,117 +117,175 @@ After services start successfully, you can access through the following addresse
 
 ### Environment Variable Configuration
 
-The project uses `.env` files for configuration, main configuration items:
+The project uses a `.env` file for configuration, with separate environment settings for the frontend and backend:
+
+#### Backend Environment Variables (express-project/.env)
 
 ```env
-# Database configuration
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=xiaoshiliu_secret_key_2025
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# Upload Configuration
+UPLOAD_MAX_SIZE=50mb
+# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting)
+UPLOAD_STRATEGY=imagehost
+
+# Local Storage Configuration
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# Third-party Image Hosting Configuration
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+# Upload Strategy: local (Local Storage) or imagehost (Third-party Image Hosting)
+UPLOAD_STRATEGY=local
+
+# Local Storage Configuration
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+
+# Third-party Image Hosting Configuration
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+
+# API Configuration
+API_BASE_URL=http://localhost:3001
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:5173
+```
+
+#### Frontend Environment Variables (vue3-project/.env)
+
+```env
+# API Base URL Configuration
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# Use Real API
+VITE_USE_REAL_API=true
+
+# Application Title
+VITE_APP_TITLE=Small石榴 Image and Text Community
+```
+
+#### Docker Environment Variable Description
+
+When deploying with Docker, environment variables are configured through `docker-compose.yml`:
+
+```env
+# Database Configuration (Docker Environment)
 DB_HOST=mysql
 DB_USER=xiaoshiliu_user
 DB_PASSWORD=123456
 DB_NAME=xiaoshiliu
 
-# JWT configuration
+# JWT Configuration
 JWT_SECRET=xiaoshiliu_secret_key_2025_docker
 JWT_EXPIRES_IN=7d
 
-# Upload configuration
+# Upload Configuration
 UPLOAD_MAX_SIZE=50mb
-# Image upload strategy (local: local storage, imagehost: third-party image hosting)
+# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting)
 UPLOAD_STRATEGY=imagehost
 
-# Local storage configuration
-LOCAL_UPLOAD_DIR=uploads
-LOCAL_BASE_URL=http://localhost:3001
-
-# Third-party image hosting configuration
-IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
-IMAGEHOST_TIMEOUT=60000
-
-# API configuration
+# API Configuration
 API_BASE_URL=http://localhost:3001
 ```
 
 ### Common Commands
 
 ```bash
-# Check service status
+# View Service Status
 docker-compose ps
 
-# View service logs
+# View Service Logs
 docker-compose logs -f
 
-# Restart specific service
+# Restart a Specific Service
 docker-compose restart backend
 
-# Enter container (alpine images usually don't have bash, please use sh)
+# Enter a Container (Alpine images usually do not have bash, please use sh)
 docker-compose exec backend sh
-# Or enter MySQL client
+# Or enter the MySQL client
 docker-compose exec mysql mysql -u root -p
 
-# Backup database
+# Backup Database
 docker-compose exec mysql mysqldump -u root -p xiaoshiliu > backup.sql
 
-# Restore database
+# Restore Database
 docker-compose exec -T mysql mysql -u root -p xiaoshiliu < backup.sql
 ```
 
 ### Data Persistence
 
-Docker deployment uses data volumes for data persistence:
+Docker Deployment Using Data Volumes for Data Persistence:
 
 - `mysql_data`: MySQL database files
 - `backend_uploads`: Backend upload files
 
 ### Troubleshooting
 
-#### 1. Port Conflicts
+#### 1. Port Conflict
 
-If you encounter port conflicts, you can modify port mappings in `docker-compose.yml`:
+If you encounter a port conflict, you can modify the port mapping in the `docker-compose.yml` file:
 
 ```yaml
 services:
   frontend:
     ports:
-      - "8080:80"  # Modify frontend port
+      - "8080:80"  # Modify the frontend port
   backend:
     ports:
-      - "3002:3001"  # Modify backend port
+      - "3002:3001"  # Modify the backend port
 ```
 
 #### 2. Insufficient Memory
 
-Ensure the system has enough memory, you can check resource usage with:
+Ensure that the system has enough memory, and you can check resource usage with the following command:
 
 ```bash
 docker stats
 ```
 
-#### 3. Database Connection Failure / Data Seeding
+#### 3. Database Connection Failure / Data Injection
 
-- Check if database service is running normally:
+- Check if the database service is started normally:
 
 ```bash
 docker-compose logs mysql
 ```
 
-- Seed sample data (Windows):
+- Inject sample data (Windows):
 ```powershell
 .\deploy.ps1 -Seed
 ```
 
-- Seed sample data (manual execution):
+- Inject sample data (manual execution):
 ```bash
 docker-compose exec -T backend node scripts/generate-data.js
 ```
 
 #### 4. File Upload Permission Issues
 
-**Problem Symptoms**:
-- Frontend file upload returns 400 error
-- Backend logs show: `EACCES: permission denied, open '/app/uploads/xxx.png'`
+**Problem Phenomenon**:
+- When the frontend uploads a file, it returns a 400 error
+- The backend logs show: `EACCES: permission denied, open '/app/uploads/xxx.png'`
 
-**Root Cause Analysis**:
-Docker container uploads directory permission issue - directory belongs to root user, but application runs under nodejs user.
+**Reason Analysis**:
+Permission issue with the uploads directory inside the Docker container, the directory belongs to the root user, but the application runs under the nodejs user.
 
 **Solution**:
 
@@ -235,21 +294,21 @@ Docker container uploads directory permission issue - directory belongs to root 
 docker-compose exec backend ls -la /app/uploads
 ```
 
-2. **Fix permission issue**:
+2. **Fix permission issues**:
 ```bash
-# Use root user to change directory ownership
+# Modify the directory owner using the root user
 docker-compose exec --user root backend chown -R nodejs:nodejs /app/uploads
 ```
 
 3. **Verify permission fix**:
 ```bash
-# Confirm directory now belongs to nodejs user
+# Confirm that the directory now belongs to the nodejs user
 docker-compose exec backend ls -la /app/uploads
 ```
 
-**Prevention Measures**:
-- Ensure Dockerfile correctly sets uploads directory permissions
-- Automatically fix permission issues on container startup
+**Preventive Measures**:
+- Ensure that the uploads directory permissions are set correctly in the Dockerfile
+- Automatically fix permissions issues at container startup
 
 #### 5. Upload Strategy Configuration
 
@@ -262,7 +321,7 @@ environment:
   UPLOAD_STRATEGY: local
 ```
 
-**Third-party Image Host Mode** (recommended for production):
+**Third-party Image Hosting Mode** (recommended for production environments):
 ```yaml
 # Set in docker-compose.yml
 environment:
@@ -271,7 +330,7 @@ environment:
 
 #### 6. Cleanup and Reset
 
-If you encounter issues and need to start over:
+If you need to restart from scratch due to issues:
 
 ```bash
 # Windows
@@ -288,35 +347,35 @@ If you encounter issues and need to start over:
 ## Environment Requirements
 
 | Component | Version Requirement | Description |
-|-----------|--------------------|--------------|
-| Node.js | >= 16.0.0 | Runtime environment |
-| MySQL | >= 5.7 | Database |
-| MariaDB | >= 10.3 | Database (optional) |
-| npm | >= 8.0.0 | Package manager |
-| yarn | >= 1.22.0 | Package manager (optional) |
-| Browser | ES6+ support | Modern browser |
+|-----------|---------------------|-------------|
+| Node.js   | >= 16.0.0           | Runtime environment |
+| MySQL     | >= 5.7               | Database     |
+| MariaDB   | >= 10.3             | Database (optional) |
+| npm       | >= 8.0.0             | Package manager |
+| yarn      | >= 1.22.0            | Package manager (optional) |
+| Browser   | Supports ES6+       | Modern browser |
 
 ## Quick Start
 
 ### 1. Install Dependencies
 
 ```bash
-# Using cnpm
+# Use cnpm
 cnpm install
-# Or using yarn
+# Or use yarn
 yarn install
 ```
 
 ### 2. Configure Backend API Address
 
-Create environment configuration file (optional):
+Create an environment configuration file (optional):
 
 ```bash
 # Copy environment configuration template
 cp .env.example .env
 ```
 
-Edit `.env` file to configure backend API address:
+Edit the `.env` file to configure the backend API address:
 
 ```env
 # Backend API address
@@ -325,17 +384,16 @@ VITE_API_BASE_URL=http://localhost:3001
 # Other configurations...
 ```
 
-### 3. Start Development Server
+### 3. Start the Development Server
 
 ```bash
-# Start development server
+# Start the development server
 npm run dev
 
-# Or using yarn
+# Or use yarn
 yarn dev
-```
 
-Development server will start at `http://localhost:5173`
+The development server will start at `http://localhost:5173`.
 
 ### 4. Build Production Version
 
@@ -349,11 +407,11 @@ npm run preview
 
 ## Backend Service Configuration
 
-⚠️ **Important Reminder**: The frontend project needs to work with backend services
+⚠️ **Important Reminder**: The front-end project needs to be used with the backend service.
 
 1. **Start Backend Service**:
    ```bash
-   # Enter backend project directory
+   # Navigate to the backend project directory
    cd ../express-project
    
    # Install backend dependencies
@@ -365,7 +423,7 @@ npm run preview
 
 2. **Backend Service Address**: `http://localhost:3001`
 
-3. **API Documentation**: Check the `API_DOCS.md` file in the backend project
+3. **API Documentation**: Check the `API_DOCS.md` file in the backend project.
 
 ## Development Environment Configuration
 
@@ -388,49 +446,48 @@ npm run dev
 # Access address: http://localhost:5173
 ```
 
-### Code Standards
+### Code Specification
 
 - Use Vue 3 Composition API
-- Follow Vue.js official style guide
-- Component naming uses PascalCase
-- File naming uses kebab-case
+- Follow the Vue.js official style guide
+- Component naming in PascalCase
+- File naming in kebab-case
 
 ## Configuration File Description
 
-### Frontend Configuration Files (vue3-project directory)
+### Frontend Configuration Files (in vue3-project directory)
 
 | File | Description |
-|------|-------------|
+|------|------|
 | `.env` | Environment variable configuration file |
 | `vite.config.js` | Vite build tool configuration |
-| `package.json` | Project dependencies and script configuration |
+| `package.json` | Project dependencies and scripts configuration |
 | `jsconfig.json` | JavaScript project configuration |
 
-### Backend Configuration Files (express-project directory)
+### Backend Configuration Files (in express-project directory)
 
 | File | Description |
-|------|-------------|
+|------|------|
 | `config/config.js` | Main configuration file |
-| `config/database.js` | Database configuration |
 | `.env` | Environment variable configuration file |
-| `database_design.md` | Database design documentation |
+| `database_design.md` | Database design document |
 | `scripts/init-database.js` | Database initialization script |
 | `generate-data.js` | Test data generation script |
 
 ## npm Script Commands
 
-### Frontend Scripts (execute in vue3-project directory)
+### Frontend Scripts (to be executed in vue3-project directory)
 
 | Command | Description |
-|---------|-------------|
+|------|------|
 | `npm run dev` | Start development server |
 | `npm run build` | Build production version |
 | `npm run preview` | Preview production version |
 
-### Backend Scripts (execute in express-project directory)
+### Backend Scripts (to be executed in express-project directory)
 
 | Command | Description |
-|---------|-------------|
+|------|------|
 | `npm start` | Start server |
 | `npm run dev` | Start development server (hot reload) |
 | `npm run init-db` | Initialize database |
@@ -438,18 +495,18 @@ npm run dev
 
 ## Environment Variable Configuration
 
-### Frontend Environment Variables (vue3-project/.env)
+### Frontend Environment Variables (in vue3-project/.env)
 
 ```env
 # API server address
 VITE_API_BASE_URL=http://localhost:3001/api
 
 # Other frontend configurations
-VITE_APP_TITLE=Xiaoshiliu Image-Text Community
+VITE_APP_TITLE=Small Pear Graphic Community
 VITE_USE_REAL_API=true
 ```
 
-### Backend Environment Variables (express-project/.env)
+### Backend Environment Variables (in express-project/.env)
 
 ```env
 # Server configuration
@@ -477,80 +534,80 @@ UPLOAD_MAX_SIZE=50mb
 
 ## Database Script Description
 
-All database-related scripts in the project are unified in the `express-project/scripts/` directory for easy management and use:
+The database-related scripts of the project are all placed in the `express-project/scripts/` directory for easy management and use:
 
 ### Script File Introduction
 
 #### 1. Database Initialization Script
 - **File Location**: `scripts/init-database.js`
-- **Function**: Create database and all data table structures
+- **Function**: Creates the database and all table structures
 - **Usage**:
   ```bash
   cd express-project
   node scripts/init-database.js
   ```
-- **Description**: Must be run on first deployment, will automatically create `xiaoshiliu` database and 12 data tables
+- **Description**: Must be run during the first deployment, which will automatically create the `xiaoshiliu` database and 12 data tables
 
 #### 2. Test Data Generation Script
 - **File Location**: `scripts/generate-data.js`
-- **Function**: Generate simulated users, posts, comments and other test data
+- **Function**: Generates simulated test data for users, notes, comments, etc.
 - **Usage**:
   ```bash
   cd express-project
   node scripts/generate-data.js
   ```
-- **Description**: Optional run, used to quickly populate test data, including 50 users, 200 posts, 800 comments, etc.
+- **Description**: Optional to run, used for quickly populating test data, including 50 users, 200 notes, and 800 comments, etc.
 
 #### 3. SQL Initialization File
 - **File Location**: `scripts/init-database.sql`
-- **Function**: Pure SQL version of database initialization script
-- **Usage**: Can be executed directly in MySQL client
-- **Description**: Same function as `init-database.js`, provides SQL version for reference
+- **Function**: Database initialization script in pure SQL
+- **Usage**: Can be directly executed in the MySQL client
+- **Description**: Functions the same as `init-database.js`, providing an SQL version for reference
 
 #### 4. Sample Image Update Script
 - **File Location**: `scripts/update-sample-images.js`
-- **Function**: Automatically get latest image links and update sample images in database
+- **Function**: Automatically retrieves the latest image links and updates the sample images in the database
 - **Usage**:
   ```bash
   cd express-project
   node scripts/update-sample-images.js
   ```
 - **Description**:
-  - Automatically get latest image links from Liciyuan API
-  - Update `imgLinks/avatar_link.txt` (50 avatar links)
-  - Update `imgLinks/post_img_link.txt` (300 post image links)
-  - Batch update user avatars and post images in database
-  - Support statistics display of image counts before and after update
+  - Automatically retrieves the latest image links from the LiCiYuan API
+  - Updates `imgLinks/avatar_link.txt` (50 avatar links)
+  - Updates `imgLinks/post_img_link.txt` (300 note image links)
+  - Batch updates user avatars and note images in the database
+  - Supports statistical display of the number of images before and after the update
 
 ## Development Environment Startup Process
 
-### 1. Start Backend Service
+### 1. Starting the Backend Service
 
 ```bash
-# Open first terminal, enter backend directory
+# Open the first terminal, enter the backend directory
 cd express-project
 
 # Install backend dependencies (first run)
 npm install
 
-# Configure database (first run)
+# Configure the database (first run)
 # Edit config/config.js or .env file
 
-# Initialize database (first run)
+# Initialize the database (first run)
 node scripts/init-database.js
 
 # Generate test data (optional)
 node scripts/generate-data.js
 
-# Start backend service
+# Start the backend service
 npm start
-# Backend service runs at http://localhost:3001
+# The backend service runs at http://localhost:3001
 ```
 
-### 2. Start Frontend Service
+### 2. Starting the Frontend Service
 
 ```bash
-# Open second terminal, enter frontend directory
+# Open the second terminal, enter the frontend directory
 cd vue3-project
 
 # Install frontend dependencies (first run)
@@ -559,19 +616,14 @@ npm install
 # Configure API address (optional)
 # Edit .env file, set VITE_API_BASE_URL
 
-# Start frontend development server
+# Start the frontend development server
 npm run dev
-# Frontend service runs at http://localhost:5173
+# The frontend service runs at http://localhost:5173
 ```
 
-### 3. Access Application
+### 3. Accessing the Application
 
 | Service | Address |
-|---------|----------|
+|---------|---------|
 | Frontend Interface | http://localhost:5173 |
 | Backend API | http://localhost:3001 |
-
----
-
-*Last Updated: January 16, 2025*
-*Deployment Guide Version: 1.0.3*
