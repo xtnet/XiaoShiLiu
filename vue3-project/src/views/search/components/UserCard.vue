@@ -298,6 +298,7 @@ const userHoverConfig = computed(() => ({
     display: flex;
     align-items: center;
     margin-bottom: 4px;
+    gap: 6px;
 }
 
 .user-nickname {

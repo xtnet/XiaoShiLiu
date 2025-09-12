@@ -50,13 +50,12 @@ const badgeTitle = computed(() => {
   align-items: center;
   justify-content: center;
   background-color: var(--primary-color);
-  border: 1.5px solid var(--primary-color);
   border-radius: 50%;
   margin-left: 4px;
   flex-shrink: 0;
   cursor: pointer;
   color: #fff;
-
+  padding: 2px;
 }
 
 .verified-badge--small {
@@ -77,22 +76,27 @@ const badgeTitle = computed(() => {
 }
 
 .verified-badge--official {
-  background-image: linear-gradient(120deg,
-      transparent,
-      rgba(255, 255, 255, 0.15),
-      rgba(255, 255, 255, 0.4),
-      rgba(255, 255, 255, 0.15),
-      transparent);
+  background-image: linear-gradient(90deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 60%,
+      transparent 100%);
   background-size: 200% 100%;
   background-repeat: no-repeat;
-  animation: reflect 3.5s ease-in-out infinite;
+  animation: reflect 3s ease-in-out infinite;
+  animation-delay: 1s;
 }
 
 @keyframes reflect {
   0% {
-    background-position: -100% center;
+    background-position: -200% center;
   }
-
+  
+  50% {
+    background-position: 200% center;
+  }
+  
   100% {
     background-position: 200% center;
   }
