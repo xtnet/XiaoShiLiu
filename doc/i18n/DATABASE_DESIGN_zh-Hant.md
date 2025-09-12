@@ -36,6 +36,7 @@
 | education | VARCHAR(50) | 學歷 | 可為空 |
 | major | VARCHAR(100) | 專業 | 可為空 |
 | interests | JSON | 興趣愛好 | JSON陣列，可為空 |
+| verified | TINYINT(1) | 認證狀態 | 0-未認證，1-已認證，預設0 |
 
 ### 2. 分類表 (categories)
 

@@ -1449,7 +1449,7 @@ const usersCrudConfig = {
   table: 'users',
   name: '用户',
   requiredFields: ['user_id', 'nickname'],
-  updateFields: ['user_id', 'nickname', 'avatar', 'bio', 'location', 'is_active', 'gender', 'zodiac_sign', 'mbti', 'education', 'major', 'interests'],
+  updateFields: ['user_id', 'nickname', 'avatar', 'bio', 'location', 'is_active', 'gender', 'zodiac_sign', 'mbti', 'education', 'major', 'interests', 'verified'],
   uniqueFields: ['user_id'],
   cascadeRules: [
     { table: 'posts', field: 'user_id' },

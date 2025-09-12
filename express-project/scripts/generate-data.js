@@ -503,7 +503,8 @@ class DataGenerator {
         mbti: Math.random() > 0.3 ? mbtiTypes[Math.floor(Math.random() * mbtiTypes.length)] : null,
         education: Math.random() > 0.3 ? educations[Math.floor(Math.random() * educations.length)] : null,
         major: Math.random() > 0.3 ? majors[Math.floor(Math.random() * majors.length)] : null,
-        interests: Math.random() > 0.3 ? JSON.stringify(userInterests) : null
+        interests: Math.random() > 0.3 ? JSON.stringify(userInterests) : null,
+        verified:0
       };
       users.push(user);
     }
@@ -1239,8 +1240,7 @@ class DataGenerator {
     };
     
     return this.categories.map(name => ({
-      name: name,
-      category_title: categoryMapping[name]
+      name: name
     }));
   }
 
@@ -1248,8 +1248,8 @@ class DataGenerator {
   async insertCategories(connection, categories) {
     for (const category of categories) {
       await connection.execute(
-        'INSERT IGNORE INTO categories (name, category_title) VALUES (?, ?)',
-        [category.name, category.category_title]
+        'INSERT IGNORE INTO categories (name) VALUES (?)',
+        [category.name]
       );
     }
     console.log(`     已插入 ${categories.length} 个分类`);

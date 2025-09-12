@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `education` varchar(50) DEFAULT NULL COMMENT '学历',
   `major` varchar(100) DEFAULT NULL COMMENT '专业',
   `interests` json DEFAULT NULL COMMENT '兴趣爱好（JSON数组）',
+  `verified` tinyint(1) DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证',
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),
   KEY `idx_user_id` (`user_id`),

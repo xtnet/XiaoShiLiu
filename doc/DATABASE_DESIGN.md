@@ -36,6 +36,7 @@
 | education | VARCHAR(50) | 学历 | 可为空 |
 | major | VARCHAR(100) | 专业 | 可为空 |
 | interests | JSON | 兴趣爱好 | JSON数组，可为空 |
+| verified | TINYINT(1) | 认证状态 | 0-未认证，1-已认证，默认0 |
 
 ### 2. 分类表 (categories)
 

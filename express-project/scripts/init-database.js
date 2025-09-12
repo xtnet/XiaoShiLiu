@@ -108,6 +108,7 @@ class DatabaseInitializer {
         \`education\` varchar(50) DEFAULT NULL COMMENT '学历',
         \`major\` varchar(100) DEFAULT NULL COMMENT '专业',
         \`interests\` json DEFAULT NULL COMMENT '兴趣爱好（JSON数组）',
+        \`verified\` tinyint(1) DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证',
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`user_id\` (\`user_id\`),
         KEY \`idx_user_id\` (\`user_id\`),
@@ -139,9 +140,11 @@ class DatabaseInitializer {
       CREATE TABLE IF NOT EXISTS \`categories\` (
         \`id\` int(11) NOT NULL AUTO_INCREMENT COMMENT '分类ID',
         \`name\` varchar(50) NOT NULL COMMENT '分类名称',
+        \`category_title\` varchar(50) DEFAULT NULL COMMENT '分类英文标题，用于URL路径',
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
         PRIMARY KEY (\`id\`),
-        UNIQUE KEY \`name\` (\`name\`)
+        UNIQUE KEY \`name\` (\`name\`),
+        UNIQUE KEY \`category_title\` (\`category_title\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
     `;
     await connection.execute(sql);

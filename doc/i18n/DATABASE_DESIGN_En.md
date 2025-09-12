@@ -36,6 +36,7 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | education | VARCHAR(50) | Education | Nullable |
 | major | VARCHAR(100) | Major | Nullable |
 | interests | JSON | Interests | JSON array, nullable |
+| verified | TINYINT(1) | Verification Status | 0-Unverified, 1-Verified, default 0 |
 
 ### 2. Categories Table (categories)
 
