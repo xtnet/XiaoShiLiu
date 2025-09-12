@@ -270,7 +270,7 @@ const menuItems = [
   { path: '/admin/follows', title: '关注管理', icon: 'follow' },
   { path: '/admin/notifications', title: '通知管理', icon: 'notification' },
   { path: '/admin/sessions', title: '会话管理', icon: 'setting' },
-  { path: '/admin/admins', title: '管理员管理', icon: 'user' }
+  { path: '/admin/admins', title: '管理员管理', icon: 'admin' }
 ]
 
 // 当前页面标题
