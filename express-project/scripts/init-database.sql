@@ -218,9 +218,9 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
 
 -- 插入默认管理员账户
--- 密码: admin123 (bcrypt加密)
+-- 密码: 123456
 INSERT INTO `admin` (`username`, `password`) VALUES 
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
+('admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
 ON DUPLICATE KEY UPDATE `username` = VALUES(`username`);
 
 -- 注意：默认数据插入请使用专门的数据生成脚本

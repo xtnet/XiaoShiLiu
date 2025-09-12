@@ -2754,7 +2754,7 @@ async function example() {
 # 管理员登录
 curl -X POST "http://localhost:3001/api/auth/admin/login" \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+  -d '{"username": "admin", "password": "123456"}'
 
 # 获取用户列表
 curl -X GET "http://localhost:3001/api/admin/users?page=1&limit=10" \

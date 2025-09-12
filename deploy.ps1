@@ -93,9 +93,9 @@ function Start-Services {
     if ($LASTEXITCODE -eq 0) {
         Write-ColorOutput "服务启动成功!" "Green"
         Write-ColorOutput "访问地址:" "Cyan"
-        Write-ColorOutput "  前端: http://localhost" "White"
+        Write-ColorOutput "  前端: http://localhost:8080" "White"
         Write-ColorOutput "  后端API: http://localhost:3001" "White"
-        Write-ColorOutput "  数据库: localhost:3306" "White"
+        Write-ColorOutput "  数据库: localhost:3307" "White"
 
         if ($Seed) {
             Seed-Data
