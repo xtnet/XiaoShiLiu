@@ -1,10 +1,10 @@
 <template>
   <div v-if="verified === 1" class="verified-badge verified-badge--official" :class="sizeClass">
-    <SvgIcon name="official" />
+    <SvgIcon name="overified" />
     <div class="tooltip">{{ badgeTitle }}</div>
   </div>
   <div v-else-if="verified === 2" class="verified-badge" :class="sizeClass">
-    <SvgIcon name="verified" />
+    <SvgIcon name="pverified" />
     <div class="tooltip">{{ badgeTitle }}</div>
   </div>
 </template>
