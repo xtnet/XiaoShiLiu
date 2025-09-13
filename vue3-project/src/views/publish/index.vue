@@ -2,7 +2,6 @@
   <div class="publish-container">
     <div class="publish-header">
       <div class="header-left">
-
         <h1 class="page-title">发布笔记</h1>
       </div>
       <div class="header-right">
@@ -251,10 +250,24 @@ const closeTextImageModal = () => {
   unlock()
 }
 
-const handleTextImageGenerate = (data) => {
-  // 暂时只显示提示信息，具体生成逻辑后续实现
+const handleTextImageGenerate = async (data) => {
   console.log('生成文字配图:', data)
-  showMessage('文字配图功能开发中，敬请期待！', 'info')
+  
+  // 将生成的图片添加到MultiImageUpload组件
+  const imageComponent = multiImageUploadRef.value
+  if (imageComponent && data.imageFile) {
+    try {
+      // 使用addFiles方法添加图片文件
+      await imageComponent.addFiles([data.imageFile])
+      showMessage('文字配图生成成功！', 'success')
+    } catch (error) {
+      console.error('添加图片失败:', error)
+      showMessage('添加图片失败，请重试', 'error')
+    }
+  } else {
+    showMessage('图片生成失败，请重试', 'error')
+  }
+  
   closeTextImageModal()
 }
 
@@ -338,9 +351,6 @@ const handleMentionSelect = (friend) => {
   // 关闭mention面板
   closeMentionPanel()
 }
-
-// 处理contenteditable输入事件
-// handleContentInput函数已移至ContentEditableInput组件中
 
 // 处理键盘事件，实现mention标签整体删除
 const handleInputKeydown = (event) => {

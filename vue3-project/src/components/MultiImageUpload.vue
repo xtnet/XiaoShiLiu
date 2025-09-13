@@ -667,6 +667,7 @@ defineExpose({
   reset,
   syncWithUrls,
   removeImageById,
+  addFiles,
   imageList,
   isUploading
 })
