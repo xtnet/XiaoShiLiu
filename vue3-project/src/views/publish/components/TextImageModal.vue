@@ -9,48 +9,71 @@
       </div>
 
       <div class="modal-body">
-        <!-- 预览图片区域 -->
-        <div class="preview-section">
-          <div class="preview-container">
-            <div v-if="!previewImage" class="preview-placeholder">
-              <SvgIcon name="imgNote" width="48" height="48" />
-              <p>{{ placeholderText }}</p>
-            </div>
-            <img v-else :src="previewImage" class="preview-image" alt="生成的图片" />
-            <!-- 隐藏的canvas用于生成图片 -->
-            <canvas ref="previewCanvas" class="hidden-canvas" width="400" height="600" style="display: none;"></canvas>
-          </div>
-        </div>
-
-        <!-- 输入框和emoji选择器 -->
-        <div class="input-section">
-          <div class="content-input-wrapper">
-            <ContentEditableInput ref="textInputRef" v-model="inputText" placeholder="输入文字内容..."
-              :input-class="'content-textarea'" :max-length="200" />
-            <div class="content-actions">
-              <button class="emoji-btn" @click="toggleEmojiPanel">
-                <SvgIcon name="emoji" class="emoji-icon" width="20" height="20" />
-              </button>
+        <!-- 左右两栏布局 -->
+        <div class="main-content">
+          <!-- 左侧预览区域 -->
+          <div class="preview-section">
+            <div class="preview-container">
+              <div v-if="!previewImage" class="preview-placeholder">
+                <SvgIcon name="imgNote" width="48" height="48" />
+                <p>{{ placeholderText }}</p>
+              </div>
+              <img v-else :src="previewImage" class="preview-image" alt="生成的图片" />
+              <!-- 隐藏的canvas用于生成图片 -->
+              <canvas ref="previewCanvas" class="hidden-canvas" width="400" height="600" style="display: none;"></canvas>
             </div>
           </div>
 
-          <!-- Emoji选择器 -->
-          <div v-if="showEmojiPanel" class="emoji-panel-overlay" @click="closeEmojiPanel">
-            <div class="emoji-panel" @click.stop>
-              <EmojiPicker @select="handleEmojiSelect" @close="closeEmojiPanel" />
+          <!-- 右侧控制区域 -->
+          <div class="controls-section">
+            <!-- 字体和颜色控制区域 -->
+            <div class="font-controls">
+              <div class="color-controls">
+                <div class="control-group">
+                  <label class="control-label">文字颜色</label>
+                  <input type="color" v-model="textColor" class="color-picker" />
+                </div>
+                <div class="control-group">
+                  <label class="control-label">描边颜色</label>
+                  <input type="color" v-model="strokeColor" class="color-picker" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- 模版选择区域 -->
-        <div class="template-section">
-          <h4 class="section-title">选择模版</h4>
-          <div class="template-scroll-container">
-            <div class="template-list">
-              <div v-for="template in templates" :key="template.id" class="template-item"
-                :class="{ active: selectedTemplate?.id === template.id }" @click="selectTemplate(template)">
-                <img :src="template.src" :alt="template.name" class="template-image" />
-                <span class="template-name">{{ template.name }}</span>
+            <!-- 输入和Emoji区域容器 -->
+            <div class="input-emoji-container">
+              <!-- 输入框和emoji选择器 -->
+              <div class="input-section">
+                <div class="content-input-wrapper">
+                  <ContentEditableInput ref="textInputRef" v-model="inputText" placeholder="输入文字内容"
+                    :input-class="'content-textarea'" :max-length="200" />
+                  <div class="content-actions">
+                    <button class="emoji-btn" @click="toggleEmojiPanel">
+                      <SvgIcon name="emoji" class="emoji-icon" width="20" height="20" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Emoji选择器 -->
+                <div v-if="showEmojiPanel" class="emoji-panel-overlay" @click="closeEmojiPanel">
+                  <div class="emoji-panel" @click.stop>
+                    <EmojiPicker @select="handleEmojiSelect" @close="closeEmojiPanel" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 模版选择区域 -->
+            <div class="template-section">
+              <p class="section-title">选择模版</p>
+              <div class="template-scroll-container">
+                <div class="template-list">
+                  <div v-for="template in templates" :key="template.id" class="template-item"
+                    :class="{ active: selectedTemplate?.id === template.id }" @click="selectTemplate(template)">
+                    <img :src="template.src" :alt="template.name" class="template-image" />
+                    <span class="template-name">{{ template.name }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -87,6 +110,30 @@ const showEmojiPanel = ref(false)
 const selectedTemplate = ref(null)
 const previewImage = ref('')
 const templates = ref([])
+const fontSize = ref(40)
+
+// 自动计算最合适的字体大小
+const calculateOptimalFontSize = () => {
+  if (!inputText.value) return 30
+  
+  const lines = processText(inputText.value)
+  const maxLineLength = Math.max(...lines.map(line => line.length))
+  
+  // 根据每行字符数确定字体大小
+  if (maxLineLength <= 5) {
+    return 55
+  } else if (maxLineLength <= 7) {
+    return 45
+  } else if (maxLineLength === 8) {
+    return 40
+  } else if (maxLineLength === 9) {
+    return 35
+  } else {
+    return 30  // 超过9个字使用最小字体
+  }
+}
+const textColor = ref('#000000')
+const strokeColor = ref('#ffffff')
 
 // 动态加载frames文件夹中的所有图片
 const loadTemplates = async () => {
@@ -113,41 +160,45 @@ const loadTemplates = async () => {
   }
 }
 
-// 处理文字换行，限制最多6行，每行最多7个字符
+// 处理文字换行，按用户输入的换行符进行换行
 const processText = (text) => {
   if (!text) return []
-
-  // 过滤掉contentEditable产生的<br>标签，转换为换行符
-  text = text.replace(/<br\s*\/?>/gi, '\n')
-
-  const lines = []
-  let currentLine = ''
-
-  for (let i = 0; i < text.length && lines.length < 6; i++) {
-    const char = text[i]
-
-    // 如果遇到换行符或当前行已达到7个字符，开始新行
-    if (char === '\n' || currentLine.length >= 7) {
-      if (currentLine.trim()) {
-        lines.push(currentLine)
-      }
-      currentLine = char === '\n' ? '' : char
-    } else {
-      currentLine += char
-    }
-  }
-
-  // 添加最后一行
-  if (currentLine.trim() && lines.length < 6) {
-    lines.push(currentLine)
-  }
-
-  return lines
+  
+  // 创建临时DOM元素来安全地提取文本内容
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = text
+  
+  // 将<br>和<div>标签转换为换行符
+  const brElements = tempDiv.querySelectorAll('br')
+  brElements.forEach(br => {
+    br.replaceWith('\n')
+  })
+  
+  const divElements = tempDiv.querySelectorAll('div')
+  divElements.forEach(div => {
+    div.insertAdjacentText('beforebegin', '\n')
+  })
+  
+  // 获取纯文本内容
+  let cleanText = tempDiv.textContent || tempDiv.innerText || ''
+  
+  // 处理HTML实体字符
+  cleanText = cleanText.replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+  
+  // 按换行符分割文本
+  const lines = cleanText.split('\n')
+  
+  // 过滤掉完全空的行
+  const filteredLines = lines.filter(line => line.trim().length > 0)
+  
+  return filteredLines
 }
 
 // 绘制canvas预览
 const drawCanvas = async () => {
-  if (!previewCanvas.value || !selectedTemplate.value) return
+  if (!previewCanvas.value || !selectedTemplate.value) {
+    return
+  }
 
   const canvas = previewCanvas.value
   const ctx = canvas.getContext('2d')
@@ -192,32 +243,35 @@ const drawCanvas = async () => {
     if (inputText.value.trim()) {
       const lines = processText(inputText.value)
 
-      // 根据行数和字数动态计算字体大小
-      let fontSize
-      if (lines.length === 1 && inputText.value.trim().length < 7) {
-        fontSize = 62
-      } else {
-        fontSize = 40
-      }
+      // 自动计算最合适的字体大小
+      const currentFontSize = calculateOptimalFontSize()
+      fontSize.value = currentFontSize
 
       // 设置文字样式
-      ctx.fillStyle = '#000000'
-      ctx.font = `bold ${fontSize}px Arial, sans-serif`
+      ctx.font = `bold ${currentFontSize}px Arial, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
+      ctx.lineWidth = 3
 
       // 计算文字总高度
-      const lineHeight = fontSize + 10
+      const lineHeight = currentFontSize + 10
       const totalHeight = lines.length * lineHeight
       const startY = (canvas.height - totalHeight) / 2 + lineHeight / 2
 
       // 绘制每一行文字
       lines.forEach((line, index) => {
-        const y = startY + index * lineHeight
-        const x = canvas.width / 2
+        if (line && typeof line === 'string') {
+          const y = startY + index * lineHeight
+          const x = canvas.width / 2
 
-        // 直接绘制黑色文字
-        ctx.fillText(line, x, y)
+          // 先绘制描边
+          ctx.strokeStyle = strokeColor.value
+          ctx.strokeText(line, x, y)
+
+          // 再绘制文字
+          ctx.fillStyle = textColor.value
+          ctx.fillText(line, x, y)
+        }
       })
     }
   } catch (error) {
@@ -239,7 +293,7 @@ const canGenerate = computed(() => {
 const placeholderText = computed(() => {
   const hasText = inputText.value.trim()
   const hasTemplate = selectedTemplate.value
-  
+
   if (!hasText && !hasTemplate) {
     return '请输入文字并选择模版'
   } else if (hasTemplate && !hasText) {
@@ -288,7 +342,7 @@ const selectTemplate = (template) => {
   selectedTemplate.value = template
   // 清除之前的预览图片
   previewImage.value = ''
-  
+
   // 如果已有文字，自动生成图片
   if (inputText.value.trim()) {
     handleGenerate()
@@ -297,18 +351,24 @@ const selectTemplate = (template) => {
 
 // 处理生成图片
 const handleGenerate = async () => {
-  if (!canGenerate.value || !previewCanvas.value) return
+  if (!canGenerate.value || !previewCanvas.value) {
+    return
+  }
 
   try {
     // 先绘制canvas，等待完成
     await drawCanvas()
-    
+
     // 将canvas转为blob并显示在预览区域
-    previewCanvas.value.toBlob((blob) => {
-      if (blob) {
-        previewImage.value = URL.createObjectURL(blob)
-      }
-    }, 'image/png', 0.9)
+    await new Promise((resolve) => {
+      previewCanvas.value.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          previewImage.value = url
+        }
+        resolve()
+      }, 'image/png', 0.9)
+    })
   } catch (error) {
     console.error('生成图片失败:', error)
   }
@@ -321,7 +381,7 @@ const handleUpload = async () => {
   try {
     // 确保canvas已绘制完成
     await drawCanvas()
-    
+
     // 将canvas转为blob
     previewCanvas.value.toBlob((blob) => {
       if (blob) {
@@ -347,13 +407,19 @@ const handleUpload = async () => {
 
 // 监听文字变化，自动生成图片
 watch(inputText, (newText) => {
-  // 清除之前的预览图片
-  if (previewImage.value) {
-    previewImage.value = ''
-  }
-  
   // 如果有文字且已选择模版，自动生成图片
   if (newText.trim() && selectedTemplate.value) {
+    handleGenerate()
+  } else if (!newText.trim()) {
+    // 只有在没有文字时才清除预览图片
+    previewImage.value = ''
+  }
+})
+
+// 监听颜色变化，自动重新生成图片
+watch([textColor, strokeColor], (newValues, oldValues) => {
+  if (inputText.value.trim() && selectedTemplate.value) {
+    // 直接执行，不使用nextTick
     handleGenerate()
   }
 })
@@ -366,6 +432,9 @@ watch(() => props.visible, (newVal) => {
     selectedTemplate.value = null
     previewImage.value = ''
     showEmojiPanel.value = false
+    // 重置颜色设置
+    textColor.value = '#000000'
+    strokeColor.value = '#ffffff'
   }
 })
 </script>
@@ -389,7 +458,7 @@ watch(() => props.visible, (newVal) => {
   background: var(--bg-color-primary);
   border-radius: 8px;
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
@@ -438,25 +507,52 @@ watch(() => props.visible, (newVal) => {
   padding: 30px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 30px;
   background: var(--bg-color-primary);
 }
 
+.main-content {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  flex: 1;
+}
+
 .preview-section {
+  flex: 0 0 300px;
   text-align: center;
+}
+
+.controls-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.input-emoji-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
 }
 
 .preview-container {
   width: 100%;
   border: 2px dashed var(--border-color-primary);
-  border-radius: 8px;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-color-primary);
-  min-height: 200px;
+  min-height: 400px;
   overflow: hidden;
   position: relative;
+}
+
+.preview-container:has(.preview-image) {
+  border: none;
 }
 
 .preview-placeholder {
@@ -469,7 +565,7 @@ watch(() => props.visible, (newVal) => {
 
 .preview-placeholder p {
   margin: 0;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .preview-canvas {
@@ -614,20 +710,79 @@ watch(() => props.visible, (newVal) => {
   }
 }
 
+.font-controls {
+  background: var(--bg-color-primary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color-primary);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+  min-width: 80px;
+  margin: 0;
+}
+
+
+
+.color-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .color-controls {
+    flex-direction: row;
+    gap: 24px;
+  }
+}
+
+.color-picker {
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 0 0 2px var(--border-color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
 .template-section {
-  margin-top: 1rem;
+  flex-shrink: 0;
 }
 
 .section-title {
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-color-primary);
-  margin: 0 0 1rem 0;
 }
 
 .template-scroll-container {
   overflow-x: auto;
-  padding-bottom: 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb-color) transparent;
 }
@@ -652,16 +807,16 @@ watch(() => props.visible, (newVal) => {
 
 .template-list {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   padding: 8px 0;
-  padding: 5px;
 }
 
 .template-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 130px;
+  flex-shrink: 0;
+  width: 80px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -678,9 +833,10 @@ watch(() => props.visible, (newVal) => {
 
 
 .template-image {
-  width: 130px;
+  width: 80px;
+  height: 120px;
+  object-fit: cover;
   border-radius: 8px;
-  margin-bottom: 12px;
   border: 1px solid var(--border-color-primary);
 }
 
@@ -753,20 +909,29 @@ watch(() => props.visible, (newVal) => {
     padding: 1rem;
   }
 
+  .main-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .preview-section {
+    flex: none;
+  }
+
   .preview-container {
-    min-height: 300px;
+    min-height: 250px;
   }
 
   .preview-image {
-    max-height: 350px;
+    max-height: 300px;
   }
 
   .template-item {
-    width: 50px;
+    width: 100px;
   }
 
   .template-image {
-    width: 50px;
+    width: 100px;
   }
 }
 </style>
