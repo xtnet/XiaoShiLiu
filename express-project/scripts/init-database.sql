@@ -217,6 +217,23 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
 
+-- 14. 审核表
+CREATE TABLE IF NOT EXISTS `audit` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '审核ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `type` tinyint(4) NOT NULL COMMENT '审核类型：1-用户审核，2-内容审核，3-评论审核',
+  `content` text NOT NULL COMMENT '审核内容',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `audit_time` timestamp NULL DEFAULT NULL COMMENT '审核时间',
+  `status` tinyint(1) DEFAULT 0 COMMENT '审核状态：0-待审核，1-审核通过',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_status` (`status`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `audit_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审核表';
+
 -- 插入默认管理员账户
 -- 密码: 123456
 INSERT INTO `admin` (`username`, `password`) VALUES 

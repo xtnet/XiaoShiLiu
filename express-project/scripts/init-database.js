@@ -75,6 +75,9 @@ class DatabaseInitializer {
       // 创建用户会话表
       await this.createUserSessionsTable(connection);
 
+      // 创建审核表
+      await this.createAuditTable(connection);
+
       console.log('所有数据表创建完成!');
 
     } catch (error) {
@@ -364,6 +367,28 @@ class DatabaseInitializer {
     `;
     await connection.execute(sql);
     console.log('✓ user_sessions 表创建成功');
+  }
+
+  async createAuditTable(connection) {
+    const sql = `
+      CREATE TABLE IF NOT EXISTS \`audit\` (
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '审核ID',
+        \`user_id\` bigint(20) NOT NULL COMMENT '用户ID',
+        \`type\` tinyint(4) NOT NULL COMMENT '审核类型：1-用户审核，2-内容审核，3-评论审核',
+        \`content\` text NOT NULL COMMENT '审核内容',
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+        \`audit_time\` timestamp NULL DEFAULT NULL COMMENT '审核时间',
+        \`status\` tinyint(1) DEFAULT 0 COMMENT '审核状态：0-待审核，1-审核通过',
+        PRIMARY KEY (\`id\`),
+        KEY \`idx_user_id\` (\`user_id\`),
+        KEY \`idx_type\` (\`type\`),
+        KEY \`idx_status\` (\`status\`),
+        KEY \`idx_created_at\` (\`created_at\`),
+        CONSTRAINT \`audit_ibfk_1\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审核表';
+    `;
+    await connection.execute(sql);
+    console.log('✓ audit 表创建成功');
   }
 
   async run() {

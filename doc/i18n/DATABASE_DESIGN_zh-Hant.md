@@ -183,7 +183,19 @@
 | password | VARCHAR(255) | 管理員密碼 | 加密儲存 |
 | created_at | TIMESTAMP | 建立時間 | 帳號建立時間 |
 
+### 13. 審核表 (audit)
+
+| 欄位名 | 類型 | 說明 | 備註 |
+|--------|------|------|------|
+| id | BIGINT | 審核ID | 主鍵，自增 |
+| user_id | BIGINT | 使用者ID | 外鍵關聯users |
+| type | TINYINT | 審核類型 | 1-使用者審核，2-內容審核，3-評論審核 |
+| content | TEXT | 審核內容 | 待審核的具體內容 |
+| created_at | TIMESTAMP | 建立時間 | 提交審核時間 |
+| audit_time | TIMESTAMP | 審核時間 | 完成審核時間，可為空 |
+| status | TINYINT(1) | 審核狀態 | 0-待審核，1-審核通過，預設0 |
+
 ---
 
 *最後更新: 2025年1月16日*
-*資料庫版本: 1.0.2*
+*資料庫版本: 1.0.3*

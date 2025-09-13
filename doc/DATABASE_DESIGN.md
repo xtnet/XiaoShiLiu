@@ -187,3 +187,15 @@
 | password | VARCHAR(255) | 管理员密码 | 加密存储 |
 | created_at | TIMESTAMP | 创建时间 | 账号创建时间 |
 
+### 13. 审核表 (audit)
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| id | BIGINT | 审核ID | 主键，自增 |
+| user_id | BIGINT | 用户ID | 外键关联users |
+| type | TINYINT | 审核类型 | 1-用户审核，2-内容审核，3-评论审核 |
+| content | TEXT | 审核内容 | 待审核的具体内容 |
+| created_at | TIMESTAMP | 创建时间 | 提交审核时间 |
+| audit_time | TIMESTAMP | 审核时间 | 完成审核时间，可为空 |
+| status | TINYINT(1) | 审核状态 | 0-待审核，1-审核通过，默认0 |
+

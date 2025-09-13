@@ -182,7 +182,19 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | password | VARCHAR(255) | Admin Password | Encrypted storage |
 | created_at | TIMESTAMP | Creation Time | Account creation time |
 
+### 13. Audit Table (audit)
+
+| Field Name | Type | Description | Notes |
+|------------|------|-------------|-------|
+| id | BIGINT | Audit ID | Primary key, auto-increment |
+| user_id | BIGINT | User ID | Foreign key to users table |
+| type | TINYINT | Audit Type | 1-User audit, 2-Content audit, 3-Comment audit |
+| content | TEXT | Audit Content | Specific content to be audited |
+| created_at | TIMESTAMP | Creation Time | Time when audit was submitted |
+| audit_time | TIMESTAMP | Audit Time | Time when audit was completed, nullable |
+| status | TINYINT(1) | Audit Status | 0-Pending, 1-Approved, default 0 |
+
 ---
 
 *Last Updated: January 16, 2025*
-*Database Version: 1.0.2*
+*Database Version: 1.0.3*
