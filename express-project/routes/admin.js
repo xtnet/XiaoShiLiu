@@ -1664,4 +1664,248 @@ router.get('/monitor/activities', adminAuth, async (req, res) => {
   }
 })
 
+// 认证管理 CRUD 配置
+const auditCrudConfig = {
+  table: 'audit',
+  name: '认证管理',
+  requiredFields: ['user_id', 'type', 'content'],
+  updateFields: ['type', 'content', 'status', 'audit_time'],
+  searchFields: {
+    user_id: { operator: '=' },
+    type: { operator: '=' },
+    status: { operator: '=' },
+    user_display_id: { operator: '=' }
+  },
+  allowedSortFields: ['id', 'created_at', 'audit_time', 'status'],
+  defaultOrderBy: 'created_at DESC',
+
+  // 自定义查询，关联用户信息
+  customQueries: {
+    getList: async (req) => {
+      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', ...filters } = req.query
+      const offset = (page - 1) * limit
+      
+      // 构建查询条件
+      let whereClause = 'WHERE 1=1'
+      const queryParams = []
+      let paramIndex = 1
+      
+      // 处理筛选条件
+      if (filters.user_id) {
+        whereClause += ` AND a.user_id = ?`
+        queryParams.push(filters.user_id)
+      }
+      
+      if (filters.user_display_id) {
+        whereClause += ` AND u.user_id LIKE ?`
+        queryParams.push(`%${filters.user_display_id}%`)
+      }
+      
+      if (filters.type) {
+        whereClause += ` AND a.type = ?`
+        queryParams.push(filters.type)
+      }
+      
+      if (filters.status !== undefined && filters.status !== '') {
+        whereClause += ` AND a.status = ?`
+        queryParams.push(parseInt(filters.status))
+      }
+      
+      // 构建排序
+      const validSortFields = ['id', 'created_at', 'audit_time', 'status']
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at'
+      const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+      
+      // 查询数据
+      const dataQuery = `
+        SELECT 
+          a.id,
+          a.user_id,
+          a.type,
+          a.content,
+          a.status,
+          a.created_at,
+          a.audit_time,
+          u.user_id as user_display_id,
+          u.nickname,
+          u.avatar
+        FROM audit a
+        LEFT JOIN users u ON a.user_id = u.id
+        ${whereClause}
+        ORDER BY a.${sortField} ${order}
+        LIMIT ? OFFSET ?
+      `
+      
+      // 查询总数
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM audit a
+        LEFT JOIN users u ON a.user_id = u.id
+        ${whereClause}
+      `
+      
+      queryParams.push(parseInt(limit), offset)
+      
+      const [dataResult, countResult] = await Promise.all([
+        pool.query(dataQuery, queryParams),
+        pool.query(countQuery, queryParams.slice(0, -2))
+      ])
+      
+      return {
+        data: dataResult[0],
+        total: parseInt(countResult[0][0].total),
+        page: parseInt(page),
+        limit: parseInt(limit)
+      }
+    },
+    
+    getOne: async (req) => {
+      const { id } = req.params
+      
+      const query = `
+        SELECT 
+          a.id,
+          a.user_id,
+          a.type,
+          a.content,
+          a.status,
+          a.created_at,
+          a.audit_time,
+          u.user_id as user_display_id,
+          u.nickname,
+          u.avatar
+        FROM audit a
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.id = ?
+      `
+      
+      const result = await pool.query(query, [id])
+      return result[0][0] || null
+    }
+  }
+}
+
+const auditHandlers = createCrudHandlers(auditCrudConfig)
+
+// 认证管理路由
+router.post('/audit', adminAuth, auditHandlers.create)
+router.put('/audit/:id', adminAuth, auditHandlers.update)
+router.delete('/audit/:id', adminAuth, auditHandlers.deleteOne)
+router.delete('/audit', adminAuth, auditHandlers.deleteMany)
+router.get('/audit/:id', adminAuth, async (req, res) => {
+  try {
+    const result = await auditCrudConfig.customQueries.getOne(req)
+    if (!result) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.NOT_FOUND,
+        message: '认证记录不存在'
+      })
+    }
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '获取认证记录成功',
+      data: result
+    })
+  } catch (error) {
+    console.error('获取认证记录失败:', error)
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
+      message: '获取认证记录失败',
+      error: error.message
+    })
+  }
+})
+
+router.get('/audit', adminAuth, async (req, res) => {
+  try {
+    const result = await auditCrudConfig.customQueries.getList(req)
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '获取认证列表成功',
+      data: result
+    })
+  } catch (error) {
+    console.error('获取认证列表失败:', error)
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
+      message: '获取认证列表失败',
+      error: error.message
+    })
+  }
+})
+
+// 审核通过
+router.put('/audit/:id/approve', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    // 获取审核记录信息
+    const [auditResult] = await pool.query('SELECT user_id, type FROM audit WHERE id = ?', [id])
+    if (auditResult.length === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.ERROR,
+        message: '审核记录不存在'
+      })
+    }
+    
+    const { user_id, type } = auditResult[0]
+    
+    // 更新审核状态为通过
+    await pool.query('UPDATE audit SET status = 1, audit_time = NOW() WHERE id = ?', [id])
+    
+    // 根据认证类型更新用户的verified字段
+    // type: 1-官方认证, 2-个人认证
+    const verifiedValue = type === 1 ? 1 : (type === 2 ? 2 : 0)
+    await pool.query('UPDATE users SET verified = ? WHERE id = ?', [verifiedValue, user_id])
+    
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '审核通过成功'
+    })
+  } catch (error) {
+    console.error('审核通过失败:', error)
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
+      message: '审核通过失败',
+      error: error.message
+    })
+  }
+})
+
+// 拒绝申请
+router.put('/audit/:id/reject', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    // 获取审核记录信息
+    const [auditResult] = await pool.query('SELECT user_id FROM audit WHERE id = ?', [id])
+    if (auditResult.length === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        code: RESPONSE_CODES.ERROR,
+        message: '审核记录不存在'
+      })
+    }
+    
+    const { user_id } = auditResult[0]
+    
+    // 更新审核状态为拒绝
+    await pool.query('UPDATE audit SET status = 2, audit_time = NOW() WHERE id = ?', [id])
+    
+    // 拒绝认证申请时，将用户的verified字段设置为0（未认证）
+    await pool.query('UPDATE users SET verified = 0 WHERE id = ?', [user_id])
+    
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '拒绝申请成功'
+    })
+  } catch (error) {
+    console.error('拒绝申请失败:', error)
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.ERROR,
+      message: '拒绝申请失败',
+      error: error.message
+    })
+  }
+})
+
 module.exports = router

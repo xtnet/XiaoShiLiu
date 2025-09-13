@@ -133,6 +133,9 @@
                 {{ column.map && column.map[item[column.key]] ? column.map[item[column.key]] : item[column.key] || '-'
                 }}
               </span>
+              <span v-else-if="column.type === 'status'" :class="column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].class : ''">
+                {{ column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].text : item[column.key] || '-' }}
+              </span>
               <span v-else-if="column.type === 'boolean'">
                 {{ item[column.key] ? (column.trueText || '是') : (column.falseText || '否') }}
               </span>
@@ -179,8 +182,20 @@
               </span>
             </td>
             <td>
-              <SvgIcon name="edit" @click="editItem(item)" class="action-icon" />
-              <SvgIcon name="delete" @click="deleteItem(item)" class="action-icon" />
+              <template v-if="customActions.length > 0">
+                <SvgIcon 
+                  v-for="action in customActions" 
+                  :key="action.key"
+                  :name="action.icon" 
+                  @click="handleCustomAction(action.key, item)" 
+                  class="action-icon" 
+                  :title="action.title || action.key"
+                />
+              </template>
+              <template v-else>
+                <SvgIcon name="edit" @click="editItem(item)" class="action-icon" />
+                <SvgIcon name="delete" @click="deleteItem(item)" class="action-icon" />
+              </template>
             </td>
           </tr>
         </tbody>
@@ -297,6 +312,10 @@ const props = defineProps({
   defaultSortOrder: {
     type: String,
     default: ''
+  },
+  customActions: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -596,7 +615,7 @@ const refreshData = () => {
   loadData()
 }
 
-const emit = defineEmits(['close-filter'])
+const emit = defineEmits(['close-filter', 'custom-action'])
 
 const handleSearch = () => {
   clearCache()
@@ -1137,6 +1156,11 @@ const batchDelete = async () => {
 const handleImageError = (event) => {
   event.target.src = defaultAvatar
 }
+
+// 处理自定义操作
+const handleCustomAction = (action, item) => {
+  emit('custom-action', { action, item })
+}
 </script>
 
 <style scoped>
@@ -1542,6 +1566,11 @@ const handleImageError = (event) => {
   height: 24px;
   color: var(--text-color-secondary);
   cursor: pointer;
+  margin-right: 8px;
+}
+
+.action-icon:last-child {
+  margin-right: 0;
 }
 
 .action-icon:hover:not(:disabled) {

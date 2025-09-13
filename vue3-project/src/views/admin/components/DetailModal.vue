@@ -8,8 +8,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="detail-content">
-          <pre><ContentRenderer :content="content" /></pre>
+        <div class="detail-content" v-html="content">
         </div>
       </div>
     </div>
@@ -18,7 +17,6 @@
 
 <script setup>
 import SvgIcon from '@/components/SvgIcon.vue'
-import ContentRenderer from '@/components/ContentRenderer.vue'
 
 const props = defineProps({
   visible: {
@@ -110,20 +108,38 @@ const closeModal = () => {
 }
 
 .detail-content {
+  padding: 20px;
+  line-height: 1.6;
+  color: var(--text-color-primary);
+  word-wrap: break-word;
+  font-size: 14px;
+  background: var(--bg-color-secondary);
+  border-radius: 4px;
   max-height: 400px;
   overflow-y: auto;
 }
 
-.detail-content pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 0;
-  padding: 8px;
-  border-radius: 2px;
-  border: 1px solid var(--border-color-primary);
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--text-color-primary);
-  transition: border-color 0.3s ease;
+.detail-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
 }
+
+.detail-content :deep(td) {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color-primary);
+  vertical-align: top;
+}
+
+.detail-content :deep(td:first-child) {
+  font-weight: bold;
+  background-color: var(--bg-color-primary);
+  width: 30%;
+}
+
+.detail-content :deep(td:last-child) {
+  background-color: var(--bg-color-secondary);
+}
+
+
 </style>

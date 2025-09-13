@@ -216,19 +216,19 @@ const handleChangePassword = async () => {
   height: 32px;
   border: none;
   background: var(--bg-color-secondary);
+  color: var(--text-color-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-color-secondary);
-  transition: all 0.2s ease;
   z-index: 1;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: var(--bg-color-tertiary);
-  color: var(--text-color-primary);
+  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 .auth-content {

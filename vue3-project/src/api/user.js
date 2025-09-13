@@ -1,5 +1,16 @@
 import { userApi } from './index.js'
 
+// 获取用户列表API
+export async function getUsers(params = {}) {
+  try {
+    const response = await userApi.getUsers(params)
+    return response
+  } catch (error) {
+    console.error('获取用户列表失败:', error)
+    throw error
+  }
+}
+
 // 获取用户信息API
 export async function getUserInfo(userId) {
   try {

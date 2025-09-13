@@ -428,6 +428,43 @@ const apiGroups = ref([
         params: [
           { name: 'id', type: 'string', required: true, description: '小石榴号' }
         ]
+      },
+      {
+        method: 'POST',
+        path: '/api/users/verification',
+        title: '提交认证申请',
+        description: '用户提交个人或企业认证申请',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'type', type: 'int', required: true, description: '认证类型：1-个人认证，2-企业认证' },
+          { name: 'real_name', type: 'string', required: true, description: '真实姓名/企业名称' },
+          { name: 'id_card', type: 'string', required: true, description: '身份证号/营业执照号' },
+          { name: 'id_card_front', type: 'string', required: true, description: '身份证正面/营业执照图片URL' },
+          { name: 'id_card_back', type: 'string', required: false, description: '身份证背面图片URL（个人认证必填）' },
+          { name: 'business_license', type: 'string', required: false, description: '营业执照图片URL（企业认证必填）' },
+          { name: 'contact_phone', type: 'string', required: false, description: '联系电话' },
+          { name: 'contact_email', type: 'string', required: false, description: '联系邮箱' },
+          { name: 'description', type: 'string', required: false, description: '申请说明' }
+        ]
+      },
+      {
+        method: 'GET',
+        path: '/api/users/verification',
+        title: '获取认证申请状态',
+        description: '获取当前用户的认证申请状态和详情',
+        auth: true,
+        expanded: false,
+        params: []
+      },
+      {
+        method: 'DELETE',
+        path: '/api/users/verification',
+        title: '撤回认证申请',
+        description: '撤回当前的认证申请（支持待审核、已通过、已拒绝状态）',
+        auth: true,
+        expanded: false,
+        params: []
       }
     ]
   },
@@ -1455,6 +1492,58 @@ const apiGroups = ref([
         expanded: false,
         params: [
           { name: 'ids', type: 'array', required: true, description: '标签ID数组' }
+        ]
+      },
+      {
+        method: 'GET',
+        path: '/api/admin/audit',
+        title: '获取认证申请列表（管理员）',
+        description: '管理员获取认证申请列表，支持分页、搜索和排序',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'type', type: 'int', required: false, description: '认证类型筛选（1-个人认证，2-企业认证）' },
+          { name: 'status', type: 'int', required: false, description: '审核状态筛选（0-待审核，1-已通过，2-已拒绝）' },
+          { name: 'user_display_id', type: 'string', required: false, description: '用户小石榴号搜索' },
+          { name: 'real_name', type: 'string', required: false, description: '真实姓名搜索' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段（id, created_at, audit_time）' },
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+        ]
+      },
+      {
+        method: 'GET',
+        path: '/api/admin/audit/:id',
+        title: '获取认证申请详情（管理员）',
+        description: '管理员获取指定认证申请的详细信息',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'id', type: 'int', required: true, description: '认证申请ID' }
+        ]
+      },
+      {
+        method: 'PUT',
+        path: '/api/admin/audit/:id/approve',
+        title: '审核通过认证申请（管理员）',
+        description: '管理员审核通过认证申请，用户认证状态将更新为已认证',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'id', type: 'int', required: true, description: '认证申请ID' }
+        ]
+      },
+      {
+        method: 'PUT',
+        path: '/api/admin/audit/:id/reject',
+        title: '审核拒绝认证申请（管理员）',
+        description: '管理员审核拒绝认证申请，需要提供拒绝原因',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'id', type: 'int', required: true, description: '认证申请ID' },
+          { name: 'reject_reason', type: 'string', required: true, description: '拒绝原因' }
         ]
       },
       {

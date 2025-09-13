@@ -10,6 +10,16 @@
 
       <div class="modal-content">
         <div class="security-options">
+          <div class="security-item" @click="handleVerification">
+            <div class="item-icon">
+              <SvgIcon name="verified" width="24" height="24" />
+            </div>
+            <div class="item-content">
+              <div class="item-title">我要认证</div>
+              <div class="item-desc">申请个人认证或官方认证</div>
+            </div>
+          </div>
+
           <div class="security-item" @click="handleChangePassword">
             <div class="item-icon">
               <SvgIcon name="edit" width="24" height="24" />
@@ -43,6 +53,7 @@
 <script setup>
 import { useScrollLock } from '@/composables/useScrollLock'
 import { useChangePasswordStore } from '@/stores/changePassword'
+import { useVerifiedStore } from '@/stores/verified'
 import { useUserStore } from '@/stores/user'
 import SvgIcon from '@/components/SvgIcon.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -59,6 +70,7 @@ const emit = defineEmits(['update:visible', 'close'])
 
 const { lock, unlock } = useScrollLock()
 const changePasswordStore = useChangePasswordStore()
+const verifiedStore = useVerifiedStore()
 const userStore = useUserStore()
 const showDeleteModal = ref(false)
 
@@ -66,6 +78,12 @@ const showDeleteModal = ref(false)
 const handleClose = () => {
   emit('update:visible', false)
   emit('close')
+}
+
+// 处理认证申请
+const handleVerification = () => {
+  handleClose()
+  verifiedStore.openVerifiedModal()
 }
 
 // 处理修改密码
@@ -142,6 +160,7 @@ watch(() => props.visible, (newVisible) => {
 }
 
 .modal-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -157,21 +176,26 @@ watch(() => props.visible, (newVisible) => {
 }
 
 .close-btn {
-  background: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
   border: none;
-  cursor: pointer;
-  padding: 4px;
+  background: var(--bg-color-secondary);
+  color: var(--text-color-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-color-secondary);
+  cursor: pointer;
+  z-index: 1;
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: var(--bg-color-secondary);
-  color: var(--text-color-primary);
+  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 .modal-content {

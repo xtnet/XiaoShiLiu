@@ -1224,4 +1224,133 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// 提交认证申请
+router.post('/verification', authenticateToken, async (req, res) => {
+  try {
+    const { type, content } = req.body;
+    const userId = req.user.id;
+
+    // 验证输入
+    if (!type || !content) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        code: RESPONSE_CODES.VALIDATION_ERROR,
+        message: '认证类型和认证内容都是必填项'
+      });
+    }
+
+    // 验证认证类型
+    if (type !== 1 && type !== 2) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        code: RESPONSE_CODES.VALIDATION_ERROR,
+        message: '无效的认证类型'
+      });
+    }
+
+    // 检查是否已有待审核的认证申请
+    const [existingAudit] = await pool.execute(
+      'SELECT id FROM audit WHERE user_id = ? AND type = ? AND status = 0',
+      [userId.toString(), type.toString()]
+    );
+
+    if (existingAudit.length > 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        code: RESPONSE_CODES.VALIDATION_ERROR,
+        message: '您已有相同类型的认证申请正在审核中，请耐心等待'
+      });
+    }
+
+    // 插入审核记录
+    const [result] = await pool.execute(
+      'INSERT INTO audit (user_id, type, content, status, created_at) VALUES (?, ?, ?, 0, NOW())',
+      [userId.toString(), type.toString(), content]
+    );
+
+    res.status(HTTP_STATUS.CREATED).json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '认证申请提交成功，请耐心等待审核',
+      data: {
+        auditId: result.insertId
+      }
+    });
+  } catch (error) {
+    console.error('提交认证申请错误:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.SERVER_ERROR,
+      message: ERROR_MESSAGES.SERVER_ERROR
+    });
+  }
+});
+
+// 获取用户认证状态
+router.get('/verification/status', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 获取用户的认证申请记录
+    const [audits] = await pool.execute(
+      'SELECT id, type, status, created_at, audit_time FROM audit WHERE user_id = ? ORDER BY created_at DESC',
+      [userId.toString()]
+    );
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '获取认证状态成功',
+      data: audits
+    });
+  } catch (error) {
+    console.error('获取认证状态错误:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.SERVER_ERROR,
+      message: ERROR_MESSAGES.SERVER_ERROR
+    });
+  }
+});
+
+// 撤回认证申请
+router.delete('/verification/revoke', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 查找用户的认证申请（包括待审核、已通过和已拒绝的）
+    const [existingAudits] = await pool.execute(
+      'SELECT id, status FROM audit WHERE user_id = ? AND status IN (0, 1, 2)',
+      [userId.toString()]
+    );
+
+    if (existingAudits.length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        code: RESPONSE_CODES.VALIDATION_ERROR,
+        message: '没有找到可撤回的认证申请'
+      });
+    }
+
+    // 删除认证申请记录
+    await pool.execute(
+      'DELETE FROM audit WHERE user_id = ? AND status IN (0, 1, 2)',
+      [userId.toString()]
+    );
+
+    // 如果撤回的是已通过的认证，需要将用户的verified字段重置为0
+    const hasApprovedAudit = existingAudits.some(audit => audit.status === 1);
+    if (hasApprovedAudit) {
+      await pool.execute(
+        'UPDATE users SET verified = 0 WHERE id = ?',
+        [userId.toString()]
+      );
+    }
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '认证申请已撤回',
+      success: true
+    });
+  } catch (error) {
+    console.error('撤回认证申请错误:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.SERVER_ERROR,
+      message: ERROR_MESSAGES.SERVER_ERROR
+    });
+  }
+});
+
 module.exports = router;

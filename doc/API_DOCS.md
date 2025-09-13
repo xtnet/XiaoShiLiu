@@ -696,6 +696,88 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+### 16. 提交认证申请
+**接口地址**: `POST /api/users/verification`
+**需要认证**: 是
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| type | int | 是 | 认证类型：1-个人认证，2-企业认证 |
+| real_name | string | 是 | 真实姓名/企业名称 |
+| id_card | string | 是 | 身份证号/营业执照号 |
+| id_card_front | string | 是 | 身份证正面/营业执照图片URL |
+| id_card_back | string | 否 | 身份证背面图片URL（个人认证必填） |
+| business_license | string | 否 | 营业执照图片URL（企业认证必填） |
+| contact_phone | string | 否 | 联系电话 |
+| contact_email | string | 否 | 联系邮箱 |
+| description | string | 否 | 申请说明 |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "认证申请提交成功，请等待审核",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "status": 0,
+    "created_at": "2025-01-02T00:00:00.000Z"
+  }
+}
+```
+
+### 17. 获取认证申请状态
+**接口地址**: `GET /api/users/verification`
+**需要认证**: 是
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "real_name": "张三",
+    "id_card": "110101199001011234",
+    "id_card_front": "https://example.com/id_front.jpg",
+    "id_card_back": "https://example.com/id_back.jpg",
+    "contact_phone": "13800138000",
+    "contact_email": "zhangsan@example.com",
+    "description": "申请个人认证",
+    "status": 0,
+    "audit_time": null,
+    "reject_reason": null,
+    "created_at": "2025-01-02T00:00:00.000Z"
+  }
+}
+```
+
+**状态说明**:
+- `0`: 待审核
+- `1`: 已通过
+- `2`: 已拒绝
+
+### 18. 撤回认证申请
+**接口地址**: `DELETE /api/users/verification`
+**需要认证**: 是
+
+**功能说明**:
+- 可以撤回待审核、已通过或已拒绝的认证申请
+- 撤回已通过的认证申请会同时取消用户的认证状态
+- 撤回后可以重新提交认证申请
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "认证申请撤回成功"
+}
+```
+
 ---
 
 ## 分类管理接口
@@ -2504,9 +2586,154 @@ async function example() {
 **接口地址**: `GET /api/admin/tags/:id`
 **需要认证**: 是
 
-### 7. 点赞管理
+### 7. 认证审核管理
 
-#### 7.1 获取点赞列表
+#### 7.1 获取认证申请列表
+**接口地址**: `GET /api/admin/audit`
+**需要认证**: 是
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | int | 否 | 页码，默认1 |
+| limit | int | 否 | 每页数量，默认20 |
+| type | int | 否 | 认证类型筛选（1-个人认证，2-企业认证） |
+| status | int | 否 | 审核状态筛选（0-待审核，1-已通过，2-已拒绝） |
+| user_display_id | string | 否 | 用户小石榴号搜索 |
+| real_name | string | 否 | 真实姓名搜索 |
+| sortField | string | 否 | 排序字段（id, created_at, audit_time） |
+| sortOrder | string | 否 | 排序方向（ASC, DESC） |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "audits": [
+      {
+        "id": 1,
+        "user_id": 1,
+        "type": 1,
+        "real_name": "张三",
+        "id_card": "110101199001011234",
+        "id_card_front": "https://example.com/id_front.jpg",
+        "id_card_back": "https://example.com/id_back.jpg",
+        "contact_phone": "13800138000",
+        "contact_email": "zhangsan@example.com",
+        "description": "申请个人认证",
+        "status": 0,
+        "audit_time": null,
+        "reject_reason": null,
+        "created_at": "2025-01-02T00:00:00.000Z",
+        "user": {
+          "id": 1,
+          "user_id": "user_001",
+          "nickname": "张三",
+          "avatar": "https://example.com/avatar.jpg"
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "pages": 1
+    }
+  }
+}
+```
+
+#### 7.2 获取认证申请详情
+**接口地址**: `GET /api/admin/audit/:id`
+**需要认证**: 是
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 认证申请ID |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "real_name": "张三",
+    "id_card": "110101199001011234",
+    "id_card_front": "https://example.com/id_front.jpg",
+    "id_card_back": "https://example.com/id_back.jpg",
+    "contact_phone": "13800138000",
+    "contact_email": "zhangsan@example.com",
+    "description": "申请个人认证",
+    "status": 0,
+    "audit_time": null,
+    "reject_reason": null,
+    "created_at": "2025-01-02T00:00:00.000Z",
+    "user": {
+      "id": 1,
+      "user_id": "user_001",
+      "nickname": "张三",
+      "avatar": "https://example.com/avatar.jpg",
+      "verified": 0
+    }
+  }
+}
+```
+
+#### 7.3 审核认证申请（通过）
+**接口地址**: `PUT /api/admin/audit/:id/approve`
+**需要认证**: 是
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 认证申请ID |
+
+**功能说明**:
+- 审核通过后，用户的认证状态会自动更新为已认证
+- 系统会记录审核时间
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "认证申请审核通过"
+}
+```
+
+#### 7.4 审核认证申请（拒绝）
+**接口地址**: `PUT /api/admin/audit/:id/reject`
+**需要认证**: 是
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 认证申请ID |
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| reject_reason | string | 是 | 拒绝原因 |
+
+**功能说明**:
+- 审核拒绝后，用户可以查看拒绝原因
+- 用户可以撤回申请后重新提交
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "认证申请已拒绝"
+}
+```
+
+### 8. 点赞管理
+
+#### 8.1 获取点赞列表
 **接口地址**: `GET /api/admin/likes`
 **需要认证**: 是
 
