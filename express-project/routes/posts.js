@@ -93,9 +93,14 @@ router.get('/', optionalAuth, async (req, res) => {
     `;
     let queryParams = [isDraft.toString()];
 
-    // 特殊处理推荐频道：使用综合推荐算法
+    // 特殊处理推荐频道：热度新鲜度评分前20%的笔记按分数排序
     if (category === 'recommend') {
-      // 简单推荐算法 = 热度(浏览量) + 新鲜度(新内容加分) + 随机因子
+      // 先获取总笔记数计算20%的数量
+      const [totalCountResult] = await pool.execute('SELECT COUNT(*) as total FROM posts WHERE is_draft = ?', [isDraft.toString()]);
+      const totalPosts = totalCountResult[0].total;
+      const recommendLimit = Math.ceil(totalPosts * 0.2);
+      
+      // 推荐算法：70%热度+30%新鲜度评分，筛选前20%按分数排序
       query = `
         SELECT 
           p.*, 
@@ -105,24 +110,26 @@ router.get('/', optionalAuth, async (req, res) => {
           u.id as author_auto_id, 
           u.location, 
           u.verified,
-          c.name as category, 
-          (p.view_count * 0.7 + 
-           TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) as original_score, 
-          ( (p.view_count * 0.7 + 
-             TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) 
-            * (0.8 + RAND() * 0.4) 
-          ) as recommend_score 
-        FROM posts p 
+          c.name as category
+        FROM (
+          SELECT 
+            p.*,
+            (p.view_count * 0.7 + TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) as score
+          FROM posts p 
+          WHERE p.is_draft = ?
+          ORDER BY score DESC
+          LIMIT ?
+        ) p
         LEFT JOIN users u ON p.user_id = u.id 
         LEFT JOIN categories c ON p.category_id = c.id 
-        WHERE p.is_draft = ? 
-        ORDER BY recommend_score DESC 
+        ORDER BY p.score DESC
         LIMIT ? OFFSET ? 
       `;
       
       // 参数设置
       queryParams = [
         isDraft.toString(),
+        recommendLimit.toString(),
         limit.toString(),
         offset.toString()
       ];
