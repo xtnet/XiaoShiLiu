@@ -597,24 +597,87 @@ const apiGroups = ref([
         method: 'GET',
         path: '/api/categories',
         title: '获取分类列表',
-        description: '获取所有分类列表',
+        description: '获取所有分类列表，支持排序和筛选',
         expanded: false,
+        params: [
+          { name: 'sortField', type: 'string', required: false, description: '排序字段：id、name、created_at、post_count，默认id' },
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方式：asc、desc，默认asc' },
+          { name: 'name', type: 'string', required: false, description: '按分类名称模糊搜索' },
+          { name: 'category_title', type: 'string', required: false, description: '按英文标题模糊搜索' }
+        ],
         example: `{
   "code": 200,
-  "message": "success",
+  "message": "获取成功",
   "data": [
      {
        "id": 1,
        "name": "生活",
        "category_title": "life",
-       "created_at": "2025-08-30T00:00:00.000Z"
+       "created_at": "2025-08-30T00:00:00.000Z",
+       "post_count": 15
      }
    ]
 }`
       },
       {
+        method: 'GET',
+        path: '/api/admin/categories',
+        title: '获取分类列表（管理员）',
+        description: '管理员获取分类列表，支持分页、排序和筛选',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认10' },
+          { name: 'sortField', type: 'string', required: false, description: '排序字段：id、name、category_title、created_at、post_count，默认id' },
+          { name: 'sortOrder', type: 'string', required: false, description: '排序方式：asc、desc，默认asc' },
+          { name: 'name', type: 'string', required: false, description: '按分类名称模糊搜索' },
+          { name: 'category_title', type: 'string', required: false, description: '按英文标题模糊搜索' }
+        ],
+        example: `{
+  "code": 200,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "学习",
+      "category_title": "study",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 15
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1
+  }
+}`
+      },
+      {
+        method: 'GET',
+        path: '/api/admin/categories/:id',
+        title: '获取单个分类（管理员）',
+        description: '管理员获取指定分类详情',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'id', type: 'int', required: true, description: '分类ID' }
+        ],
+        example: `{
+  "code": 200,
+  "message": "获取成功",
+  "data": {
+    "id": 1,
+    "name": "学习",
+    "category_title": "study",
+    "created_at": "2025-01-01T00:00:00.000Z"
+  }
+}`
+      },
+      {
         method: 'POST',
-        path: '/api/categories',
+        path: '/api/admin/categories',
         title: '创建分类（管理员）',
         description: '管理员创建新分类',
         auth: true,
@@ -635,7 +698,7 @@ const apiGroups = ref([
       },
       {
         method: 'PUT',
-        path: '/api/categories/:id',
+        path: '/api/admin/categories/:id',
         title: '更新分类（管理员）',
         description: '管理员更新分类信息',
         auth: true,
@@ -653,7 +716,7 @@ const apiGroups = ref([
       },
       {
         method: 'DELETE',
-        path: '/api/categories/:id',
+        path: '/api/admin/categories/:id',
         title: '删除分类（管理员）',
         description: '管理员删除指定分类',
         auth: true,
@@ -668,7 +731,7 @@ const apiGroups = ref([
       },
       {
         method: 'DELETE',
-        path: '/api/categories',
+        path: '/api/admin/categories',
         title: '批量删除分类（管理员）',
         description: '管理员批量删除多个分类',
         auth: true,

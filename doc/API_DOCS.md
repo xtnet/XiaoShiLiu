@@ -785,36 +785,107 @@ Authorization: Bearer <your_jwt_token>
 ### 1. 获取分类列表
 **接口地址**: `GET /api/categories`
 
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| sortField | string | 否 | 排序字段，可选值：id、name、created_at、post_count，默认id |
+| sortOrder | string | 否 | 排序方式，可选值：asc、desc，默认asc |
+| name | string | 否 | 按分类名称模糊搜索 |
+| category_title | string | 否 | 按英文标题模糊搜索 |
+
 **响应示例**:
 ```json
 {
   "code": 200,
-  "message": "success",
+  "message": "获取成功",
   "data": [
     {
       "id": 1,
       "name": "学习",
       "category_title": "study",
-      "created_at": "2025-01-01T00:00:00.000Z"
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 15
     },
     {
       "id": 2,
       "name": "校园",
       "category_title": "campus",
-      "created_at": "2025-01-01T00:00:00.000Z"
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 8
     },
     {
       "id": 3,
       "name": "情感",
       "category_title": "emotion",
-      "created_at": "2025-01-01T00:00:00.000Z"
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 23
     }
   ]
 }
 ```
 
-### 2. 创建分类
-**接口地址**: `POST /api/categories`
+### 2. 获取分类列表（管理员）
+**接口地址**: `GET /api/admin/categories`
+**需要认证**: 是（管理员权限）
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | int | 否 | 页码，默认1 |
+| limit | int | 否 | 每页数量，默认10 |
+| sortField | string | 否 | 排序字段，可选值：id、name、category_title、created_at、post_count，默认id |
+| sortOrder | string | 否 | 排序方式，可选值：asc、desc，默认asc |
+| name | string | 否 | 按分类名称模糊搜索 |
+| category_title | string | 否 | 按英文标题模糊搜索 |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "学习",
+      "category_title": "study",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 15
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+```
+
+### 3. 获取单个分类（管理员）
+**接口地址**: `GET /api/admin/categories/:id`
+**需要认证**: 是（管理员权限）
+
+**路径参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | int | 是 | 分类ID |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "获取成功",
+  "data": {
+    "id": 1,
+    "name": "学习",
+    "category_title": "study",
+    "created_at": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 4. 创建分类
+**接口地址**: `POST /api/admin/categories`
 **需要认证**: 是（管理员权限）
 
 **请求参数**:
@@ -837,8 +908,8 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 3. 更新分类
-**接口地址**: `PUT /api/categories/:id`
+### 5. 更新分类
+**接口地址**: `PUT /api/admin/categories/:id`
 **需要认证**: 是（管理员权限）
 
 **路径参数**:
@@ -866,8 +937,8 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 4. 删除分类
-**接口地址**: `DELETE /api/categories/:id`
+### 6. 删除分类
+**接口地址**: `DELETE /api/admin/categories/:id`
 **需要认证**: 是（管理员权限）
 
 **路径参数**:
@@ -883,8 +954,8 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-### 5. 批量删除分类
-**接口地址**: `DELETE /api/categories`
+### 7. 批量删除分类
+**接口地址**: `DELETE /api/admin/categories`
 **需要认证**: 是（管理员权限）
 
 **请求参数**:

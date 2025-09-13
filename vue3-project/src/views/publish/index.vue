@@ -1157,12 +1157,34 @@ const handleSaveDraft = async () => {
   }
 }
 
-
-
 /* 响应式设计 */
 @media (max-width: 960px) {
   .publish-container {
     min-width: 100%;
+    max-width: 100%;
+    margin: 72px 0;
+  }
+  
+  .publish-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .header-right {
+    gap: 0.5rem;
+  }
+  
+  .draft-box-btn,
+  .manage-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .publish-content {
+    padding: 0.75rem;
+  }
+  
+  .publish-actions {
+    padding: 1rem 0.75rem;
   }
 }
 

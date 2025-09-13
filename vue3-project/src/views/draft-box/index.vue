@@ -692,21 +692,23 @@ onMounted(() => {
   color: var(--text-color-secondary);
 }
 
-
-
 /* 响应式设计 */
 @media (max-width: 960px) {
   .draft-box-container {
     min-width: 100%;
+    max-width: 100%;
+    margin: 72px 0;
   }
-  .post-meta {
-    flex-direction: column;
-    align-items: flex-start;
+  
+  .page-header {
+    padding: 0.75rem 1rem;
   }
+  
   .filter-section {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
+    padding: 0.75rem 1rem;
   }
 
   .search-box {
@@ -717,7 +719,77 @@ onMounted(() => {
     justify-content: flex-start;
     gap: 0.75rem;
   }
+  
+  .posts-section {
+    padding: 0.75rem 1rem;
+  }
+  
+  .post-item {
+    padding: 0.75rem;
+    flex-direction: column;
+    position: relative;
+  }
+  
+  .post-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  .post-item > .post-thumbnail {
+    order: 1;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.75rem;
+    align-self: flex-start;
+  }
+  
+  .post-item > .post-info {
+    order: 2;
+    margin-left: 75px;
+    margin-top: -75px;
+    padding-right: 6rem;
+  }
+  
+  .post-info > .post-title {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+  }
+  
+  .post-info > .post-content {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+  
+  .post-info > .post-meta {
+    margin-left: -75px;
+    margin-top: 0.5rem;
+  }
+  
+  .post-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .date-row {
+    margin-left: 0;
+    order: 2;
+  }
+  
+  .meta-row {
+    order: 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 }
-
-
 </style>
