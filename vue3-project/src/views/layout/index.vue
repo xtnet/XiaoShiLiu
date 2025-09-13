@@ -73,6 +73,7 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: flex-start;
   background-color: var(--bg-color-primary);
+  transition: background-color 0.2s ease;
 }
 
 @media (max-width: 960px) {

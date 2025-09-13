@@ -731,7 +731,6 @@ watch(() => props.visible, (newVal) => {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color-primary);
-  min-width: 80px;
   margin: 0;
 }
 
@@ -751,8 +750,8 @@ watch(() => props.visible, (newVal) => {
 }
 
 .color-picker {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   box-shadow: 0 0 0 2px var(--border-color-primary);
   border-radius: 50%;
   cursor: pointer;

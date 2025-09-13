@@ -641,6 +641,7 @@ const handleSaveDraft = async () => {
   margin: 72px auto;
   min-width: 700px;
   max-width: 700px;
+  transition: background-color 0.2s ease;
 }
 
 .publish-header {
@@ -653,6 +654,7 @@ const handleSaveDraft = async () => {
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.2s ease,border-color 0.2s ease;
 }
 
 .header-left {
@@ -788,6 +790,8 @@ const handleSaveDraft = async () => {
   padding: 1rem;
   max-width: 600px;
   margin: 0 auto;
+  background-color: var(--bg-color-primary);
+  transition: background-color 0.2s ease;
 }
 
 .publish-form {
