@@ -167,8 +167,8 @@ const searchFields = [
 
 // 自定义操作按钮
 const customActions = [
-  { key: 'approve', icon: 'tick', title: '审核通过', class: 'btn-success' },
-  { key: 'reject', icon: 'close', title: '拒绝申请', class: 'btn-danger' },
+  { key: 'approve', icon: 'passed', title: '审核通过', class: 'btn-success' },
+  { key: 'reject', icon: 'unpassed', title: '拒绝申请', class: 'btn-danger' },
   { key: 'delete', icon: 'delete', title: '删除', class: 'btn-outline' }
 ]
 
