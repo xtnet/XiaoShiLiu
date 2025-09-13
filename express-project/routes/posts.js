@@ -93,25 +93,39 @@ router.get('/', optionalAuth, async (req, res) => {
     `;
     let queryParams = [isDraft.toString()];
 
-    // 特殊处理推荐频道：显示浏览量前20%的笔记，但支持分页
+    // 特殊处理推荐频道：使用综合推荐算法
     if (category === 'recommend') {
-      // 先获取总笔记数（只计算指定状态的笔记）
-      const [totalCountResult] = await pool.execute('SELECT COUNT(*) as total FROM posts WHERE is_draft = ?', [isDraft.toString()]);
-      const totalPosts = totalCountResult[0].total;
-      const topPostsCount = Math.ceil(totalPosts * 0.2); // 前20%的笔记数量
-
-      // 直接获取前20%浏览量的笔记，然后进行分页（只包含指定状态的笔记）
+      // 简单推荐算法 = 热度(浏览量) + 新鲜度(新内容加分) + 随机因子
       query = `
-        SELECT p.*, u.nickname, u.avatar as user_avatar, u.user_id as author_account, u.id as author_auto_id, u.location, c.name as category
-        FROM (
-          SELECT * FROM posts WHERE is_draft = ? ORDER BY view_count DESC LIMIT ?
-        ) p
-        LEFT JOIN users u ON p.user_id = u.id
-        LEFT JOIN categories c ON p.category_id = c.id
-        ORDER BY p.view_count DESC
-        LIMIT ? OFFSET ?
+        SELECT 
+          p.*, 
+          u.nickname, 
+          u.avatar as user_avatar, 
+          u.user_id as author_account, 
+          u.id as author_auto_id, 
+          u.location, 
+          u.verified,
+          c.name as category, 
+          (p.view_count * 0.7 + 
+           TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) as original_score, 
+          ( (p.view_count * 0.7 + 
+             TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) 
+            * (0.8 + RAND() * 0.4) 
+          ) as recommend_score 
+        FROM posts p 
+        LEFT JOIN users u ON p.user_id = u.id 
+        LEFT JOIN categories c ON p.category_id = c.id 
+        WHERE p.is_draft = ? 
+        ORDER BY recommend_score DESC 
+        LIMIT ? OFFSET ? 
       `;
-      queryParams = [isDraft.toString(), topPostsCount.toString(), limit.toString(), offset.toString()];
+      
+      // 参数设置
+      queryParams = [
+        isDraft.toString(),
+        limit.toString(),
+        offset.toString()
+      ];
     } else {
       let whereConditions = [];
       let additionalParams = [];
@@ -172,7 +186,7 @@ router.get('/', optionalAuth, async (req, res) => {
     // 获取总数
     let total;
     if (category === 'recommend') {
-      // 推荐频道的总数就是前20%的笔记数量
+      // 推荐频道的总数限制为总笔记数的20%
       const [totalCountResult] = await pool.execute('SELECT COUNT(*) as total FROM posts WHERE is_draft = ?', [isDraft.toString()]);
       const totalPosts = totalCountResult[0].total;
       total = Math.ceil(totalPosts * 0.2);
