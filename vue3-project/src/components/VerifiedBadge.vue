@@ -56,6 +56,14 @@ const badgeTitle = computed(() => {
   cursor: pointer;
   color: #fff;
   padding: 2px;
+  overflow: hidden;
+}
+
+.verified-badge svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .verified-badge--small {
