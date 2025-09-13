@@ -15,10 +15,10 @@ export async function getCategories(params = {}) {
   }
 }
 
-// 获取分类详情
+// 获取分类详情（管理员功能）
 export async function getCategoryDetail(categoryId) {
   try {
-    const response = await request.get(`/categories/${categoryId}`)
+    const response = await request.get(`/admin/categories/${categoryId}`)
     return response
   } catch (error) {
     console.error('获取分类详情失败:', error)
@@ -30,10 +30,10 @@ export async function getCategoryDetail(categoryId) {
   }
 }
 
-// 创建分类
+// 创建分类（管理员功能）
 export async function createCategory(data) {
   try {
-    const response = await request.post('/categories', data)
+    const response = await request.post('/admin/categories', data)
     return response
   } catch (error) {
     console.error('创建分类失败:', error)
@@ -45,10 +45,10 @@ export async function createCategory(data) {
   }
 }
 
-// 更新分类
+// 更新分类（管理员功能）
 export async function updateCategory(categoryId, data) {
   try {
-    const response = await request.put(`/categories/${categoryId}`, data)
+    const response = await request.put(`/admin/categories/${categoryId}`, data)
     return response
   } catch (error) {
     console.error('更新分类失败:', error)
@@ -60,10 +60,10 @@ export async function updateCategory(categoryId, data) {
   }
 }
 
-// 删除分类
+// 删除分类（管理员功能）
 export async function deleteCategory(categoryId) {
   try {
-    const response = await request.delete(`/categories/${categoryId}`)
+    const response = await request.delete(`/admin/categories/${categoryId}`)
     return response
   } catch (error) {
     console.error('删除分类失败:', error)

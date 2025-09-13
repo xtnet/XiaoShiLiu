@@ -1908,4 +1908,265 @@ router.put('/audit/:id/reject', adminAuth, async (req, res) => {
   }
 })
 
+// Categories CRUD 配置
+const categoriesCrudConfig = {
+  table: 'categories',
+  name: '分类',
+  requiredFields: ['name', 'category_title'],
+  updateFields: ['name', 'category_title'],
+  uniqueFields: ['name', 'category_title'],
+  cascadeRules: [
+    { table: 'posts', field: 'category_id' }
+  ],
+  searchFields: {
+    name: { operator: 'LIKE' },
+    category_title: { operator: 'LIKE' }
+  },
+  allowedSortFields: ['id', 'name', 'created_at'],
+  defaultOrderBy: 'id ASC',
+
+  // 创建前的自定义验证
+  beforeCreate: async (data) => {
+    const { name, category_title } = data
+    
+    if (!name || name.trim() === '') {
+      return { isValid: false, message: '分类名称不能为空' }
+    }
+
+    if (!category_title || category_title.trim() === '') {
+      return { isValid: false, message: '分类英文标题不能为空' }
+    }
+
+    // 检查分类名称是否已存在
+    const [existingName] = await pool.execute(
+      'SELECT id FROM categories WHERE name = ?',
+      [name.trim()]
+    )
+    
+    if (existingName.length > 0) {
+      return { isValid: false, message: '分类名称已存在' }
+    }
+
+    // 检查分类英文标题是否已存在
+    const [existingTitle] = await pool.execute(
+      'SELECT id FROM categories WHERE category_title = ?',
+      [category_title.trim()]
+    )
+    
+    if (existingTitle.length > 0) {
+      return { isValid: false, message: '分类英文标题已存在' }
+    }
+
+    // 清理数据
+    data.name = name.trim()
+    data.category_title = category_title.trim()
+    
+    return { isValid: true }
+  },
+
+  // 更新前的自定义验证
+  beforeUpdate: async (data, id, req) => {
+    const { name, category_title } = data
+    
+    if (name && name.trim() === '') {
+      return { isValid: false, message: '分类名称不能为空' }
+    }
+
+    if (category_title && category_title.trim() === '') {
+      return { isValid: false, message: '分类英文标题不能为空' }
+    }
+
+    if (name) {
+      // 检查分类名称是否已存在（排除当前记录）
+      const [existingName] = await pool.execute(
+        'SELECT id FROM categories WHERE name = ? AND id != ?',
+        [name.trim(), id]
+      )
+      
+      if (existingName.length > 0) {
+        return { isValid: false, message: '分类名称已存在' }
+      }
+
+      data.name = name.trim()
+    }
+
+    if (category_title) {
+      // 检查分类英文标题是否已存在（排除当前记录）
+      const [existingTitle] = await pool.execute(
+        'SELECT id FROM categories WHERE category_title = ? AND id != ?',
+        [category_title.trim(), id]
+      )
+      
+      if (existingTitle.length > 0) {
+        return { isValid: false, message: '分类英文标题已存在' }
+      }
+
+      data.category_title = category_title.trim()
+    }
+
+    return { isValid: true }
+  },
+
+  // 删除前检查
+  beforeDelete: async (id) => {
+    // 检查是否有笔记使用此分类
+    const [posts] = await pool.execute(
+      'SELECT COUNT(*) as count FROM posts WHERE category_id = ?',
+      [id]
+    )
+    
+    if (posts[0].count > 0) {
+      return { isValid: false, message: `该分类下还有 ${posts[0].count} 篇笔记，无法删除` }
+    }
+    
+    return { isValid: true }
+  },
+
+  // 批量删除前检查
+  beforeDeleteMany: async (ids) => {
+    const placeholders = ids.map(() => '?').join(',')
+    const [posts] = await pool.execute(
+      `SELECT category_id, COUNT(*) as count FROM posts WHERE category_id IN (${placeholders}) GROUP BY category_id`,
+      ids
+    )
+    
+    if (posts.length > 0) {
+      const categoryIds = posts.map(p => p.category_id).join(', ')
+      return { isValid: false, message: `分类 ${categoryIds} 下还有笔记，无法删除` }
+    }
+    
+    return { isValid: true }
+  },
+
+  customQueries: {
+    create: async (req) => {
+      const { name, category_title } = req.body;
+
+      if (!name || name.trim() === '') {
+        throw new Error('分类名称不能为空');
+      }
+
+      if (!category_title || category_title.trim() === '') {
+        throw new Error('分类英文标题不能为空');
+      }
+
+      // 检查分类名称是否已存在
+      const [existingName] = await pool.execute(
+        'SELECT id FROM categories WHERE name = ?',
+        [name.trim()]
+      );
+
+      if (existingName.length > 0) {
+        throw new Error('分类名称已存在');
+      }
+
+      // 检查分类英文标题是否已存在
+      const [existingTitle] = await pool.execute(
+        'SELECT id FROM categories WHERE category_title = ?',
+        [category_title.trim()]
+      );
+
+      if (existingTitle.length > 0) {
+        throw new Error('分类英文标题已存在');
+      }
+
+      // 创建分类
+      const [result] = await pool.execute(
+        'INSERT INTO categories (name, category_title) VALUES (?, ?)',
+        [name.trim(), category_title.trim()]
+      );
+
+      return {
+        id: result.insertId,
+        name: name.trim(),
+        category_title: category_title.trim()
+      };
+    },
+
+    getList: async (req) => {
+      const { page = 1, limit = 10, sortField = 'id', sortOrder = 'asc', name, category_title } = req.query
+      const offset = (parseInt(page) - 1) * parseInt(limit)
+      
+      // 构建WHERE条件
+      const conditions = []
+      const queryParams = []
+      
+      if (name && name.trim()) {
+        conditions.push('c.name LIKE ?')
+        queryParams.push(`%${name.trim()}%`)
+      }
+      
+      if (category_title && category_title.trim()) {
+        conditions.push('c.category_title LIKE ?')
+        queryParams.push(`%${category_title.trim()}%`)
+      }
+      
+      const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''
+      
+      // 验证排序字段
+      const allowedSortFields = ['id', 'name', 'category_title', 'created_at', 'post_count']
+      const validSortField = allowedSortFields.includes(sortField) ? sortField : 'id'
+      const validSortOrder = ['asc', 'desc'].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC'
+      
+      // 获取总数
+      const [countResult] = await pool.execute(`
+        SELECT COUNT(DISTINCT c.id) as total
+        FROM categories c
+        ${whereClause}
+      `, queryParams)
+      
+      // 获取数据
+      const [categories] = await pool.execute(`
+        SELECT 
+          c.id,
+          c.name,
+          c.category_title,
+          c.created_at,
+          COUNT(p.id) as post_count
+        FROM categories c
+        LEFT JOIN posts p ON c.id = p.category_id
+        ${whereClause}
+        GROUP BY c.id, c.name, c.category_title, c.created_at
+        ORDER BY ${validSortField} ${validSortOrder}
+        LIMIT ? OFFSET ?
+      `, [...queryParams, parseInt(limit), offset])
+      
+      return {
+        data: categories,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: countResult[0].total,
+          totalPages: Math.ceil(countResult[0].total / parseInt(limit))
+        }
+      }
+    }
+  }
+}
+
+const categoriesHandlers = createCrudHandlers(categoriesCrudConfig)
+
+// Categories 路由
+router.post('/categories', adminAuth, categoriesHandlers.create)
+router.put('/categories/:id', adminAuth, categoriesHandlers.update)
+router.delete('/categories/:id', adminAuth, categoriesHandlers.deleteOne)
+router.delete('/categories', adminAuth, categoriesHandlers.deleteMany)
+router.get('/categories/:id', adminAuth, categoriesHandlers.getOne)
+router.get('/categories', adminAuth, async (req, res) => {
+  try {
+    const result = await categoriesCrudConfig.customQueries.getList(req)
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '获取成功',
+      ...result
+    })
+  } catch (err) {
+    console.error('获取分类列表失败:', err)
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      code: RESPONSE_CODES.SERVER_ERROR,
+      message: err.message || '获取分类列表失败'
+    })
+  }
+})
+
 module.exports = router

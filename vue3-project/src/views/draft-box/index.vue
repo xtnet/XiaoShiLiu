@@ -346,9 +346,11 @@ onMounted(() => {
   min-height: 100vh;
   background: var(--bg-color-primary);
   color: var(--text-color-primary);
-  margin-top: 72px;
   padding-bottom: calc(48px + constant(safe-area-inset-bottom));
   padding-bottom: calc(48px + env(safe-area-inset-bottom));
+  margin:72px auto;
+  min-width: 700px;
+  max-width: 700px;
 }
 
 .page-header {
@@ -470,8 +472,8 @@ onMounted(() => {
 }
 
 .loading-spinner {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: 3px solid var(--border-color-primary);
   border-top: 3px solid var(--primary-color);
   border-radius: 50%;
@@ -503,11 +505,6 @@ onMounted(() => {
   opacity: 0.5;
 }
 
-.empty-state p {
-  margin: 0 0 1.5rem 0;
-  font-size: 1rem;
-}
-
 .create-btn {
   display: flex;
   align-items: center;
@@ -516,10 +513,11 @@ onMounted(() => {
   background: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
+  margin-top: 1rem;
   transition: all 0.2s ease;
 }
 
@@ -595,21 +593,20 @@ onMounted(() => {
 
 .post-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-color-secondary);
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
 }
 
 .date-row {
-  display: flex;
-  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: nowrap;
 }
 
 .category {
@@ -622,23 +619,6 @@ onMounted(() => {
 
 .date {
   font-size: 0.8rem;
-}
-
-/* 桌面端保持原有布局 */
-@media (min-width: 769px) {
-  .post-meta {
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .date-row {
-    margin-left: auto;
-  }
-  
-  .meta-row {
-    gap: 1rem;
-  }
 }
 
 .post-actions {
@@ -683,28 +663,23 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem;
+  padding: 2rem 1rem;
 }
 
 .page-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  padding: 0.5rem 1rem;
   border: 1px solid var(--border-color-primary);
   background: var(--bg-color-primary);
   color: var(--text-color-primary);
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: var(--primary-color);
   background: var(--primary-color);
   color: white;
+  border-color: var(--primary-color);
 }
 
 .page-btn:disabled {
@@ -720,7 +695,14 @@ onMounted(() => {
 
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
+  .draft-box-container {
+    min-width: 100%;
+  }
+  .post-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .filter-section {
     flex-direction: column;
     align-items: stretch;
@@ -733,36 +715,9 @@ onMounted(() => {
 
   .filter-options {
     justify-content: flex-start;
-  }
-
-  .post-item {
-    flex-direction: column;
-  }
-
-  .post-thumbnail {
-    width: 100%;
-    height: 200px;
-  }
-
-  .post-actions {
-    flex-direction: row;
-    justify-content: flex-end;
+    gap: 0.75rem;
   }
 }
 
-@media (max-width: 480px) {
-  .page-header {
-    padding: 0.75rem;
-  }
 
-  .drafts-section {
-    padding: 0.75rem;
-  }
-
-  .post-item {
-    padding: 0.75rem;
-  }
-
-
-}
 </style>

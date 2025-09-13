@@ -54,10 +54,10 @@ const searchFields = [
 ]
 
 const apiEndpoints = {
-  list: '/categories',
-  create: '/categories',
-  update: '/categories',
-  delete: '/categories'
+  list: '/admin/categories',
+  create: '/admin/categories',
+  update: '/admin/categories',
+  delete: '/admin/categories'
 }
 </script>
 

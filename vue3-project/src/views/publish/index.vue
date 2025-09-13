@@ -599,9 +599,11 @@ const handleSaveDraft = async () => {
   min-height: 100vh;
   background: var(--bg-color-primary);
   color: var(--text-color-primary);
-  margin-top: 72px;
-  transition: background 0.2s ease;
-
+  padding-bottom: calc(48px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+  margin:72px auto;
+  min-width: 700px;
+  max-width: 700px;
 }
 
 .publish-header {
@@ -614,7 +616,6 @@ const handleSaveDraft = async () => {
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .header-left {
@@ -1159,17 +1160,9 @@ const handleSaveDraft = async () => {
 
 
 /* 响应式设计 */
-@media (max-width: 768px) {
-  .publish-header {
-    padding: 0.75rem;
-  }
-
-  .page-title {
-    font-size: 1.1rem;
-  }
-
-  .publish-content {
-    padding: 1rem;
+@media (max-width: 960px) {
+  .publish-container {
+    min-width: 100%;
   }
 }
 
