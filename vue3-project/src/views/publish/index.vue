@@ -31,6 +31,12 @@
         <div class="image-upload-section">
           <MultiImageUpload ref="multiImageUploadRef" v-model="form.images" :max-images="9" :allow-delete-last="true"
             @error="handleUploadError" />
+          <div class="text-image-section">
+            <button type="button" class="text-image-btn" @click="openTextImageModal">
+              <SvgIcon name="magic" width="16" height="16" />
+              <span>文字配图</span>
+            </button>
+          </div>
         </div>
 
         <div class="input-section">
@@ -42,9 +48,8 @@
         <div class="input-section">
           <div class="content-input-wrapper">
             <ContentEditableInput ref="contentTextarea" v-model="form.content" :input-class="'content-textarea'"
-              placeholder="请输入内容" :enable-mention="true" :mention-users="mentionUsers"
-              @focus="handleContentFocus" @blur="handleContentBlur" @keydown="handleInputKeydown"
-              @mention="handleMentionInput" />
+              placeholder="请输入内容" :enable-mention="true" :mention-users="mentionUsers" @focus="handleContentFocus"
+              @blur="handleContentBlur" @keydown="handleInputKeydown" @mention="handleMentionInput" />
             <div class="content-actions">
               <button type="button" class="mention-btn" @click="toggleMentionPanel">
                 <SvgIcon name="mention" class="mention-icon" width="20" height="20" />
@@ -88,6 +93,9 @@
     </div>
 
     <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="handleToastClose" />
+
+    <!-- 文字配图模态框 -->
+    <TextImageModal :visible="showTextImageModal" @close="closeTextImageModal" @generate="handleTextImageGenerate" />
   </div>
 </template>
 
@@ -111,6 +119,7 @@ import MessageToast from '@/components/MessageToast.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
+import TextImageModal from '@/views/publish/components/TextImageModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -127,6 +136,7 @@ const isSavingDraft = ref(false)
 const showEmojiPanel = ref(false)
 const showMentionPanel = ref(false)
 const isContentFocused = ref(false)
+const showTextImageModal = ref(false)
 
 const showToast = ref(false)
 const toastMessage = ref('')
@@ -229,6 +239,23 @@ const goToDraftBox = () => {
 
 const handleUploadError = (error) => {
   showMessage(error, 'error')
+}
+
+const openTextImageModal = () => {
+  showTextImageModal.value = true
+  lock()
+}
+
+const closeTextImageModal = () => {
+  showTextImageModal.value = false
+  unlock()
+}
+
+const handleTextImageGenerate = (data) => {
+  // 暂时只显示提示信息，具体生成逻辑后续实现
+  console.log('生成文字配图:', data)
+  showMessage('文字配图功能开发中，敬请期待！', 'info')
+  closeTextImageModal()
 }
 
 const handleCategoryChange = (data) => {
@@ -601,7 +628,7 @@ const handleSaveDraft = async () => {
   color: var(--text-color-primary);
   padding-bottom: calc(48px + constant(safe-area-inset-bottom));
   padding-bottom: calc(48px + env(safe-area-inset-bottom));
-  margin:72px auto;
+  margin: 72px auto;
   min-width: 700px;
   max-width: 700px;
 }
@@ -1164,25 +1191,25 @@ const handleSaveDraft = async () => {
     max-width: 100%;
     margin: 72px 0;
   }
-  
+
   .publish-header {
     padding: 0.75rem 1rem;
   }
-  
+
   .header-right {
     gap: 0.5rem;
   }
-  
+
   .draft-box-btn,
   .manage-btn {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
-  
+
   .publish-content {
     padding: 0.75rem;
   }
-  
+
   .publish-actions {
     padding: 1rem 0.75rem;
   }
@@ -1284,13 +1311,43 @@ const handleSaveDraft = async () => {
     flex-direction: column;
   }
 
-  .publish-actions .cancel-btn,
-  .publish-actions .draft-btn,
-  .publish-actions .publish-btn {
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 0.9rem;
-    min-width: unset;
-  }
+}
+
+.text-image-section {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.text-image-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem;
+  background: var(--primary-color);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.text-image-btn:hover {
+  background: var(--primary-color-dark);
+}
+
+.text-image-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.publish-actions .cancel-btn,
+.publish-actions .draft-btn,
+.publish-actions .publish-btn {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  min-width: unset;
 }
 </style>
