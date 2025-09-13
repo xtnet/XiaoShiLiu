@@ -276,6 +276,51 @@ class NotificationHelper {
     const notificationData = this.createNotificationData(params);
     return await this.insertNotification(pool, notificationData);
   }
+
+  /**
+   * 删除指定条件的通知
+   * @param {Object} pool 数据库连接池
+   * @param {Object} conditions 删除条件
+   * @param {number} conditions.type 通知类型
+   * @param {number} conditions.targetId 目标ID
+   * @param {number} conditions.senderId 发送者ID
+   * @param {number} conditions.userId 接收者ID（可选）
+   * @returns {Promise<Object>} 删除结果
+   */
+  static async deleteNotifications(pool, conditions) {
+    const { type, targetId, senderId, userId } = conditions;
+    
+    let query = 'DELETE FROM notifications WHERE type = ? AND target_id = ? AND sender_id = ?';
+    let params = [type, targetId, senderId];
+    
+    if (userId) {
+      query += ' AND user_id = ?';
+      params.push(userId);
+    }
+    
+    const [result] = await pool.execute(query, params);
+    return result;
+  }
+
+  /**
+   * 获取指定条件的通知接收者列表
+   * @param {Object} pool 数据库连接池
+   * @param {Object} conditions 查询条件
+   * @param {number} conditions.type 通知类型
+   * @param {number} conditions.targetId 目标ID
+   * @param {number} conditions.senderId 发送者ID
+   * @returns {Promise<Array>} 接收者ID列表
+   */
+  static async getNotificationReceivers(pool, conditions) {
+    const { type, targetId, senderId } = conditions;
+    
+    const [rows] = await pool.execute(
+      'SELECT DISTINCT user_id FROM notifications WHERE type = ? AND target_id = ? AND sender_id = ?',
+      [type, targetId, senderId]
+    );
+    
+    return rows.map(row => row.user_id);
+  }
 }
 
 module.exports = NotificationHelper;

@@ -650,6 +650,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '无权限修改此笔记' });
     }
 
+    // 在更新之前获取原始笔记信息（用于对比@用户变化）
+    const [originalPostRows] = await pool.execute('SELECT is_draft, content FROM posts WHERE id = ?', [postId.toString()]);
+    const wasOriginallyDraft = originalPostRows.length > 0 && originalPostRows[0].is_draft === 1;
+    const originalContent = originalPostRows.length > 0 ? originalPostRows[0].content : '';
+
     // 更新笔记基本信息
     await pool.execute(
       'UPDATE posts SET title = ?, content = ?, category_id = ?, is_draft = ? WHERE id = ?',
@@ -704,36 +709,75 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     }
 
-    // 检查是否从草稿变为发布状态，如果是则处理@用户通知
-    const [originalPostRows] = await pool.execute('SELECT is_draft FROM posts WHERE id = ?', [postId.toString()]);
-    const wasOriginallyDraft = originalPostRows.length > 0 && originalPostRows[0].is_draft === 1;
-    
-    if (wasOriginallyDraft && !is_draft && content && hasMentions(content)) {
-      const mentionedUsers = extractMentionedUsers(content);
-
-      for (const mentionedUser of mentionedUsers) {
+    // 处理@用户通知的逻辑
+    if (!is_draft && content) { // 只有在发布状态下才处理@通知
+      // 获取新内容中的@用户
+      const newMentionedUsers = hasMentions(content) ? extractMentionedUsers(content) : [];
+      const newMentionedUserIds = new Set(newMentionedUsers.map(user => user.userId));
+      
+      // 获取原内容中的@用户（如果不是从草稿变为发布）
+      let oldMentionedUserIds = new Set();
+      if (!wasOriginallyDraft && originalContent && hasMentions(originalContent)) {
+        const oldMentionedUsers = extractMentionedUsers(originalContent);
+        oldMentionedUserIds = new Set(oldMentionedUsers.map(user => user.userId));
+      }
+      
+      // 找出需要删除通知的用户（在旧列表中但不在新列表中）
+      const usersToRemoveNotification = [...oldMentionedUserIds].filter(userId => !newMentionedUserIds.has(userId));
+      
+      // 找出需要添加通知的用户（在新列表中但不在旧列表中）
+      const usersToAddNotification = [...newMentionedUserIds].filter(userId => !oldMentionedUserIds.has(userId));
+      
+      // 删除不再需要的@通知
+      for (const mentionedUserId of usersToRemoveNotification) {
         try {
           // 根据小石榴号查找用户的自增ID
-          const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUser.userId]);
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUserId]);
+          
+          if (userRows.length > 0) {
+            const mentionedUserAutoId = userRows[0].id;
+            
+            // 删除该用户的@通知
+            await NotificationHelper.deleteNotifications(pool, {
+              type: NotificationHelper.TYPES.MENTION,
+              targetId: postId,
+              senderId: userId,
+              userId: mentionedUserAutoId
+            });
+            
+            console.log(`删除@通知 - 笔记ID: ${postId}, 用户: ${mentionedUserId}`);
+          }
+        } catch (error) {
+          console.error(`删除@用户通知失败 - 用户: ${mentionedUserId}:`, error);
+        }
+      }
+      
+      // 添加新的@通知
+      for (const mentionedUserId of usersToAddNotification) {
+        try {
+          // 根据小石榴号查找用户的自增ID
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUserId]);
 
           if (userRows.length > 0) {
-            const mentionedUserId = userRows[0].id;
+            const mentionedUserAutoId = userRows[0].id;
 
             // 不给自己发通知
-            if (mentionedUserId !== userId) {
+            if (mentionedUserAutoId !== userId) {
               // 创建@用户通知
               const mentionNotificationData = NotificationHelper.createNotificationData({
-                userId: mentionedUserId,
+                userId: mentionedUserAutoId,
                 senderId: userId,
                 type: NotificationHelper.TYPES.MENTION,
                 targetId: postId
               });
 
               await NotificationHelper.insertNotification(pool, mentionNotificationData);
+              
+              console.log(`添加@通知 - 笔记ID: ${postId}, 用户: ${mentionedUserId}`);
             }
           }
         } catch (error) {
-          console.error(`处理@用户通知失败 - 用户: ${mentionedUser.userId}:`, error);
+          console.error(`处理@用户通知失败 - 用户: ${mentionedUserId}:`, error);
         }
       }
     }

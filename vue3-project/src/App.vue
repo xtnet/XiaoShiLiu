@@ -73,6 +73,13 @@ const restoreThemeColor = () => {
       root.style.setProperty('--primary-color-shadow', shadowColor)
     }
   }
+  else{
+  // 设置默认主题色
+    const root = document.documentElement
+    root.style.setProperty('--primary-color', '#ff2442')
+    root.style.setProperty('--primary-color-dark', '#b31f35')
+    root.style.setProperty('--primary-color-shadow', 'rgba(254, 40, 67, 0.3)')
+  }
 }
 
 // 应用启动时初始化用户信息和主题色
