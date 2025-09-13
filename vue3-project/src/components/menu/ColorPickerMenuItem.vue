@@ -165,6 +165,7 @@ onMounted(() => {
 }
 
 .color-display:active {
-  transform: scale(0.95);
+  transform: scale(0.90);
+  box-shadow: 0 0 0 1px var(--primary-color);
 }
 </style>

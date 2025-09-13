@@ -94,7 +94,11 @@ const newItemAnimStates = ref({})
 // 计算当前应该使用的列数
 const updateColumnCount = () => {
     const width = window.innerWidth
-    if (width >= 1200) {
+    if (width >= 1420) {
+        columnCount.value = 5
+        columnGap.value = 16
+        batchSize.value = 15 // 超大屏增加批次大小
+    } else if (width >= 1200) {
         columnCount.value = 4
         columnGap.value = 16
         batchSize.value = 12 // 大屏增加批次大小
@@ -972,7 +976,6 @@ function handleImageError(event) {
 .waterfall-container {
     width: 100%;
     position: relative;
-    margin: 0 auto;
     padding: 0 16px;
     box-sizing: border-box;
     /* 确保容器有正确的层级和渲染上下文 */
@@ -984,7 +987,6 @@ function handleImageError(event) {
     display: flex;
     align-items: flex-start;
     width: 100%;
-    margin: 0 auto;
     gap: 16px;
     /* 优化大屏多列布局的渲染性能 */
     contain: layout style;
@@ -1254,6 +1256,16 @@ function handleImageError(event) {
 
 
 /* 响应式设计优化 */
+@media (min-width: 1420px) {
+    .waterfall-columns {
+        gap: 20px;
+    }
+
+    .waterfall-column {
+        gap: 20px;
+    }
+}
+
 @media (min-width: 1200px) {
     .waterfall-columns {
         gap: 18px;

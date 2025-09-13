@@ -35,8 +35,7 @@ onUnmounted(() => {
   min-height: 100vh;
   background-color: var(--bg-color-primary);
   min-width: 320px;
-  margin: 0 auto;
-  max-width: 1200px;
+  margin: 0;
   width: 100%;
   overflow-x: hidden;
   position: relative;
@@ -64,8 +63,9 @@ onUnmounted(() => {
 
 .content-wrapper {
   flex: 1;
-  margin: auto;
+  margin: 0 auto;
   width: 100%;
+  max-width: 1200px;
   padding: 0;
   box-sizing: border-box;
   padding-bottom: 48px;

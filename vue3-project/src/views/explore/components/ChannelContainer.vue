@@ -167,7 +167,6 @@ onUnmounted(() => {
     .fixed-channel-container {
         left: calc(50% + 114px);
         width: calc(100% - 228px);
-        max-width: calc(1200px - 228px);
     }
 }
 </style>
