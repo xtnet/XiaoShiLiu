@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.1.3</span>
+        <span class="version">版本: v1.1.4</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-12</span>
+        <span class="update-time">更新时间: 2025-09-13</span>
       </div>
     </div>
 
@@ -68,6 +68,9 @@
           </div>
           <div v-for="group in filteredApiGroups" :key="group.name" class="api-group">
             <h4>{{ group.name }}</h4>
+            <div v-if="group.description" class="group-description">
+              <p>{{ group.description }}</p>
+            </div>
             <div class="api-list">
               <div v-for="api in group.apis" :key="api.path" class="api-item">
                 <div class="api-header" @click="toggleApi(api)">
@@ -962,6 +965,7 @@ const apiGroups = ref([
   },
   {
     name: '通知相关接口',
+    description: '通知系统支持以下类型：1-点赞笔记，2-点赞评论，3-收藏，4-评论笔记，5-回复评论，6-关注用户，7-评论提及（在评论中提及用户），8-笔记提及（在笔记中提及用户）',
     apis: [
       {
         method: 'GET',
@@ -2231,6 +2235,21 @@ mark {
   font-size: 18px;
   color: var(--text-color-primary);
   border-bottom: 1px solid var(--border-color-primary);
+}
+
+.group-description {
+  background: #f0f8ff;
+  padding: 12px 30px;
+  border-left: 4px solid #007bff;
+  margin: 0;
+  font-size: 14px;
+  color: #495057;
+  border-bottom: 1px solid var(--border-color-primary);
+}
+
+.group-description p {
+  margin: 0;
+  line-height: 1.5;
 }
 
 .api-list {

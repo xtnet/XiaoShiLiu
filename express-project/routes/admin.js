@@ -1684,38 +1684,38 @@ const auditCrudConfig = {
     getList: async (req) => {
       const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', ...filters } = req.query
       const offset = (page - 1) * limit
-      
+
       // 构建查询条件
       let whereClause = 'WHERE 1=1'
       const queryParams = []
       let paramIndex = 1
-      
+
       // 处理筛选条件
       if (filters.user_id) {
         whereClause += ` AND a.user_id = ?`
         queryParams.push(filters.user_id)
       }
-      
+
       if (filters.user_display_id) {
         whereClause += ` AND u.user_id LIKE ?`
         queryParams.push(`%${filters.user_display_id}%`)
       }
-      
+
       if (filters.type) {
         whereClause += ` AND a.type = ?`
         queryParams.push(filters.type)
       }
-      
+
       if (filters.status !== undefined && filters.status !== '') {
         whereClause += ` AND a.status = ?`
         queryParams.push(parseInt(filters.status))
       }
-      
+
       // 构建排序
       const validSortFields = ['id', 'created_at', 'audit_time', 'status']
       const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at'
       const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-      
+
       // 查询数据
       const dataQuery = `
         SELECT 
@@ -1735,7 +1735,7 @@ const auditCrudConfig = {
         ORDER BY a.${sortField} ${order}
         LIMIT ? OFFSET ?
       `
-      
+
       // 查询总数
       const countQuery = `
         SELECT COUNT(*) as total
@@ -1743,14 +1743,14 @@ const auditCrudConfig = {
         LEFT JOIN users u ON a.user_id = u.id
         ${whereClause}
       `
-      
+
       queryParams.push(parseInt(limit), offset)
-      
+
       const [dataResult, countResult] = await Promise.all([
         pool.query(dataQuery, queryParams),
         pool.query(countQuery, queryParams.slice(0, -2))
       ])
-      
+
       return {
         data: dataResult[0],
         total: parseInt(countResult[0][0].total),
@@ -1758,10 +1758,10 @@ const auditCrudConfig = {
         limit: parseInt(limit)
       }
     },
-    
+
     getOne: async (req) => {
       const { id } = req.params
-      
+
       const query = `
         SELECT 
           a.id,
@@ -1778,7 +1778,7 @@ const auditCrudConfig = {
         LEFT JOIN users u ON a.user_id = u.id
         WHERE a.id = ?
       `
-      
+
       const result = await pool.query(query, [id])
       return result[0][0] || null
     }
@@ -1838,7 +1838,7 @@ router.get('/audit', adminAuth, async (req, res) => {
 router.put('/audit/:id/approve', adminAuth, async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // 获取审核记录信息
     const [auditResult] = await pool.query('SELECT user_id, type FROM audit WHERE id = ?', [id])
     if (auditResult.length === 0) {
@@ -1847,17 +1847,17 @@ router.put('/audit/:id/approve', adminAuth, async (req, res) => {
         message: '审核记录不存在'
       })
     }
-    
+
     const { user_id, type } = auditResult[0]
-    
+
     // 更新审核状态为通过
     await pool.query('UPDATE audit SET status = 1, audit_time = NOW() WHERE id = ?', [id])
-    
+
     // 根据认证类型更新用户的verified字段
     // type: 1-官方认证, 2-个人认证
     const verifiedValue = type === 1 ? 1 : (type === 2 ? 2 : 0)
     await pool.query('UPDATE users SET verified = ? WHERE id = ?', [verifiedValue, user_id])
-    
+
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '审核通过成功'
@@ -1876,7 +1876,7 @@ router.put('/audit/:id/approve', adminAuth, async (req, res) => {
 router.put('/audit/:id/reject', adminAuth, async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // 获取审核记录信息
     const [auditResult] = await pool.query('SELECT user_id FROM audit WHERE id = ?', [id])
     if (auditResult.length === 0) {
@@ -1885,15 +1885,15 @@ router.put('/audit/:id/reject', adminAuth, async (req, res) => {
         message: '审核记录不存在'
       })
     }
-    
+
     const { user_id } = auditResult[0]
-    
+
     // 更新审核状态为拒绝
     await pool.query('UPDATE audit SET status = 2, audit_time = NOW() WHERE id = ?', [id])
-    
+
     // 拒绝认证申请时，将用户的verified字段设置为0（未认证）
     await pool.query('UPDATE users SET verified = 0 WHERE id = ?', [user_id])
-    
+
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '拒绝申请成功'

@@ -12,7 +12,8 @@ class NotificationHelper {
     COMMENT_POST: 4,   // 评论笔记
     REPLY_COMMENT: 5,  // 回复评论
     FOLLOW: 6,         // 关注
-    MENTION: 7         // @提及
+    MENTION_COMMENT: 7, // 评论中@提及
+    MENTION: 8         // 笔记中@提及
   };
 
   // 通知标题模板
@@ -60,11 +61,18 @@ class NotificationHelper {
       '开始关注你了',
       '关注了你的账号'
     ],
-    [this.TYPES.MENTION]: [
+    [this.TYPES.MENTION_COMMENT]: [
       '在评论中@了你',
       '在评论中提到了你',
       '在评论中艾特了你',
       '评论中@了你',
+      '提及了你'
+    ],
+    [this.TYPES.MENTION]: [
+      '在笔记中@了你',
+      '在笔记中提到了你',
+      '在笔记中艾特了你',
+      '笔记中@了你',
       '提及了你'
     ]
   };

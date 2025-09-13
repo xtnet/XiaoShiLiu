@@ -152,7 +152,7 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | id | BIGINT | Notification ID | Primary key, auto-increment |
 | user_id | BIGINT | Recipient User ID | Foreign key to users |
 | sender_id | BIGINT | Sender User ID | Foreign key to users |
-| type | TINYINT | Notification Type | 1-Like, 2-Comment, 3-Follow |
+| type | TINYINT | Notification Type | 1-Like Post, 2-Like Comment, 3-Collection, 4-Comment Post, 5-Reply Comment, 6-Follow, 7-Comment Mention, 8-Post Mention |
 | title | VARCHAR(200) | Notification Title | Notification content |
 | target_id | BIGINT | Associated Target ID | Post or comment ID, nullable |
 | comment_id | BIGINT | Associated Comment ID | For comment and reply notifications, nullable |

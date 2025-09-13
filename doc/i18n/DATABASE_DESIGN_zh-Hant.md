@@ -153,7 +153,7 @@
 | id | BIGINT | 通知ID | 主鍵，自增 |
 | user_id | BIGINT | 接收使用者ID | 外鍵關聯users |
 | sender_id | BIGINT | 發送使用者ID | 外鍵關聯users |
-| type | TINYINT | 通知類型 | 1-按讚, 2-評論, 3-關注 |
+| type | TINYINT | 通知類型 | 1-按讚筆記, 2-按讚評論, 3-收藏, 4-評論筆記, 5-回覆評論, 6-關注, 7-評論提及, 8-筆記提及 |
 | title | VARCHAR(200) | 通知標題 | 通知內容 |
 | target_id | BIGINT | 關聯目標ID | 筆記或評論ID，可為空 |
 | comment_id | BIGINT | 關聯評論ID | 用於評論和回覆通知，可為空 |

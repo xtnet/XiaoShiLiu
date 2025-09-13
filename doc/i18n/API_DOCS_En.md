@@ -2,10 +2,10 @@
 
 ## Project Information
 - **Project Name**: Xiaoshiliu Image and Text Community
-- **Version**: v1.1.3
+- **Version**: v1.1.4
 - **Basic URL**: `http://localhost:3001`
 - **Database**: xiaoshiliu (MySQL)
-- **Update Time**: 2025-09-12
+- **Update Time**: 2025-09-13
 
 ## General Instructions
 
@@ -632,6 +632,17 @@ Common parameters for interfaces supporting pagination:
 ---
 
 ## Notification-related APIs
+
+### Notification Type Description
+The notification system supports the following types:
+- **1**: Like Post
+- **2**: Like Comment
+- **3**: Collection
+- **4**: Comment Post
+- **5**: Reply Comment
+- **6**: Follow User
+- **7**: Comment Mention (mentioning user in comment)
+- **8**: Post Mention (mentioning user in post)
 
 ### 1. Retrieve Comment Notifications
 **API Endpoint**: `GET /api/notifications/comments`

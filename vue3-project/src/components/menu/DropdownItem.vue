@@ -25,9 +25,8 @@ const handleClick = () => {
 .dropdown-item {
   cursor: pointer;
   transition: background-color 0.2s ease;
-  border-radius: 999px;
-  margin: 2px 0;
-  width: 100%;
+  border-radius: 8px;
+  margin: 2px 4px;
   box-sizing: border-box;
 }
 

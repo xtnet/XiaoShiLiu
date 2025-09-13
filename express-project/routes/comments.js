@@ -179,7 +179,7 @@ router.post('/', authenticateToken, async (req, res) => {
               const mentionNotificationData = NotificationHelper.createNotificationData({
                 userId: mentionedUserId,
                 senderId: userId,
-                type: NotificationHelper.TYPES.MENTION,
+                type: NotificationHelper.TYPES.MENTION_COMMENT,
                 targetId: post_id,
                 commentId: commentId
               });

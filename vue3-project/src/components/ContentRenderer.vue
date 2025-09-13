@@ -4,22 +4,13 @@
     <div v-if="text" class="content-text">
       <span class="mention-text" v-html="parsedText" @click="handleMentionClick"></span>
     </div>
-    
+
     <!-- 图片内容 -->
     <div v-if="images && images.length > 0" class="content-images">
       <div class="images-grid" :class="getGridClass()">
-        <div 
-          v-for="(image, index) in images" 
-          :key="index" 
-          class="image-item"
-          @click="$emit('image-click', { images: images, index })"
-        >
-          <img 
-            :src="image" 
-            :alt="`图片${index + 1}`" 
-            class="content-image"
-            @error="handleImageError"
-          />
+        <div v-for="(image, index) in images" :key="index" class="image-item"
+          @click="$emit('image-click', { images: images, index })">
+          <img :src="image" :alt="`图片${index + 1}`" class="content-image" @error="handleImageError" />
         </div>
       </div>
     </div>
@@ -52,18 +43,18 @@ const actualContent = computed(() => {
 // 解析content内容，提取文字和图片
 const parsedContent = computed(() => {
   if (!actualContent.value) return { text: '', images: [] }
-  
+
   // 创建临时DOM元素来解析HTML
   const tempDiv = document.createElement('div')
   tempDiv.innerHTML = actualContent.value
-  
+
   // 提取图片
   const imgElements = tempDiv.querySelectorAll('img')
   const images = Array.from(imgElements).map(img => img.src)
-  
+
   // 移除图片元素，获取文本（保留换行信息）
   imgElements.forEach(img => img.remove())
-  
+
   // 将<br>标签转换为换行符，保留换行信息
   let htmlContent = tempDiv.innerHTML
   htmlContent = htmlContent.replace(/<br\s*\/?>/gi, '\n')
@@ -73,12 +64,12 @@ const parsedContent = computed(() => {
   htmlContent = htmlContent.replace(/<\/p><p>/gi, '\n')
   htmlContent = htmlContent.replace(/<p>/gi, '')
   htmlContent = htmlContent.replace(/<\/p>/gi, '')
-  
+
   // 创建新的临时div来获取纯文本
   const textDiv = document.createElement('div')
   textDiv.innerHTML = htmlContent
   const text = textDiv.textContent || textDiv.innerText || ''
-  
+
   return { text: text.trim(), images }
 })
 
@@ -93,12 +84,12 @@ const parsedText = computed(() => {
 // 处理mention链接点击事件
 const handleMentionClick = (event) => {
   const target = event.target
-  
+
   // 检查点击的是否是mention链接
   if (target.classList.contains('mention-link')) {
     event.preventDefault()
     const userId = target.getAttribute('data-user-id')
-    
+
     if (userId) {
       // 在新标签页中打开用户主页
       const userUrl = `${window.location.origin}/user/${userId}`
@@ -229,19 +220,19 @@ const handleImageError = (event) => {
   .images-grid.single {
     max-width: 150px;
   }
-  
+
   .images-grid.double {
     max-width: 150px;
   }
-  
+
   .images-grid.triple {
     max-width: 180px;
   }
-  
+
   .images-grid.quad {
     max-width: 150px;
   }
-  
+
   .images-grid.multiple {
     max-width: 180px;
   }

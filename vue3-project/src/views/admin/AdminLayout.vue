@@ -329,10 +329,10 @@ const handleMouseLeave = (event) => {
   // 获取侧边栏元素的边界信息
   const sidebarElement = event.currentTarget
   const rect = sidebarElement.getBoundingClientRect()
-  
+
   // 获取鼠标离开时的位置
   const mouseX = event.clientX
-  
+
   // 只有当鼠标从右侧离开时才收起侧边栏
   // 右侧边界位置 + 一些容差值
   if (mouseX >= rect.right - 5) {
@@ -438,7 +438,8 @@ const goBack = () => {
   align-items: center;
   justify-content: center;
 }
-.logo-icon img{
+
+.logo-icon img {
   width: 120%;
   height: 100%;
   object-fit: contain;
@@ -476,7 +477,7 @@ const goBack = () => {
 
 .sidebar.collapsed.expanded .sidebar-footer {
   border-top: 1px solid var(--border-color-primary);
-  transition: border 0.3s ease,background-color 0.3s ease;
+  transition: border 0.3s ease, background-color 0.3s ease;
 }
 
 .sidebar-footer {

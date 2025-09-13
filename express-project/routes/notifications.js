@@ -39,7 +39,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
       LEFT JOIN users u ON n.sender_id = u.id
       LEFT JOIN posts p ON n.target_id = p.id
       LEFT JOIN comments c ON n.comment_id = c.id
-      WHERE n.user_id = ? AND n.type IN (4, 5, 7)
+      WHERE n.user_id = ? AND n.type IN (4, 5, 7, 8)
       ORDER BY n.created_at DESC LIMIT ? OFFSET ?
     `;
 
@@ -47,7 +47,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
 
     // 获取总数
     const [countResult] = await pool.execute(
-      'SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND type IN (4, 5, 7)',
+      'SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND type IN (4, 5, 7, 8)',
       [userId.toString()]
     );
     const total = countResult[0].total;
@@ -382,7 +382,7 @@ router.get('/unread-count-by-type', authenticateToken, async (req, res) => {
     // 按类型统计未读通知数量
     const [result] = await pool.execute(
       `SELECT 
-        SUM(CASE WHEN type IN (4, 5, 7) THEN 1 ELSE 0 END) as comments,
+        SUM(CASE WHEN type IN (4, 5, 7, 8) THEN 1 ELSE 0 END) as comments,
         SUM(CASE WHEN type IN (1, 2) THEN 1 ELSE 0 END) as likes,
         SUM(CASE WHEN type = 3 THEN 1 ELSE 0 END) as collections,
         SUM(CASE WHEN type = 6 THEN 1 ELSE 0 END) as follows,

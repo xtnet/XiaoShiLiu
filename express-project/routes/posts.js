@@ -4,6 +4,7 @@ const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
 const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
+const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
 
 // 获取笔记列表
 router.get('/', optionalAuth, async (req, res) => {
@@ -351,6 +352,37 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
+    // 处理@用户通知（仅在发布笔记时，不是草稿时）
+    if (!is_draft && content && hasMentions(content)) {
+      const mentionedUsers = extractMentionedUsers(content);
+
+      for (const mentionedUser of mentionedUsers) {
+        try {
+          // 根据小石榴号查找用户的自增ID
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUser.userId]);
+
+          if (userRows.length > 0) {
+            const mentionedUserId = userRows[0].id;
+
+            // 不给自己发通知
+            if (mentionedUserId !== userId) {
+              // 创建@用户通知
+              const mentionNotificationData = NotificationHelper.createNotificationData({
+                userId: mentionedUserId,
+                senderId: userId,
+                type: NotificationHelper.TYPES.MENTION,
+                targetId: postId
+              });
+
+              await NotificationHelper.insertNotification(pool, mentionNotificationData);
+            }
+          }
+        } catch (error) {
+          console.error(`处理@用户通知失败 - 用户: ${mentionedUser.userId}:`, error);
+        }
+      }
+    }
+
     console.log(`创建笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
 
     res.json({
@@ -669,6 +701,40 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // 更新标签使用次数
         await pool.execute('UPDATE tags SET use_count = use_count + 1 WHERE id = ?', [tagId]);
+      }
+    }
+
+    // 检查是否从草稿变为发布状态，如果是则处理@用户通知
+    const [originalPostRows] = await pool.execute('SELECT is_draft FROM posts WHERE id = ?', [postId.toString()]);
+    const wasOriginallyDraft = originalPostRows.length > 0 && originalPostRows[0].is_draft === 1;
+    
+    if (wasOriginallyDraft && !is_draft && content && hasMentions(content)) {
+      const mentionedUsers = extractMentionedUsers(content);
+
+      for (const mentionedUser of mentionedUsers) {
+        try {
+          // 根据小石榴号查找用户的自增ID
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUser.userId]);
+
+          if (userRows.length > 0) {
+            const mentionedUserId = userRows[0].id;
+
+            // 不给自己发通知
+            if (mentionedUserId !== userId) {
+              // 创建@用户通知
+              const mentionNotificationData = NotificationHelper.createNotificationData({
+                userId: mentionedUserId,
+                senderId: userId,
+                type: NotificationHelper.TYPES.MENTION,
+                targetId: postId
+              });
+
+              await NotificationHelper.insertNotification(pool, mentionNotificationData);
+            }
+          }
+        } catch (error) {
+          console.error(`处理@用户通知失败 - 用户: ${mentionedUser.userId}:`, error);
+        }
       }
     }
 

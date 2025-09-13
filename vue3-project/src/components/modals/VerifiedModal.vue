@@ -18,19 +18,15 @@
         </div>
 
         <!-- 认证状态提示 -->
-        <div v-else-if="hasVerification.hasPending || hasVerification.hasApproved || hasVerification.hasRejected" class="verification-status">
+        <div v-else-if="hasVerification.hasPending || hasVerification.hasApproved || hasVerification.hasRejected"
+          class="verification-status">
           <div class="status-icon">
             <SvgIcon v-if="hasVerification.hasPending" name="clock" width="48" height="48" />
             <SvgIcon v-else-if="hasVerification.hasApproved" name="verified" width="48" height="48" />
-            <SvgIcon v-else name="close" width="48" height="48"/>
+            <SvgIcon v-else name="close" width="48" height="48" />
           </div>
           <p class="status-text">{{ hasVerification.statusText }}</p>
-          <button 
-            type="button" 
-            class="revoke-btn"
-            @click="handleRevokeVerification"
-            :disabled="revokeLoading"
-          >
+          <button type="button" class="revoke-btn" @click="handleRevokeVerification" :disabled="revokeLoading">
             {{ revokeLoading ? '撤回中...' : '撤回认证' }}
           </button>
         </div>
@@ -41,11 +37,7 @@
           <div class="form-group">
             <label class="form-label">认证类型</label>
             <div class="verification-types">
-              <div 
-                class="verification-type" 
-                :class="{ active: form.type === 2 }"
-                @click="selectVerificationType(2)"
-              >
+              <div class="verification-type" :class="{ active: form.type === 2 }" @click="selectVerificationType(2)">
                 <div class="type-icon">
                   <VerifiedBadge :verified="2" size="large" />
                 </div>
@@ -54,12 +46,8 @@
                   <div class="type-desc">适用于个人用户</div>
                 </div>
               </div>
-              
-              <div 
-                class="verification-type" 
-                :class="{ active: form.type === 1 }"
-                @click="selectVerificationType(1)"
-              >
+
+              <div class="verification-type" :class="{ active: form.type === 1 }" @click="selectVerificationType(1)">
                 <div class="type-icon">
                   <VerifiedBadge :verified="1" size="large" />
                 </div>
@@ -75,45 +63,26 @@
           <div v-if="form.type === 2" class="verification-form">
             <div class="form-group">
               <label class="form-label">真实姓名</label>
-              <input 
-                v-model="form.personalInfo.realName" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入真实姓名"
-                :disabled="loading" 
-              />
+              <input v-model="form.personalInfo.realName" type="text" class="form-input" placeholder="请输入真实姓名"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">身份证号</label>
-              <input 
-                v-model="form.personalInfo.idCard" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入身份证号"
-                :disabled="loading" 
-              />
+              <input v-model="form.personalInfo.idCard" type="text" class="form-input" placeholder="请输入身份证号"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">职业/身份</label>
-              <input 
-                v-model="form.personalInfo.occupation" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入职业或身份描述"
-                :disabled="loading" 
-              />
+              <input v-model="form.personalInfo.occupation" type="text" class="form-input" placeholder="请输入职业或身份描述"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">认证理由</label>
-              <ContentEditableInput 
-                v-model="form.personalInfo.reason" 
-                :input-class="'form-textarea'"
-                placeholder="请简述申请个人认证的理由"
-                :max-length="200"
-              />
+              <ContentEditableInput v-model="form.personalInfo.reason" :input-class="'form-textarea'"
+                placeholder="请简述申请个人认证的理由" :max-length="200" />
             </div>
           </div>
 
@@ -121,56 +90,32 @@
           <div v-if="form.type === 1" class="verification-form">
             <div class="form-group">
               <label class="form-label">机构/企业名称</label>
-              <input 
-                v-model="form.officialInfo.organizationName" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入机构或企业全称"
-                :disabled="loading" 
-              />
+              <input v-model="form.officialInfo.organizationName" type="text" class="form-input"
+                placeholder="请输入机构或企业全称" :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">统一社会信用代码</label>
-              <input 
-                v-model="form.officialInfo.creditCode" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入统一社会信用代码"
-                :disabled="loading" 
-              />
+              <input v-model="form.officialInfo.creditCode" type="text" class="form-input" placeholder="请输入统一社会信用代码"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">联系人姓名</label>
-              <input 
-                v-model="form.officialInfo.contactName" 
-                type="text" 
-                class="form-input" 
-                placeholder="请输入联系人姓名"
-                :disabled="loading" 
-              />
+              <input v-model="form.officialInfo.contactName" type="text" class="form-input" placeholder="请输入联系人姓名"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">联系电话</label>
-              <input 
-                v-model="form.officialInfo.contactPhone" 
-                type="tel" 
-                class="form-input" 
-                placeholder="请输入联系电话"
-                :disabled="loading" 
-              />
+              <input v-model="form.officialInfo.contactPhone" type="tel" class="form-input" placeholder="请输入联系电话"
+                :disabled="loading" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">认证理由</label>
-              <ContentEditableInput 
-                v-model="form.officialInfo.reason" 
-                :input-class="'form-textarea'"
-                placeholder="请简述申请官方认证的理由和用途"
-                :max-length="200"
-              />
+              <ContentEditableInput v-model="form.officialInfo.reason" :input-class="'form-textarea'"
+                placeholder="请简述申请官方认证的理由和用途" :max-length="200" />
             </div>
           </div>
 
@@ -239,11 +184,11 @@ const hasVerification = computed(() => {
   if (!verificationStatus.value || verificationStatus.value.length === 0) {
     return { hasPending: false, hasApproved: false, hasRejected: false, statusText: '' }
   }
-  
+
   const pendingAudit = verificationStatus.value.find(audit => audit.status === 0)
   const approvedAudit = verificationStatus.value.find(audit => audit.status === 1)
   const rejectedAudit = verificationStatus.value.find(audit => audit.status === 2)
-  
+
   if (approvedAudit) {
     const typeText = approvedAudit.type === 1 ? '官方认证' : '个人认证'
     return {
@@ -253,7 +198,7 @@ const hasVerification = computed(() => {
       statusText: `您已通过${typeText}，如需重新申请可先撤回当前认证`
     }
   }
-  
+
   if (rejectedAudit) {
     const typeText = rejectedAudit.type === 1 ? '官方认证' : '个人认证'
     return {
@@ -263,7 +208,7 @@ const hasVerification = computed(() => {
       statusText: `您的${typeText}申请已被拒绝，如需重新申请请先撤回当前申请并修改后再次提交`
     }
   }
-  
+
   if (pendingAudit) {
     const typeText = pendingAudit.type === 1 ? '官方认证' : '个人认证'
     return {
@@ -273,7 +218,7 @@ const hasVerification = computed(() => {
       statusText: `您的${typeText}申请正在审核中，请耐心等待`
     }
   }
-  
+
   return { hasPending: false, hasApproved: false, hasRejected: false, statusText: '' }
 })
 
@@ -292,7 +237,7 @@ const fetchVerificationStatus = async () => {
       }
     })
     const result = await response.json()
-    
+
     if (result.code === 200) {
       verificationStatus.value = result.data
     }
@@ -437,7 +382,7 @@ const handleSubmitVerification = async () => {
 
   try {
     const contentHtml = generateContentHtml()
-    
+
     const response = await fetch('/api/users/verification', {
       method: 'POST',
       headers: {
@@ -454,7 +399,7 @@ const handleSubmitVerification = async () => {
 
     if (result.code === 200 || result.success) {
       $message.success('认证申请提交成功，请耐心等待审核')
-      
+
       // 重置表单
       form.type = null
       form.personalInfo = {
@@ -470,7 +415,7 @@ const handleSubmitVerification = async () => {
         contactPhone: '',
         reason: ''
       }
-      
+
       // 重新获取认证状态，显示认证状态和撤回按钮
       await fetchVerificationStatus()
     } else {
@@ -487,9 +432,9 @@ const handleSubmitVerification = async () => {
 // 撤回认证申请
 const handleRevokeVerification = async () => {
   if (revokeLoading.value) return
-  
+
   revokeLoading.value = true
-  
+
   try {
     const response = await fetch('/api/users/verification/revoke', {
       method: 'DELETE',
@@ -854,6 +799,7 @@ const handleRevokeVerification = async () => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

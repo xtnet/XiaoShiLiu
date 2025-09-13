@@ -155,7 +155,7 @@
 | id | BIGINT | 通知ID | 主键，自增 |
 | user_id | BIGINT | 接收用户ID | 外键关联users |
 | sender_id | BIGINT | 发送用户ID | 外键关联users |
-| type | TINYINT | 通知类型 | 1-点赞, 2-评论, 3-关注 |
+| type | TINYINT | 通知类型 | 1-点赞笔记, 2-点赞评论, 3-收藏, 4-评论笔记, 5-回复评论, 6-关注, 7-评论提及, 8-笔记提及 |
 | title | VARCHAR(200) | 通知标题 | 通知内容 |
 | target_id | BIGINT | 关联目标ID | 笔记或评论ID，可为空 |
 | comment_id | BIGINT | 关联评论ID | 用于评论和回复通知，可为空 |

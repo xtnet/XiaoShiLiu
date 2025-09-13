@@ -1,21 +1,14 @@
 <template>
   <CrudTable title="认证管理" entity-name="认证申请" api-endpoint="/admin/audit" :columns="columns" :form-fields="formFields"
     :search-fields="searchFields" :custom-actions="customActions" @custom-action="handleCustomAction" />
-  
+
   <!-- 消息提示 -->
   <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="handleToastClose" />
 
   <!-- 删除确认弹窗 -->
-  <ConfirmDialog 
-    v-model:visible="showDeleteModal" 
-    title="确认删除" 
-    :message="`确定要删除用户《${selectedItem?.nickname || selectedItem?.user_id}》的认证申请吗？此操作不可撤销。`" 
-    type="warning" 
-    confirm-text="删除" 
-    cancel-text="取消" 
-    @confirm="handleConfirmDelete" 
-    @cancel="showDeleteModal = false" 
-  />
+  <ConfirmDialog v-model:visible="showDeleteModal" title="确认删除"
+    :message="`确定要删除用户《${selectedItem?.nickname || selectedItem?.user_id}》的认证申请吗？此操作不可撤销。`" type="warning"
+    confirm-text="删除" cancel-text="取消" @confirm="handleConfirmDelete" @cancel="showDeleteModal = false" />
 </template>
 
 <script setup>
@@ -77,12 +70,12 @@ const getAuthHeaders = () => {
   const headers = {
     'Content-Type': 'application/json'
   }
-  
+
   const token = localStorage.getItem('admin_token')
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-  
+
   return headers
 }
 
@@ -91,9 +84,9 @@ const columns = [
   { key: 'id', label: 'ID', sortable: true },
   { key: 'user_display_id', label: '用户小石榴号', type: 'user-link', sortable: false },
   { key: 'nickname', label: '用户昵称', sortable: false },
-  { 
-    key: 'type', 
-    label: '认证类型', 
+  {
+    key: 'type',
+    label: '认证类型',
     type: 'status',
     sortable: false,
     statusMap: {
@@ -102,10 +95,10 @@ const columns = [
     }
   },
   { key: 'content', label: '认证内容', type: 'content', sortable: false },
-  { 
-    key: 'status', 
-    label: '审核状态', 
-    type: 'status', 
+  {
+    key: 'status',
+    label: '审核状态',
+    type: 'status',
     sortable: true,
     statusMap: {
       0: { text: '待审核', class: 'status-pending' },
@@ -120,10 +113,10 @@ const columns = [
 // 表单字段定义
 const formFields = computed(() => [
   { key: 'user_id', label: '用户ID', type: 'number', required: true, placeholder: '请输入用户ID' },
-  { 
-    key: 'type', 
-    label: '认证类型', 
-    type: 'select', 
+  {
+    key: 'type',
+    label: '认证类型',
+    type: 'select',
     required: true,
     options: [
       { value: 1, label: '官方认证' },
@@ -131,10 +124,10 @@ const formFields = computed(() => [
     ]
   },
   { key: 'content', label: '认证内容', type: 'textarea', required: true, placeholder: '请输入认证相关内容' },
-  { 
-    key: 'status', 
-    label: '审核状态', 
-    type: 'select', 
+  {
+    key: 'status',
+    label: '审核状态',
+    type: 'select',
     required: false,
     options: [
       { value: 0, label: '待审核' },

@@ -133,6 +133,7 @@ async function loadCommentsData(isLoadMore = false) {
     const transformedData = notifications.map(item => {
       const isRead = item.is_read === 1
       const isReplyComment = item.type === 5 // 回复评论类型
+      const isMentionPost = item.type === 8 // 笔记@通知类型
       return {
         notificationId: item.id,
         id: item.from_user_id,
@@ -142,7 +143,7 @@ async function loadCommentsData(isLoadMore = false) {
         verified: item.from_verified || 0,
         action: item.title || '评论了你的笔记',
         time: formatTime(item.created_at),
-        content: item.comment_content || '原评论已删除',
+        content: isMentionPost ? '点击查看详情' : (item.comment_content || '原评论已删除'),
         postImage: item.post_image || '/default-post.png',
         target_id: item.target_id,
         commentId: item.comment_id, // 评论ID，用于回复和点赞
@@ -588,7 +589,6 @@ const onImageClick = async (notification) => {
 
 // 评论点击处理
 const onCommentClick = async (notification) => {
-  console.log('onCommentClick被调用，通知数据:', notification);
   if (notification.target_id) {
     try {
       // 使用正确的API获取笔记详情

@@ -4,7 +4,7 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description 基于Express框架的图文社区后端API服务
- * @version v1.1.3
+ * @version v1.1.4
  * @license GPLv3
  */
 // 加载环境变量

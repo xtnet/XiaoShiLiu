@@ -41,7 +41,7 @@ onUnmounted(() => {
   position: relative;
   box-sizing: border-box;
   transition: background-color 0.2s ease;
-  
+
 }
 
 .main-content {

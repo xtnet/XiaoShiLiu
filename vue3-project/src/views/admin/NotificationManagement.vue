@@ -14,7 +14,8 @@ const notificationTypeMap = {
   '4': '4(评论笔记)',
   '5': '5(回复评论)',
   '6': '6(关注)',
-  '7': '7(提及)'
+  '7': '7(评论提及)',
+  '8': '8(笔记提及)'
 }
 
 const columns = [
@@ -45,7 +46,9 @@ const formFields = [
       { value: '3', label: '收藏笔记' },
       { value: '4', label: '评论笔记' },
       { value: '5', label: '回复评论' },
-      { value: '6', label: '关注' }
+      { value: '6', label: '关注' },
+      { value: '7', label: '评论提及' },
+      { value: '8', label: '笔记提及' }
     ]
   },
   { key: 'title', label: '标题', type: 'text', required: true, placeholder: '请输入通知标题' },
@@ -68,7 +71,9 @@ const searchFields = [
       { value: '3', label: '收藏笔记' },
       { value: '4', label: '评论笔记' },
       { value: '5', label: '回复评论' },
-      { value: '6', label: '关注' }
+      { value: '6', label: '关注' },
+      { value: '7', label: '评论提及' },
+      { value: '8', label: '笔记提及' }
     ]
   },
   {
