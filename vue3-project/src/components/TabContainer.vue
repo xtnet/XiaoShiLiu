@@ -186,8 +186,8 @@ onUnmounted(() => {
     height: 40px;
     border-radius: 20px;
     background: var(--bg-color-secondary);
-    transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transition: left 0.25s ease-out,
+        width 0.25s ease-out,
         background-color 0.2s ease;
     z-index: 1;
     bottom: 22.5px;
