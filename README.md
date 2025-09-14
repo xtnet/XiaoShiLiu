@@ -72,6 +72,11 @@
     <td><img src="./doc/imgs/14.png" alt="PC端界面14" width="300"/></td>
     <td><img src="./doc/imgs/15.png" alt="PC端界面15" width="300"/></td>
   </tr>
+    <tr>
+    <td><img src="./doc/imgs/16.png" alt="PC端界面16" width="300"/></td>
+    <td><img src="./doc/imgs/17.png" alt="PC端界面17" width="300"/></td>
+    <td><img src="./doc/imgs/18.png" alt="PC端界面18" width="300"/></td>
+  </tr>
 </table>
 
 
