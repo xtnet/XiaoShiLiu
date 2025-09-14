@@ -353,9 +353,15 @@ defineExpose({
   border: none;
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
-  color: var(--text-color-secondary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-primary);
   transition: all 0.2s ease;
+}
+.close-btn{
+  background: var(--bg-color-secondary);
 }
 
 .refresh-btn:disabled {
@@ -367,12 +373,14 @@ defineExpose({
   animation: spin 1s linear infinite;
 }
 
-.refresh-btn:hover:not(:disabled),
-.close-btn:hover {
+.refresh-btn:hover:not(:disabled){
   background: var(--bg-color-secondary);
-  color: var(--text-color-primary);
+  color: var(--text-color-secondary);
 }
-
+.close-btn:hover {
+  scale: 1.1;
+  color: var(--text-color-secondary);
+}
 .mention-search {
   padding: 5px 20px;
   border-bottom: 1px solid var(--border-color-primary);

@@ -696,15 +696,24 @@ const handleSave = async () => {
 }
 
 .close-btn {
-  background: none;
+  width: 30px;
+  height: 30px;
+  background: var(--bg-color-secondary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   cursor: pointer;
   padding: 5px;
-  color: var(--text-color-secondary);
+  color: var(--text-color-primary);
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  color: var(--text-color-primary);
+  color: var(--text-color-secondary);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 .close-btn svg {

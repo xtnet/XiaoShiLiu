@@ -478,23 +478,25 @@ onMounted(() => {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 30px;
+  height: 30px;
   background: var(--bg-color-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-color-secondary);
-  transition: all 0.2s ease;
   z-index: 1;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: var(--text-color-primary);
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: var(--bg-color-tertiary);
-  color: var(--text-color-primary);
+  color: var(--text-color-secondary);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 .auth-content {

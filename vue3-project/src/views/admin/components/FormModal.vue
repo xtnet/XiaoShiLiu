@@ -70,25 +70,27 @@
               </label>
             </div>
             <div v-else-if="field.type === 'avatar-upload'" class="avatar-upload-field">
-              <div class="avatar-upload-area" @click="triggerAvatarFileInput(field.key)" @dragover.prevent @drop.prevent="handleAvatarDrop($event, field.key)">
-                <input :ref="el => setAvatarFileInputRef(field.key, el)" type="file" accept="image/*" @change="handleAvatarFileSelect($event, field.key)" style="display: none" />
-                
+              <div class="avatar-upload-area" @click="triggerAvatarFileInput(field.key)" @dragover.prevent
+                @drop.prevent="handleAvatarDrop($event, field.key)">
+                <input :ref="el => setAvatarFileInputRef(field.key, el)" type="file" accept="image/*"
+                  @change="handleAvatarFileSelect($event, field.key)" style="display: none" />
+
                 <div v-if="!avatarUploading[field.key] && !formData[field.key]" class="avatar-upload-placeholder">
                   <SvgIcon name="publish" width="40" height="40" />
                   <p>点击或拖拽上传头像</p>
                   <p class="upload-hint">支持 JPG、PNG、GIF 格式，将自动裁剪为正方形</p>
                 </div>
-                
+
                 <div v-if="avatarUploading[field.key]" class="avatar-upload-loading">
                   <SvgIcon name="loading" class="loading-icon" />
                   <p>上传中...</p>
                 </div>
-                
+
                 <div v-if="formData[field.key] && !avatarUploading[field.key]" class="avatar-image-preview">
                   <img :src="formData[field.key]" alt="头像预览" />
                 </div>
               </div>
-              
+
               <div v-if="avatarErrors[field.key]" class="avatar-error-message">
                 {{ avatarErrors[field.key] }}
               </div>
@@ -140,8 +142,8 @@
 
 
   <MentionModal :visible="showMentionPanel" @close="closeMentionPanel" @select="handleContentEditableMentionSelect" />
-  
-  <CropModal :visible="showAvatarCropModal" :image-src="avatarCropImageSrc" :uploading="avatarCropUploading" 
+
+  <CropModal :visible="showAvatarCropModal" :image-src="avatarCropImageSrc" :uploading="avatarCropUploading"
     @close="closeAvatarCropModal" @confirm="handleAvatarCropConfirm" />
 </template>
 
@@ -800,7 +802,7 @@ const handleAvatarCropConfirm = async (blob) => {
       avatarErrors.value[fieldKey] = result.message || '头像上传失败，请重试'
       return
     }
-    
+
     showAvatarCropModal.value = false
     avatarCropImageSrc.value = ''
     currentAvatarField.value = ''
@@ -857,11 +859,23 @@ const handleAvatarCropConfirm = async (blob) => {
 }
 
 .close-btn {
-  background: none;
+  background: var(--bg-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
   border: none;
   cursor: pointer;
   padding: 5px;
+  color: var(--text-color-primary);
+}
+
+.close-btn:hover {
   color: var(--text-color-secondary);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 .close-btn svg {
@@ -1327,6 +1341,7 @@ const handleAvatarCropConfirm = async (blob) => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

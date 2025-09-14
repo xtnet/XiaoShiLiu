@@ -176,15 +176,23 @@ export default {
 }
 
 .close-btn {
-  background: none;
+  background: var(--bg-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
   border: none;
   cursor: pointer;
   padding: 5px;
-  color: var(--text-color-secondary);
+  color: var(--text-color-primary);
 }
 
 .close-btn:hover {
-  color: var(--text-color-primary);
+  color: var(--text-color-secondary);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 .close-btn svg {
