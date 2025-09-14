@@ -38,6 +38,17 @@
                   <input type="color" v-model="strokeColor" class="color-picker" />
                 </div>
               </div>
+              <div class="control-group">
+                <label class="control-label">字体</label>
+                <DropdownSelect
+                  v-model="selectedFont"
+                  :options="fontOptions"
+                  placeholder="选择字体"
+                  min-width="120px"
+                  max-width="200px"
+                  size="small"
+                />
+              </div>
             </div>
 
             <!-- 输入和Emoji区域容器 -->
@@ -65,7 +76,7 @@
 
             <!-- 模版选择区域 -->
             <div class="template-section">
-              <p class="section-title">选择模版</p>
+              <div class="section-title">选择模版</div>
               <div class="template-scroll-container">
                 <div class="template-list">
                   <div v-for="template in templates" :key="template.id" class="template-item"
@@ -93,6 +104,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import EmojiPicker from '@/components/EmojiPicker.vue'
+import DropdownSelect from '@/components/DropdownSelect.vue'
 
 const props = defineProps({
   visible: {
@@ -111,6 +123,23 @@ const selectedTemplate = ref(null)
 const previewImage = ref('')
 const templates = ref([])
 const fontSize = ref(40)
+const selectedFont = ref('微软雅黑')
+
+// 字体选项
+const fontOptions = [
+  { label: '微软雅黑', value: '微软雅黑' },
+  { label: '宋体', value: '宋体' },
+  { label: '楷体', value: '楷体' },
+  { label: '黑体', value: '黑体' },
+  { label: '仿宋', value: 'FangSong' },
+  { label: '华文细黑', value: 'STXihei' },
+  { label: '华文彩云', value: 'STCaiyun' },
+  { label: '华文楷体', value: 'STKaiti' },
+  { label: '华文宋体', value: 'STSong' },
+  { label: '华文黑体', value: 'STHeiti' },
+  { label: '华文仿宋', value: 'STFangsong' },
+  { label: '华文隶书', value: 'STLiti' }
+]
 
 // 自动计算最合适的字体大小
 const calculateOptimalFontSize = () => {
@@ -248,7 +277,7 @@ const drawCanvas = async () => {
       fontSize.value = currentFontSize
 
       // 设置文字样式
-      ctx.font = `bold ${currentFontSize}px Arial, sans-serif`
+      ctx.font = `bold ${currentFontSize}px ${selectedFont.value}, Arial, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.lineWidth = 3
@@ -416,8 +445,8 @@ watch(inputText, (newText) => {
   }
 })
 
-// 监听颜色变化，自动重新生成图片
-watch([textColor, strokeColor], (newValues, oldValues) => {
+// 监听颜色和字体变化，自动重新生成图片
+watch([textColor, strokeColor, selectedFont], (newValues, oldValues) => {
   if (inputText.value.trim() && selectedTemplate.value) {
     // 直接执行，不使用nextTick
     handleGenerate()
@@ -432,9 +461,10 @@ watch(() => props.visible, (newVal) => {
     selectedTemplate.value = null
     previewImage.value = ''
     showEmojiPanel.value = false
-    // 重置颜色设置
+    // 重置颜色和字体设置
     textColor.value = '#000000'
     strokeColor.value = '#ffffff'
+    selectedFont.value = '微软雅黑'
   }
 })
 </script>
@@ -715,6 +745,9 @@ watch(() => props.visible, (newVal) => {
   border-radius: 8px;
   padding: 8px 10px;
   border: 1px solid var(--border-color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .control-group {
@@ -742,16 +775,9 @@ watch(() => props.visible, (newVal) => {
   gap: 16px;
 }
 
-@media (max-width: 768px) {
-  .color-controls {
-    flex-direction: row;
-    gap: 24px;
-  }
-}
-
 .color-picker {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   box-shadow: 0 0 0 2px var(--border-color-primary);
   border-radius: 50%;
   cursor: pointer;
@@ -807,7 +833,7 @@ watch(() => props.visible, (newVal) => {
 .template-list {
   display: flex;
   gap: 12px;
-  padding: 8px 0;
+  padding: 8px 12px;
 }
 
 .template-item {
@@ -837,6 +863,7 @@ watch(() => props.visible, (newVal) => {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--border-color-primary);
+  user-select: none;
 }
 
 .template-name {
@@ -844,6 +871,8 @@ watch(() => props.visible, (newVal) => {
   font-size: 12px;
   color: var(--text-color-secondary);
   font-weight: 500;
+  margin: 4px 0 0 0;
+  user-select: none;
 }
 
 .modal-footer {
@@ -851,7 +880,7 @@ watch(() => props.visible, (newVal) => {
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  padding: 20px 30px;
+  padding: 8px 30px;
   border-top: 1px solid var(--border-color-primary);
   background: var(--bg-color-primary);
   flex-shrink: 0;
@@ -859,14 +888,14 @@ watch(() => props.visible, (newVal) => {
 
 .cancel-btn,
 .upload-btn {
-  padding: 12px 24px;
+  padding: 10px 24px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-  min-width: 100px;
+  min-width: 80px;
 }
 
 .cancel-btn {
@@ -896,6 +925,13 @@ watch(() => props.visible, (newVal) => {
   background-color: var(--primary-color-dark);
 }
 
+@media (max-width: 768px) {
+  .color-controls {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+}
 @media (max-width: 640px) {
   .text-image-modal {
     margin: 0.5rem;

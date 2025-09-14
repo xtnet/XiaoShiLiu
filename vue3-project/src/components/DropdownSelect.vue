@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown-selector" :style="{ maxWidth, minWidth }">
+  <div class="dropdown-selector" :class="{ small: size === 'small' }" :style="{ maxWidth, minWidth }">
     <div class="dropdown-toggle" :class="{ active: isOpen }" @click="toggleDropdown">
       <div class="selected-content">
         <span v-if="selectedOption" class="selected-text">
@@ -63,6 +63,12 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  // 尺寸大小
+  size: {
+    type: String,
+    default: 'normal',
+    validator: (value) => ['small', 'normal'].includes(value)
   }
 })
 
@@ -190,6 +196,10 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
+.dropdown-selector.small .selected-content {
+  padding: 8px 12px;
+}
+
 .selected-text {
   color: var(--text-color-primary);
   font-weight: 500;
@@ -236,6 +246,10 @@ onUnmounted(() => {
   position: relative;
   border-radius: 6px;
   margin-bottom: 4px;
+}
+
+.dropdown-selector.small .dropdown-option {
+  padding: 8px 12px;
 }
 
 .dropdown-option:last-child {
