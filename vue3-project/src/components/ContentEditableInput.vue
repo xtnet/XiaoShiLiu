@@ -75,7 +75,7 @@ onMounted(() => {
 
 
 
-// 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持<br>标签用于换行
+// 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持换行
 const convertMentionLinksToText = (html) => {
   if (!html) return ''
 
@@ -99,27 +99,31 @@ const convertMentionLinksToText = (html) => {
     marker.parentNode.replaceChild(atText, marker)
   })
 
-  // 将其他换行元素转换为<br>标签，统一换行格式
-  let content = tempDiv.innerHTML
-  // 处理<div>标签（contenteditable中的换行通常生成div）
-  // 先处理连续的div标签
-  content = content.replace(/<\/div><div>/gi, '<br>')
-  // 处理第一个div标签（如果内容以div开头，说明第一行后面有换行）
-  content = content.replace(/^([^<]*)<div>/gi, '$1<br>')
-  // 移除所有剩余的div标签
-  content = content.replace(/<\/?div[^>]*>/gi, '')
-  // 处理<p>标签
-  content = content.replace(/<\/p><p>/gi, '<br>')
-  content = content.replace(/<p>/gi, '')
-  content = content.replace(/<\/p>/gi, '')
+  // 将div标签转换为换行符，保持文本格式
+  const processNode = (node) => {
+    let result = ''
+    for (let child of node.childNodes) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        result += child.textContent
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        if (child.tagName === 'DIV') {
+          // div标签表示换行，在前面添加换行符（除非是第一个div）
+          if (result.length > 0) {
+            result += '\n'
+          }
+          result += processNode(child)
+        } else if (child.tagName === 'BR') {
+          result += '\n'
+        } else {
+          // 其他标签直接处理内容
+          result += processNode(child)
+        }
+      }
+    }
+    return result
+  }
 
-  // 过滤其他HTML标签，但保留<br>标签
-  content = content.replace(/<(?!br\s*\/?)[^>]*>/gi, '')
-
-  // 清理多余的<br>标签
-  content = content.replace(/^(<br\s*\/?\s*)+/gi, '').replace(/(<br\s*\/?\s*)+$/gi, '')
-
-  return content
+  return processNode(tempDiv)
 }
 
 // 处理输入事件

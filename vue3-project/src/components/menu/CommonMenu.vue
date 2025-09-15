@@ -5,14 +5,12 @@ import ThemeSwitcherMenuItem from '@/components/menu/ThemeSwitcherMenuItem.vue'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
 import { useAboutStore } from '@/stores/about'
-import { useChangePasswordStore } from '@/stores/changePassword'
 import { useKeyboardShortcutsStore } from '@/stores/keyboardShortcuts'
 import { useAccountSecurityStore } from '@/stores/accountSecurity'
 import ColorPickerMenuItem from '@/components/menu/ColorPickerMenuItem.vue'
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const aboutStore = useAboutStore()
-const changePasswordStore = useChangePasswordStore()
 const keyboardShortcutsStore = useKeyboardShortcutsStore()
 const accountSecurityStore = useAccountSecurityStore()
 

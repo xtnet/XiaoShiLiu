@@ -32,6 +32,14 @@ export function parseMentions(text) {
     return placeholder
   })
 
+  // 先处理换行符，将其转换为占位符保护
+  const lineBreaks = []
+  protectedText = protectedText.replace(/\n/g, () => {
+    const placeholder = `__LINE_BREAK_${lineBreaks.length}__`
+    lineBreaks.push('<div></div>')
+    return placeholder
+  })
+
   // 对剩余文本进行HTML转义，防止用户输入的HTML标签被渲染
   const escapedText = escapeHtml(protectedText)
 
@@ -43,10 +51,24 @@ export function parseMentions(text) {
     return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${nickname}</a>`
   })
 
+  // 恢复换行符为div标签
+  lineBreaks.forEach((lineBreak, index) => {
+    result = result.replace(`__LINE_BREAK_${index}__`, lineBreak)
+  })
+
   // 恢复data-at-marker的span标签
   atMarkers.forEach((marker, index) => {
     result = result.replace(`__AT_MARKER_${index}__`, marker)
   })
+
+  // 如果结果包含换行div，需要将第一行内容包装在div中以保持一致性
+  if (result.includes('<div></div>')) {
+    const lines = result.split('<div></div>')
+    if (lines.length > 1 && lines[0]) {
+      lines[0] = lines[0]
+      result = lines.join('<div></div>')
+    }
+  }
 
   return result
 }
