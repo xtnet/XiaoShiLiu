@@ -151,6 +151,9 @@
                           <span v-if="isCurrentUserComment(comment)">我</span>
                           <span v-else>{{ comment.username }}</span>
                         </span>
+                        <div v-if="isPostAuthorComment(comment)" class="author-badge author-badge--parent">
+                          作者
+                        </div>
                       </div>
                       <button v-if="isCurrentUserComment(comment)" class="comment-delete-btn"
                         @click="handleDeleteComment(comment)">
@@ -191,6 +194,9 @@
                                 <span v-if="isCurrentUserComment(reply)">我</span>
                                 <span v-else>{{ reply.username }}</span>
                               </span>
+                              <div v-if="isPostAuthorComment(reply)" class="author-badge author-badge--reply">
+                                作者
+                              </div>
                             </div>
                             <button v-if="isCurrentUserComment(reply)" class="comment-delete-btn"
                               @click="handleDeleteReply(reply, comment.id)">
@@ -847,6 +853,18 @@ const isCurrentUserComment = (comment) => {
 
   const commentUserId = comment.user_auto_id
   return commentUserId === currentUser.id
+}
+
+// 判断评论者是否为帖子作者
+const isPostAuthorComment = (comment) => {
+  if (!comment || !props.item) {
+    return false
+  }
+
+  const postAuthorId = props.item.author_auto_id // 帖子作者的自增ID
+  const commentUserId = comment.user_auto_id // 评论者的自增ID
+
+  return postAuthorId && commentUserId && postAuthorId === commentUserId
 }
 
 const handleDeleteComment = async (comment) => {
@@ -2896,6 +2914,29 @@ function handleAvatarError(event) {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* 作者标识样式 */
+.author-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color-shadow);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-radius: 999px;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.author-badge--parent {
+  padding: 2px 6px;
+}
+
+.author-badge--reply {
+  padding: 1px 5px;
 }
 
 .comment-username {
