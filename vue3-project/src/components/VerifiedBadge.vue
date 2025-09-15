@@ -25,7 +25,7 @@ const props = defineProps({
   size: {
     type: String,
     default: 'medium',
-    validator: (value) => ['small', 'medium', 'large'].includes(value)
+    validator: (value) => ['mini', 'small', 'medium', 'large'].includes(value)
   }
 })
 
@@ -65,9 +65,15 @@ const badgeTitle = computed(() => {
   max-height: 100%;
 }
 
+.verified-badge--mini {
+  width: 7px;
+  height: 7px;
+  margin-left: 0px;
+}
+
 .verified-badge--small {
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
   margin-left: 0px;
 }
 
@@ -99,11 +105,11 @@ const badgeTitle = computed(() => {
   0% {
     background-position: -200% center;
   }
-  
+
   50% {
     background-position: 200% center;
   }
-  
+
   100% {
     background-position: 200% center;
   }

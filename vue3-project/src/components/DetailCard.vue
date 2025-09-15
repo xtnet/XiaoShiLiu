@@ -47,12 +47,14 @@
         <div class="content-section" :style="windowWidth > 768 ? { width: contentSectionWidth + 'px' } : {}">
           <div class="author-wrapper">
             <div class="author-info">
-              <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
-                @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
+              <div class="author-avatar-container">
+                <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
+                  @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
+                <VerifiedBadge :verified="authorData.verified" size="medium" class="author-verified-badge" />
+              </div>
               <div class="author-name-container">
                 <span class="author-name" @click="onUserClick(authorData.id)"
                   v-user-hover="getAuthorUserHoverConfig()">{{ authorData.name }}</span>
-                <VerifiedBadge :verified="authorData.verified" />
               </div>
             </div>
             <FollowButton v-if="!isCurrentUserPost" :is-following="authorData.isFollowing" :user-id="authorData.id"
@@ -135,9 +137,12 @@
 
                 <div v-for="comment in enhancedComments" :key="comment.id" class="comment-item"
                   :data-comment-id="String(comment.id)">
-                  <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
-                    @click="onUserClick(comment.user_id)" @error="handleAvatarError"
-                    v-user-hover="getCommentUserHoverConfig(comment)" />
+                  <div class="comment-avatar-container">
+                    <img :src="comment.avatar" :alt="comment.username" class="comment-avatar clickable-avatar"
+                      @click="onUserClick(comment.user_id)" @error="handleAvatarError"
+                      v-user-hover="getCommentUserHoverConfig(comment)" />
+                    <VerifiedBadge :verified="comment.verified || 0" size="small" class="comment-verified-badge" />
+                  </div>
                   <div class="comment-content">
                     <div class="comment-header">
                       <div class="comment-user-info">
@@ -146,7 +151,6 @@
                           <span v-if="isCurrentUserComment(comment)">我</span>
                           <span v-else>{{ comment.username }}</span>
                         </span>
-                        <VerifiedBadge :verified="comment.verified || 0" size="medium" />
                       </div>
                       <button v-if="isCurrentUserComment(comment)" class="comment-delete-btn"
                         @click="handleDeleteComment(comment)">
@@ -173,9 +177,12 @@
                     <div v-if="comment.replies && comment.replies.length > 0" class="replies-list">
                       <div v-for="reply in getDisplayedReplies(comment.replies, comment.id)" :key="reply.id"
                         class="reply-item" :data-comment-id="String(reply.id)">
-                        <img :src="reply.avatar" :alt="reply.username" class="reply-avatar "
-                          @click="onUserClick(reply.user_id)" @error="handleAvatarError"
-                          v-user-hover="getCommentUserHoverConfig(reply)" />
+                        <div class="reply-avatar-container">
+                          <img :src="reply.avatar" :alt="reply.username" class="reply-avatar "
+                            @click="onUserClick(reply.user_id)" @error="handleAvatarError"
+                            v-user-hover="getCommentUserHoverConfig(reply)" />
+                          <VerifiedBadge :verified="reply.verified || 0" size="mini" class="reply-verified-badge" />
+                        </div>
                         <div class="reply-content">
                           <div class="reply-header">
                             <div class="reply-user-info">
@@ -184,7 +191,6 @@
                                 <span v-if="isCurrentUserComment(reply)">我</span>
                                 <span v-else>{{ reply.username }}</span>
                               </span>
-                              <VerifiedBadge :verified="reply.verified || 0" size="small" />
                             </div>
                             <button v-if="isCurrentUserComment(reply)" class="comment-delete-btn"
                               @click="handleDeleteReply(reply, comment.id)">
@@ -2578,12 +2584,26 @@ function handleAvatarError(event) {
   gap: 12px;
 }
 
+.author-avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
 .author-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
+}
+
+.author-verified-badge {
+  position: absolute;
+  bottom: 0px;
+  right: -6px;
+  z-index: 2;
+  border: 2px solid var(--bg-color-primary);
+  border-radius: 50%;
 }
 
 
@@ -2832,13 +2852,30 @@ function handleAvatarError(event) {
   }
 }
 
+.comment-avatar-container {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
 .comment-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
   cursor: pointer;
+  display: block;
+}
+
+.comment-verified-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -6px;
+  z-index: 2;
+  border: 2px solid var(--bg-color-primary);
+  border-radius: 50%;
 }
 
 
@@ -2971,13 +3008,30 @@ function handleAvatarError(event) {
   transition: all 0.3s ease;
 }
 
+.reply-avatar-container {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
 .reply-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
   cursor: pointer;
+  display: block;
+}
+
+.reply-verified-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  z-index: 2;
+  border: 1px solid var(--bg-color-primary);
+  border-radius: 50%;
 }
 
 
@@ -3814,9 +3868,44 @@ function handleAvatarError(event) {
     height: 36px;
   }
 
+  /* 移动端回复头像保持更小尺寸以区分层级 */
+  .reply-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* 移动端回复头像容器也需要调整 */
+  .reply-avatar-container {
+    width: 28px;
+    height: 28px;
+  }
+
   .comment-content,
   .reply-content {
     margin-left: 12px;
+  }
+  /* 移动端头像和认证徽章调整 */
+  .author-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .author-verified-badge {
+    right: -4px;
+    bottom: -1px;
+    border-width: 1px;
+  }
+
+  .comment-verified-badge {
+    right: -8px;
+    bottom: -7px;
+    border-width: 1px;
+  }
+
+  .reply-verified-badge {
+    right: -2px;
+    bottom: -1px;
+    border-width: 1px;
   }
 
   /* 表情面板在移动端的调整 */
