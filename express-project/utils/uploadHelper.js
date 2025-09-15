@@ -5,6 +5,7 @@ const path = require('path');
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const config = require('../config/config');
 const crypto = require('crypto');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 /**
  * 保存文件到本地
@@ -100,6 +101,73 @@ async function uploadToImageHost(fileBuffer, filename, mimetype) {
 
 
 /**
+ * 上传文件到 Cloudflare R2
+ * @param {Buffer} fileBuffer - 文件缓冲区
+ * @param {string} filename - 文件名
+ * @param {string} mimetype - 文件MIME类型
+ * @returns {Promise<{success: boolean, url?: string, message?: string}>}
+ */
+async function uploadToR2(fileBuffer, filename, mimetype) {
+  try {
+    const r2Config = config.upload.r2;
+    
+    // 验证必要的配置
+    if (!r2Config.accessKeyId || !r2Config.secretAccessKey || !r2Config.bucketName || !r2Config.endpoint) {
+      throw new Error('Cloudflare R2 配置不完整');
+    }
+
+    // 创建 S3 客户端（Cloudflare R2 兼容 S3 API）
+    const s3Client = new S3Client({
+      region: r2Config.region,
+      endpoint: r2Config.endpoint,
+      credentials: {
+        accessKeyId: r2Config.accessKeyId,
+        secretAccessKey: r2Config.secretAccessKey,
+      },
+    });
+
+    // 生成唯一文件名
+    const ext = path.extname(filename);
+    const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
+    const uniqueFilename = `${Date.now()}_${hash}${ext}`;
+
+    // 上传参数
+    const uploadParams = {
+      Bucket: r2Config.bucketName,
+      Key: uniqueFilename,
+      Body: fileBuffer,
+      ContentType: mimetype,
+    };
+
+    // 执行上传
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
+
+    // 构建访问URL
+    let fileUrl;
+    if (r2Config.publicUrl) {
+      // 使用自定义域名
+      fileUrl = `${r2Config.publicUrl}/${uniqueFilename}`;
+    } else {
+      // 使用默认的 R2 公共URL格式
+      const accountId = r2Config.accountId;
+      fileUrl = `https://pub-${accountId}.r2.dev/${uniqueFilename}`;
+    }
+
+    return {
+      success: true,
+      url: fileUrl
+    };
+  } catch (error) {
+    console.error('Cloudflare R2 上传失败:', error.message);
+    return {
+      success: false,
+      message: error.message || 'Cloudflare R2 上传失败'
+    };
+  }
+}
+
+/**
  * 从文件路径上传到图床
  * @param {string} filePath - 文件路径
  * @param {string} originalname - 原始文件名
@@ -176,6 +244,8 @@ async function uploadFile(fileBuffer, filename, mimetype) {
     return await saveToLocal(fileBuffer, filename);
   } else if (strategy === 'imagehost') {
     return await uploadToImageHost(fileBuffer, filename, mimetype);
+  } else if (strategy === 'r2') {
+    return await uploadToR2(fileBuffer, filename, mimetype);
   } else {
     return {
       success: false,
@@ -189,6 +259,7 @@ module.exports = {
   uploadToImageHost,
   uploadFileToImageHost,
   saveToLocal,
+  uploadToR2,
   uploadFile,
   adminAuth
 };

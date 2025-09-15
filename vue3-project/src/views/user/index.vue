@@ -371,7 +371,7 @@ function handleCollect(data) {
       <div class="tab-slider" :style="sliderStyle"></div>
     </div>
 
-    <div class="fixedTab" :class="{ hidden: scrollY < 260 }" ref="fixedTabBarRef" v-if="userStore.isLoggedIn">
+    <div class="fixedTab" :class="{ hidden: scrollY < 300 }" ref="fixedTabBarRef" v-if="userStore.isLoggedIn">
 
       <div v-for="item in tabs" class="tab-item" :class="{ active: activeTab === item.name }"
         @click="onTabClick(item.name)">

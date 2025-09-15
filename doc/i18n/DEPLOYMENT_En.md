@@ -1,17 +1,17 @@
 # Deployment Guide
 
-This document provides a detailed description of the deployment process and configuration instructions for the XiaoShiLiu image and text community project.
+This document provides a detailed introduction to the deployment process and configuration instructions for the XiaoShiLiu image and text community project.
 
 ## Deployment Methods
 
 The project supports two deployment methods:
 
-1. **Docker One-click Deployment** (recommended) - Simple and quick, suitable for production environments
+1. **Docker One-Click Deployment** (recommended) - Simple and quick, suitable for production environments
 2. **Traditional Deployment** - Manual configuration, suitable for development environments
 
 ---
 
-## 🐳 Docker One-click Deployment (Recommended)
+## 🐳 Docker One-Click Deployment (Recommended)
 
 ### Environment Requirements
 
@@ -26,11 +26,11 @@ The project supports two deployment methods:
 |-----------|--------------|-------------|-------------|
 | Database | mysql | 8.0 | Uses the official image `mysql:8.0` with utf8mb4 default configuration |
 | Backend Runtime | node | 18-alpine | `express-project/Dockerfile` uses `node:18-alpine` |
-| Frontend Build | node | 18-alpine | `vue3-project/Dockerfile` uses it during the build phase |
+| Frontend Build | node | 18-alpine | `vue3-project/Dockerfile` uses this for the build phase |
 | Frontend Runtime | nginx | alpine | Uses `nginx:alpine` to provide static files |
 | Compose Health Check | wget | - | Frontend health check uses `wget --spider http://localhost/` |
 
-> Note: The above versions are consistent with `docker-compose.yml` and the front-end `Dockerfile`; if changes are required, please adjust the corresponding files and documentation accordingly.
+> Note: The above versions are consistent with `docker-compose.yml` and the front-end and back-end `Dockerfile`; if changes are required, please synchronize adjustments to the corresponding files and documentation.
 ### Quick Start
 
 #### 1. Clone the Project
@@ -44,10 +44,10 @@ cd XiaoShiLiu
 
 ```bash
 # Optional: If you have custom environment variables, you can create a .env file
-# This repository does not provide .env.docker, if there is no special need, you can skip it and use the default values in docker-compose.yml
+# This repository does not provide .env.docker, so you can skip it if there is no special need. You can use the default values in docker-compose.yml instead.
 ```
 
-#### 3. One-click Start
+#### 3. One-Click Start
 
 **Windows Users:**
 
@@ -76,7 +76,7 @@ cd XiaoShiLiu
 **Linux/macOS Users:**
 
 ```bash
-# Give the script execution permission
+# Grant execution permission to the script
 chmod +x deploy.sh
 
 # Start services
@@ -117,7 +117,7 @@ After the service starts successfully, you can access the application through th
 
 ### Environment Variable Configuration
 
-The project uses a `.env` file for configuration, with separate environment settings for the frontend and backend:
+The project uses a `.env` file for configuration, with separate environment configurations for the frontend and backend:
 
 #### Backend Environment Variables (express-project/.env)
 
@@ -140,7 +140,7 @@ DB_PORT=3306
 
 # Upload Configuration
 UPLOAD_MAX_SIZE=50mb
-# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting)
+# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting, r2: Cloudflare R2 Storage)
 UPLOAD_STRATEGY=imagehost
 
 # Local Storage Configuration
@@ -150,7 +150,17 @@ LOCAL_BASE_URL=http://localhost:3001
 # Third-party Image Hosting Configuration
 IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
 IMAGEHOST_TIMEOUT=60000
-# Upload Strategy: local (Local Storage) or imagehost (Third-party Image Hosting)
+
+# Cloudflare R2 Storage Configuration
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your_bucket_name
+R2_ACCOUNT_ID=your_account_id
+R2_REGION=auto
+# Optional: Custom Domain URL (if a custom domain is configured)
+R2_PUBLIC_URL=https://your-custom-domain.com
+# Upload Strategy: local (Local Storage), imagehost (Third-party Image Hosting), or r2 (Cloudflare R2 Storage)
 UPLOAD_STRATEGY=local
 
 # Local Storage Configuration
@@ -178,7 +188,7 @@ VITE_API_BASE_URL=http://localhost:3001/api
 VITE_USE_REAL_API=true
 
 # Application Title
-VITE_APP_TITLE=Small石榴 Image and Text Community
+VITE_APP_TITLE=Small Pear Graphic Community
 ```
 
 #### Docker Environment Variable Description
@@ -198,7 +208,7 @@ JWT_EXPIRES_IN=7d
 
 # Upload Configuration
 UPLOAD_MAX_SIZE=50mb
-# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting)
+# Image Upload Strategy (local: Local Storage, imagehost: Third-party Image Hosting, r2: Cloudflare R2 Storage)
 UPLOAD_STRATEGY=imagehost
 
 # API Configuration
@@ -208,39 +218,39 @@ API_BASE_URL=http://localhost:3001
 ### Common Commands
 
 ```bash
-# View Service Status
+# Check service status
 docker-compose ps
 
-# View Service Logs
+# View service logs
 docker-compose logs -f
 
-# Restart a Specific Service
+# Restart a specific service
 docker-compose restart backend
 
-# Enter a Container (Alpine images usually do not have bash, please use sh)
+# Enter the container (sh is used since alpine images typically do not have bash)
 docker-compose exec backend sh
 # Or enter the MySQL client
 docker-compose exec mysql mysql -u root -p
 
-# Backup Database
+# Backup the database
 docker-compose exec mysql mysqldump -u root -p xiaoshiliu > backup.sql
 
-# Restore Database
+# Restore the database
 docker-compose exec -T mysql mysql -u root -p xiaoshiliu < backup.sql
 ```
 
 ### Data Persistence
 
-Docker Deployment Using Data Volumes for Data Persistence:
+Docker uses volumes for data persistence in deployment:
 
 - `mysql_data`: MySQL database files
 - `backend_uploads`: Backend upload files
 
 ### Troubleshooting
 
-#### 1. Port Conflict
+#### 1. Port Conflicts
 
-If you encounter a port conflict, you can modify the port mapping in the `docker-compose.yml` file:
+If port conflicts occur, you can modify the port mappings in the `docker-compose.yml` file:
 
 ```yaml
 services:
@@ -252,15 +262,15 @@ services:
       - "3002:3001"  # Modify the backend port
 ```
 
-#### 2. Insufficient Memory
+#### 2. Memory Insufficient
 
-Ensure that the system has enough memory, and you can check resource usage with the following command:
+Ensure the system has enough memory, and you can view resource usage with the following command:
 
 ```bash
 docker stats
 ```
 
-#### 3. Database Connection Failure / Data Injection
+#### 3. Database Connection Failure / Loading Data
 
 - Check if the database service is started normally:
 
@@ -268,51 +278,51 @@ docker stats
 docker-compose logs mysql
 ```
 
-- Inject sample data (Windows):
+- Load sample data (Windows):
 ```powershell
 .\deploy.ps1 -Seed
 ```
 
-- Inject sample data (manual execution):
+- Load sample data (manual execution):
 ```bash
 docker-compose exec -T backend node scripts/generate-data.js
 ```
 
 #### 4. File Upload Permission Issues
 
-**Problem Phenomenon**:
-- When the frontend uploads a file, it returns a 400 error
-- The backend logs show: `EACCES: permission denied, open '/app/uploads/xxx.png'`
+**Problem Phenomena**:
+- When uploading files from the frontend, a 400 error is returned
+- Backend logs show: `EACCES: permission denied, open '/app/uploads/xxx.png'`
 
-**Reason Analysis**:
-Permission issue with the uploads directory inside the Docker container, the directory belongs to the root user, but the application runs under the nodejs user.
+**Cause Analysis**:
+Permission issue in the Docker container's uploads directory. The directory belongs to the root user, but the application runs under the nodejs user.
 
 **Solution**:
 
-1. **Check uploads directory permissions**:
+1. **Check the permissions of the uploads directory**:
 ```bash
 docker-compose exec backend ls -la /app/uploads
 ```
 
-2. **Fix permission issues**:
+2. **Fix the permission issue**:
 ```bash
-# Modify the directory owner using the root user
+# Modify the directory owner to root user using root user
 docker-compose exec --user root backend chown -R nodejs:nodejs /app/uploads
 ```
 
-3. **Verify permission fix**:
+3. **Verify the permission fix**:
 ```bash
 # Confirm that the directory now belongs to the nodejs user
 docker-compose exec backend ls -la /app/uploads
 ```
 
 **Preventive Measures**:
-- Ensure that the uploads directory permissions are set correctly in the Dockerfile
-- Automatically fix permissions issues at container startup
+- Ensure the uploads directory permissions are set correctly in the Dockerfile
+- Automatically fix permissions issues when the container starts
 
 #### 5. Upload Strategy Configuration
 
-The project supports two file upload strategies:
+The project supports three file upload strategies:
 
 **Local Storage Mode** (recommended for development and small deployments):
 ```yaml
@@ -328,9 +338,26 @@ environment:
   UPLOAD_STRATEGY: imagehost
 ```
 
+**Cloudflare R2 Storage Mode** (recommended for production environments, supports CDN acceleration):
+
+```yaml
+# Setting in docker-compose.yml
+environment:
+  UPLOAD_STRATEGY: r2
+  R2_ACCESS_KEY_ID: your_r2_access_key_id
+  R2_SECRET_ACCESS_KEY: your_r2_secret_access_key
+  R2_ENDPOINT: https://your_account_id.r2.cloudflarestorage.com
+  R2_BUCKET_NAME: your_bucket_name
+  R2_ACCOUNT_ID: your_account_id
+  R2_REGION: auto
+  # Optional: Custom domain
+  R2_PUBLIC_URL: https://your-custom-domain.com
+
+> **Note**: To use Cloudflare R2 storage, you need to first create an R2 bucket and obtain the corresponding access key in the Cloudflare console.
+
 #### 6. Cleanup and Reset
 
-If you need to restart from scratch due to issues:
+If you encounter problems and need to start over:
 
 ```bash
 # Windows
@@ -344,25 +371,25 @@ If you need to restart from scratch due to issues:
 
 ## 📋 Traditional Deployment Method
 
-## Environment Requirements
+## System Requirements
 
 | Component | Version Requirement | Description |
 |-----------|---------------------|-------------|
-| Node.js   | >= 16.0.0           | Runtime environment |
-| MySQL     | >= 5.7               | Database     |
-| MariaDB   | >= 10.3             | Database (optional) |
-| npm       | >= 8.0.0             | Package manager |
-| yarn      | >= 1.22.0            | Package manager (optional) |
-| Browser   | Supports ES6+       | Modern browser |
+| Node.js | >= 16.0.0 | Runtime environment |
+| MySQL | >= 5.7 | Database |
+| MariaDB | >= 10.3 | Database (optional) |
+| npm | >= 8.0.0 | Package manager |
+| yarn | >= 1.22.0 | Package manager (optional) |
+| Browser | Supports ES6+ | Modern browser |
 
 ## Quick Start
 
 ### 1. Install Dependencies
 
 ```bash
-# Use cnpm
+# Using cnpm
 cnpm install
-# Or use yarn
+# Or using yarn
 yarn install
 ```
 
@@ -384,14 +411,15 @@ VITE_API_BASE_URL=http://localhost:3001
 # Other configurations...
 ```
 
-### 3. Start the Development Server
+### 3. Start Development Server
 
 ```bash
-# Start the development server
+# Start development server
 npm run dev
 
-# Or use yarn
+# Or using yarn
 yarn dev
+```
 
 The development server will start at `http://localhost:5173`.
 
@@ -407,7 +435,7 @@ npm run preview
 
 ## Backend Service Configuration
 
-⚠️ **Important Reminder**: The front-end project needs to be used with the backend service.
+⚠️ **Important Reminder**: The frontend project needs to be used with the backend service.
 
 1. **Start Backend Service**:
    ```bash
@@ -446,28 +474,28 @@ npm run dev
 # Access address: http://localhost:5173
 ```
 
-### Code Specification
+### Code Conventions
 
 - Use Vue 3 Composition API
-- Follow the Vue.js official style guide
+- Adhere to the official Vue.js style guide
 - Component naming in PascalCase
 - File naming in kebab-case
 
-## Configuration File Description
+## Explanation of Configuration Files
 
-### Frontend Configuration Files (in vue3-project directory)
+### Frontend Configuration Files (vue3-project directory)
 
 | File | Description |
-|------|------|
+|------|-------------|
 | `.env` | Environment variable configuration file |
 | `vite.config.js` | Vite build tool configuration |
-| `package.json` | Project dependencies and scripts configuration |
+| `package.json` | Project dependencies and script configuration |
 | `jsconfig.json` | JavaScript project configuration |
 
-### Backend Configuration Files (in express-project directory)
+### Backend Configuration Files (express-project directory)
 
 | File | Description |
-|------|------|
+|------|-------------|
 | `config/config.js` | Main configuration file |
 | `.env` | Environment variable configuration file |
 | `database_design.md` | Database design document |
@@ -476,37 +504,37 @@ npm run dev
 
 ## npm Script Commands
 
-### Frontend Scripts (to be executed in vue3-project directory)
+### Frontend Scripts (to be executed in the vue3-project directory)
 
 | Command | Description |
-|------|------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build production version |
-| `npm run preview` | Preview production version |
+|---------|-------------|
+| `npm run dev` | Start the development server |
+| `npm run build` | Build the production version |
+| `npm run preview` | Preview the production version |
 
-### Backend Scripts (to be executed in express-project directory)
+### Backend Scripts (to be executed in the express-project directory)
 
 | Command | Description |
-|------|------|
-| `npm start` | Start server |
-| `npm run dev` | Start development server (hot reload) |
-| `npm run init-db` | Initialize database |
+|---------|-------------|
+| `npm start` | Start the server |
+| `npm run dev` | Start the development server (hot reload) |
+| `npm run init-db` | Initialize the database |
 | `npm run generate-data` | Generate test data |
 
 ## Environment Variable Configuration
 
-### Frontend Environment Variables (in vue3-project/.env)
+### Frontend Environment Variables (vue3-project/.env)
 
 ```env
 # API server address
 VITE_API_BASE_URL=http://localhost:3001/api
 
 # Other frontend configurations
-VITE_APP_TITLE=Small Pear Graphic Community
+VITE_APP_TITLE=Small石榴Image and Text Community
 VITE_USE_REAL_API=true
 ```
 
-### Backend Environment Variables (in express-project/.env)
+### Backend Environment Variables (express-project/.env)
 
 ```env
 # Server configuration
@@ -534,57 +562,58 @@ UPLOAD_MAX_SIZE=50mb
 
 ## Database Script Description
 
-The database-related scripts of the project are all placed in the `express-project/scripts/` directory for easy management and use:
+The database-related scripts for the project are all placed in the `express-project/scripts/` directory for easy management and use:
 
 ### Script File Introduction
 
 #### 1. Database Initialization Script
 - **File Location**: `scripts/init-database.js`
-- **Function**: Creates the database and all table structures
-- **Usage**:
+- **Function**: Create the database and all table structures
+- **Usage Method**:
   ```bash
   cd express-project
   node scripts/init-database.js
   ```
-- **Description**: Must be run during the first deployment, which will automatically create the `xiaoshiliu` database and 12 data tables
+- **Description**: Must be run for the first deployment, which will automatically create the `xiaoshiliu` database and 12 data tables
 
 #### 2. Test Data Generation Script
 - **File Location**: `scripts/generate-data.js`
-- **Function**: Generates simulated test data for users, notes, comments, etc.
-- **Usage**:
+- **Function**: Generate mock user, note, comment, and other test data
+- **Usage Method**:
   ```bash
   cd express-project
   node scripts/generate-data.js
   ```
-- **Description**: Optional to run, used for quickly populating test data, including 50 users, 200 notes, and 800 comments, etc.
+- **Description**: Optional to run, used to quickly populate test data, including 50 users, 200 notes, and 800 comments, etc.
 
 #### 3. SQL Initialization File
 - **File Location**: `scripts/init-database.sql`
-- **Function**: Database initialization script in pure SQL
-- **Usage**: Can be directly executed in the MySQL client
-- **Description**: Functions the same as `init-database.js`, providing an SQL version for reference
+- **Function**: Pure SQL version of the database initialization script
+- **Usage Method**: Can be directly executed in the MySQL client
+- **Description**: Has the same function as `init-database.js`, providing an SQL version for reference
 
 #### 4. Sample Image Update Script
 - **File Location**: `scripts/update-sample-images.js`
-- **Function**: Automatically retrieves the latest image links and updates the sample images in the database
-- **Usage**:
+- **Function**: Automatically obtain the latest image links and update the sample images in the database
+- **Usage Method**:
   ```bash
   cd express-project
   node scripts/update-sample-images.js
   ```
+
 - **Description**:
-  - Automatically retrieves the latest image links from the LiCiYuan API
+  - Automatically fetches the latest image links from the Liziwen API
   - Updates `imgLinks/avatar_link.txt` (50 avatar links)
   - Updates `imgLinks/post_img_link.txt` (300 note image links)
   - Batch updates user avatars and note images in the database
-  - Supports statistical display of the number of images before and after the update
+  - Supports statistics showing the number of images before and after the update
 
 ## Development Environment Startup Process
 
-### 1. Starting the Backend Service
+### 1. Start Backend Service
 
 ```bash
-# Open the first terminal, enter the backend directory
+# Open the first terminal, navigate to the backend directory
 cd express-project
 
 # Install backend dependencies (first run)
@@ -604,10 +633,10 @@ npm start
 # The backend service runs at http://localhost:3001
 ```
 
-### 2. Starting the Frontend Service
+### 2. Start Frontend Service
 
 ```bash
-# Open the second terminal, enter the frontend directory
+# Open the second terminal, navigate to the frontend directory
 cd vue3-project
 
 # Install frontend dependencies (first run)
@@ -621,7 +650,7 @@ npm run dev
 # The frontend service runs at http://localhost:5173
 ```
 
-### 3. Accessing the Application
+### 3. Access the Application
 
 | Service | Address |
 |---------|---------|

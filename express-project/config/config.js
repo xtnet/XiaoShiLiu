@@ -40,7 +40,7 @@ const config = {
     maxSize: process.env.UPLOAD_MAX_SIZE || '50mb',
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     // 上传策略配置
-    strategy: process.env.UPLOAD_STRATEGY || 'local', // 'local' 或 'imagehost'
+    strategy: process.env.UPLOAD_STRATEGY || 'imagehost', // 'local', 'imagehost' 或 'r2'
     // 本地存储配置
     local: {
       uploadDir: process.env.LOCAL_UPLOAD_DIR || 'uploads',
@@ -50,6 +50,16 @@ const config = {
     imagehost: {
       apiUrl: process.env.IMAGEHOST_API_URL || 'https://api.xinyew.cn/api/jdtc',
       timeout: parseInt(process.env.IMAGEHOST_TIMEOUT) || 60000
+    },
+    // Cloudflare R2 配置
+    r2: {
+      accountId: process.env.R2_ACCOUNT_ID,
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+      bucketName: process.env.R2_BUCKET_NAME,
+      endpoint: process.env.R2_ENDPOINT,
+      publicUrl: process.env.R2_PUBLIC_URL, // 可选：自定义域名
+      region: process.env.R2_REGION || 'auto'
     }
   },
 

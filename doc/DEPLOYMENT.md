@@ -138,7 +138,7 @@ DB_PORT=3306
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
-# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床, r2: Cloudflare R2存储)
 UPLOAD_STRATEGY=imagehost
 
 # 本地存储配置
@@ -148,7 +148,17 @@ LOCAL_BASE_URL=http://localhost:3001
 # 第三方图床配置
 IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
 IMAGEHOST_TIMEOUT=60000
-# 上传策略: local(本地存储) 或 imagehost(第三方图床)
+
+# Cloudflare R2 存储配置
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your_bucket_name
+R2_ACCOUNT_ID=your_account_id
+R2_REGION=auto
+# 可选：自定义域名URL（如果配置了自定义域名）
+R2_PUBLIC_URL=https://your-custom-domain.com
+# 上传策略: local(本地存储)、imagehost(第三方图床) 或 r2(Cloudflare R2存储)
 UPLOAD_STRATEGY=local
 
 # 本地存储配置
@@ -196,7 +206,7 @@ JWT_EXPIRES_IN=7d
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
-# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床, r2: Cloudflare R2存储)
 UPLOAD_STRATEGY=imagehost
 
 # API配置
@@ -310,7 +320,7 @@ docker-compose exec backend ls -la /app/uploads
 
 #### 5. 上传策略配置
 
-项目支持两种文件上传策略：
+项目支持三种文件上传策略：
 
 **本地存储模式**（推荐用于开发和小型部署）：
 ```yaml
@@ -325,6 +335,23 @@ environment:
 environment:
   UPLOAD_STRATEGY: imagehost
 ```
+
+**Cloudflare R2存储模式**（推荐用于生产环境，支持CDN加速）：
+```yaml
+# docker-compose.yml中设置
+environment:
+  UPLOAD_STRATEGY: r2
+  R2_ACCESS_KEY_ID: your_r2_access_key_id
+  R2_SECRET_ACCESS_KEY: your_r2_secret_access_key
+  R2_ENDPOINT: https://your_account_id.r2.cloudflarestorage.com
+  R2_BUCKET_NAME: your_bucket_name
+  R2_ACCOUNT_ID: your_account_id
+  R2_REGION: auto
+  # 可选：自定义域名
+  R2_PUBLIC_URL: https://your-custom-domain.com
+```
+
+> **注意**：使用Cloudflare R2存储需要先在Cloudflare控制台创建R2存储桶并获取相应的访问密钥。
 
 #### 6. 清理和重置
 

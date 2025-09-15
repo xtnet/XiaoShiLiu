@@ -323,7 +323,7 @@ onMounted(async () => {
       <div class="tab-slider" :style="sliderStyle"></div>
     </div>
 
-    <div class="fixedTab" :class="{ hidden: scrollY < 260 }" ref="fixedTabBarRef" v-if="userInfo.nickname">
+    <div class="fixedTab" :class="{ hidden: scrollY < 300 }" ref="fixedTabBarRef" v-if="userInfo.nickname">
       <div v-for="item in tabs" class="tab-item" :class="{ active: activeTab === item.name }"
         @click="onTabClick(item.name)">
         {{ item.label }}

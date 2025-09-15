@@ -3,7 +3,7 @@
 ## Project Information
 - **Project Name**: Xiaoshiliu Image and Text Community
 - **Version**: v1.1.5
-- **Basic URL**: `http://localhost:3001`
+- **Base URL**: `http://localhost:3001`
 - **Database**: xiaoshiliu (MySQL)
 - **Update Time**: 2025-09-13
 
@@ -35,20 +35,20 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### Pagination Parameters
-Common parameters for interfaces supporting pagination:
+General parameters for interfaces that support pagination:
 - `page`: Page number, default is 1
 - `limit`: Number of items per page, default is 20
 
 ---
 
-## Authentication-related Interfaces
+## Authentication-Related Interfaces
 
 ### 1. User Registration
 **API Address**: `POST /api/auth/register`
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-----------|------|----------|------------|
 | user_id | string | Yes | User ID (unique) |
 | nickname | string | Yes | Nickname |
 | password | string | Yes | Password (6-20 characters) |
@@ -58,9 +58,9 @@ Common parameters for interfaces supporting pagination:
 
 **Function Description**:
 - The system will automatically obtain the user's location information through a third-party API
-- If the user manually provides the location parameter, the system will prioritize the value provided by the user
-- For local environments, location will be displayed as "Local"
-- The system will not store the user's IP address; it will only obtain the location information for display purposes
+- If the user manually provides the location parameter, the value provided by the user will be used preferentially
+- For local environments, location will display as "Local"
+- The system will not store the user's IP address, only obtain the location information for display purposes
 
 **Response Example**:
 ```json
@@ -74,7 +74,8 @@ Common parameters for interfaces supporting pagination:
       "nickname": "Xiaoshiliu",
       "avatar": "https://example.com/avatar.jpg",
       "bio": "This is a personal introduction",
-      "location": "Beijing"
+      "location": "Beijing",
+      "verified": 0
     },
     "tokens": {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -90,10 +91,75 @@ Common parameters for interfaces supporting pagination:
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| user_id | string | Yes | Xiaoshiliu account |
+|-----------|------|----------|------------|
+| user_id | string | Yes | Xiaoshiliu ID |
 | password | string | Yes | Password |
 
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "user_id": "xiaoshiliu123",
+      "nickname": "Xiaoshiliu User",
+      "avatar": "http://example.com/avatar.jpg",
+      "bio": "This is my personal introduction",
+      "location": "Beijing",
+      "follow_count": 10,
+      "fans_count": 20,
+      "like_count": 100,
+      "verified": 0
+    },
+    "tokens": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "expires_in": 3600
+    }
+  }
+}
+```
+
+### 3. Refresh Token
+**API Address**: `POST /api/auth/refresh`
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| refresh_token | String | Yes | Refresh token |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Token refreshed successfully",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires_in": 3600
+  }
+}
+```
+
+### 4. Logout
+**Interface Address**: `POST /api/auth/logout`
+**Authentication Required**: Yes
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Logout successful"
+}
+```
+
+### 5. Get Current User Information
+**Interface Address**: `GET /api/auth/me`
+**Authentication Required**: Yes
+
+**Response Example**:
 ```json
 {
   "code": 200,
@@ -101,46 +167,199 @@ Common parameters for interfaces supporting pagination:
   "data": {
     "id": 1,
     "user_id": "user_001",
-    "nickname": "Xiaosuishi",
+    "nickname": "Pear石榴",
     "avatar": "https://example.com/avatar.jpg",
     "bio": "This is a personal introduction",
     "location": "Beijing",
     "follow_count": 10,
     "fans_count": 20,
     "like_count": 100,
+    "is_active": 1,
+    "verified": 0,
     "created_at": "2025-08-30T00:00:00.000Z"
   }
 }
 ```
 
+---
+
+## User-related Interfaces
+
+### 1. Get User List
+**Interface Address**: `GET /api/users`
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | Integer | No | Page number, default 1 |
+| limit | Integer | No | Number per page, default 20 |
+
+**Response Example**:
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
-    "followers": [
+    "users": [
       {
-        "id": 3,
-        "user_id": "user_003",
-        "nickname": "User 3",
-        "avatar": "https://example.com/avatar3.jpg",
+        "id": 1,
+        "user_id": "user_001",
+        "nickname": "Pear石榴",
+        "avatar": "https://example.com/avatar.jpg",
         "bio": "This is a personal introduction",
-        "location": "Shanghai",
-        "follow_count": 3,
-        "fans_count": 15,
-        "followed_at": "2025-08-31T00:00:00.000Z"
+        "location": "Beijing",
+        "follow_count": 10,
+        "fans_count": 20,
+        "like_count": 100,
+        "verified": 0,
+        "created_at": "2025-08-30T00:00:00.000Z"
       }
     ],
     "pagination": {
       "page": 1,
       "limit": 20,
-      "total": 15,
+      "total": 100,
+      "pages": 5
+    }
+  }
+}
+```
+
+### 2. Get User Details
+**Interface Address**: `GET /api/users/:id`
+
+**Path Parameter**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | Integer | Yes | User ID |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "user_id": "user_001",
+    "nickname": "Pear石榴",
+    "avatar": "https://example.com/avatar.jpg",
+    "bio": "This is a personal introduction",
+    "location": "Beijing",
+    "follow_count": 10,
+    "fans_count": 20,
+    "like_count": 100,
+    "verified": 0,
+    "created_at": "2025-08-30T00:00:00.000Z"
+  }
+}
+```
+
+### 3. Get User Collection List
+**Interface Address**: `GET /api/users/:id/collections`
+
+**Path Parameter**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | Integer | Yes | User ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | Integer | No | Page number, default 1 |
+| limit | Integer | No | Number per page, default 20 |
+
+### 4. Follow User
+**Interface Address**: `POST /api/users/:id/follow`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | The ID of the user being followed |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Follow successful"
+}
+```
+
+### 5. Unfollow User
+**API Endpoint**: `DELETE /api/users/:id/follow`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | The ID of the user being followed |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Unfollow successful"
+}
+```
+
+### 6. Get Follow List
+**API Endpoint**: `GET /api/users/:id/following`
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | User ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | int | No | Page number, default 1 |
+| limit | int | No | Number of items per page, default 20 |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "following": [
+      {
+        "id": 2,
+        "user_id": "user_002",
+        "nickname": "User 2",
+        "avatar": "https://example.com/avatar2.jpg",
+        "bio": "Personal introduction",
+        "follow_count": 5,
+        "fans_count": 10,
+        "verified": 0,
+        "followed_at": "2025-08-30T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 10,
       "pages": 1
     }
   }
 }
 ```
 
+### 7. Get Follower List
+**API Endpoint**: `GET /api/users/:id/followers`
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | User ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | int | No | Page number, default 1 |
+| limit | int | No | Number of items per page, default 20 |
+
+**Response Example**:
 ```json
 {
   "code": 200,
@@ -155,6 +374,7 @@ Common parameters for interfaces supporting pagination:
         "bio": "Personal introduction",
         "follow_count": 8,
         "fans_count": 15,
+        "verified": 0,
         "followed_at": "2025-08-30T00:00:00.000Z"
       }
     ],
@@ -174,94 +394,389 @@ Common parameters for interfaces supporting pagination:
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| keyword | string | Yes | Search keyword (supports nickname and wechat ID search) |
+| keyword | string | Yes | Search keyword (supports nickname and Xiaosu ID search) |
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
+
+**Response Example**:
+
+```json
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "user_id": "user_001",
+    "nickname": "小石榴",
+    "total_posts": 10,
+    "total_likes": 50,
+    "total_comments": 30,
+    "total_follows": 20,
+    "total_fans": 15,
+    "average_likes_per_post": 5,
+    "average_comments_per_post": 3,
+    "average_comments_per_like": 1.2,
+    "latest_post_time": "2025-08-30T12:00:00.000Z"
+  }
+}
+```
+
+```json
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "posts_count": 25,
+    "likes_count": 150,
+    "collections_count": 80,
+    "comments_count": 45,
+    "followers_count": 120,
+    "following_count": 85,
+    "views_count": 2500
+  }
+}
+```
+
+### 15. Update User Information
+**API Endpoint**: `PUT /api/users/:id`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | User ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| nickname | string | No | Nickname |
+| avatar | string | No | Avatar URL |
+| bio | string | No | Personal Bio |
+| location | string | No | Location |
 
 **Response Example**:
 ```json
 {
   "code": 200,
-  "message": "success"
+  "message": "User information updated successfully",
+  "data": {
+    "id": 1,
+    "user_id": "user_001",
+    "nickname": "New Nickname",
+    "avatar": "https://example.com/new_avatar.jpg",
+    "bio": "New personal bio",
+    "location": "Shanghai",
+    "updated_at": "2025-01-02T00:00:00.000Z"
+  }
 }
 ```
 
+### 16. Submit Verification Application
+**API Endpoint**: `POST /api/users/verification`
+**Authentication Required**: Yes
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| type | integer | Yes | Verification Type: 1-Individual Verification, 2-Enterprise Verification |
+| real_name | string | Yes | Real Name/Enterprise Name |
+| id_card | string | Yes | ID Card Number/Business License Number |
+| id_card_front | string | Yes | ID Card Front/Business License Image URL |
+| id_card_back | string | No | ID Card Back Image URL (required for individual verification) |
+| business_license | string | No | Business License Image URL (required for enterprise verification) |
+| contact_phone | string | Yes | Contact Phone |
+| contact_email | string | Yes | Contact Email |
+| description | string | No | Application Description |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification application submitted successfully, please wait for review",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "status": 0,
+    "created_at": "2025-01-02T00:00:00.000Z"
+  }
+}
+```
+
+### 17. Get Verification Application Status
+**API Endpoint**: `GET /api/users/verification`
+**Authentication Required**: Yes
+
+**Response Example**:
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
-    "likes": [
-      {
-        "id": 1,
-        "post_id": 1,
-        "user_id": 1,
-        "created_at": "2025-08-30T00:00:00.000Z"
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 1,
-      "pages": 1
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "real_name": "Zhang San",
+    "id_card": "110101199001011234",
+    "id_card_front": "https://example.com/id_front.jpg",
+    "id_card_back": "https://example.com/id_back.jpg",
+    "contact_phone": "13800138000",
+    "contact_email": "zhangsan@example.com",
+    "description": "Application for individual verification",
+    "status": 0,
+    "audit_time": null,
+    "reject_reason": null,
+    "created_at": "2025-01-02T00:00:00.000Z"
+  }
+}
+```
+
+**Status Description**:
+- `0`: Pending review
+- `1`: Approved
+- `2`: Rejected
+
+### 18. Withdraw Verification Application
+**API Endpoint**: `DELETE /api/users/verification`
+**Authentication Required**: Yes
+
+**Function Description**:
+- Can recall pending, approved, or rejected certification applications
+- Recalling an approved certification application will also cancel the user's certification status
+- After recalling, certification applications can be resubmitted
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Certification application recall successful"
+}
+```
+
+---
+
+## Category Management Interface
+
+### 1. Get Category List
+**Interface Address**: `GET /api/categories`
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|------------|
+| sortField | String | No | Sorting field, optional values: id, name, created_at, post_count, default id |
+| sortOrder | String | No | Sorting order, optional values: asc, desc, default asc |
+| name | String | No | Fuzzy search by category name |
+| category_title | String | No | Fuzzy search by English title |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Successfully obtained",
+  "data": [
+    {
+      "id": 1,
+      "name": "Learning",
+      "category_title": "study",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 15
+    },
+    {
+      "id": 2,
+      "name": "Campus",
+      "category_title": "campus",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 8
+    },
+    {
+      "id": 3,
+      "name": "Emotion",
+      "category_title": "emotion",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 23
     }
+  ]
+}
+```
+
+### 2. Get Category List (Administrator)
+**Interface Address**: `GET /api/admin/categories`
+**Authentication Required**: Yes (Administrator Permission)
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|------------|
+| page | Integer | No | Page number, default 1 |
+| limit | Integer | No | Number of items per page, default 10 |
+| sortField | String | No | Sorting field, optional values: id, name, category_title, created_at, post_count, default id |
+| sortOrder | String | No | Sorting order, optional values: asc, desc, default asc |
+| name | String | No | Fuzzy search by category name |
+| category_title | String | No | Fuzzy search by English title |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Successfully obtained",
+  "data": [
+    {
+      "id": 1,
+      "name": "Learning",
+      "category_title": "study",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "post_count": 15
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1
   }
 }
 ```
 
+### 3. Get Single Category (Administrator)
+**Interface Address**: `GET /api/admin/categories/:id`
+**Authentication Required**: Yes (Administrator Permission)
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|------------|
+| id | Integer | Yes | Category ID |
+
+**Response Example**:
 ```json
 {
   "code": 200,
-  "message": "Success",
+  "message": "Successfully obtained",
   "data": {
-    "nickname": "New Nickname",
-    "avatar": "https://example.com/new_avatar.jpg",
-    "bio": "New personal introduction",
-    "location": "New location"
+    "id": 1,
+    "name": "Learning",
+    "category_title": "study",
+    "created_at": "2025-01-01T00:00:00.000Z"
   }
 }
 ```
 
+### 4. Create Category
+**Interface Address**: `POST /api/admin/categories`
+**Authentication Required**: Yes (Administrator Permission)
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| name | String | Yes | Category name |
+| category_title | String | Yes | English title for URL routing |
+
+**Response Example**:
 ```json
 {
   "code": 200,
-  "message": "Post list retrieved successfully",
+  "message": "Category created successfully",
   "data": {
-    "total": 50,
-    "per_page": 10,
-    "current_page": 1,
-    "data": [
-      {
-        "id": 1,
-        "user_id": "user_001",
-        "title": "Introduction to Python",
-        "content": "This is an introduction to Python programming language.",
-        "created_at": "2025-01-01T00:00:00.000Z",
-        "updated_at": "2025-01-02T00:00:00.000Z",
-        "category": {
-          "id": 1,
-          "name": "Programming",
-          "category_title": "programming"
-        }
-      },
-      {
-        "id": 2,
-        "user_id": "user_002",
-        "title": "Understanding AI",
-        "content": "This post discusses the basics of artificial intelligence.",
-        "created_at": "2025-01-01T01:00:00.000Z",
-        "updated_at": "2025-01-02T01:00:00.000Z",
-        "category": {
-          "id": 2,
-          "name": "Technology",
-          "category_title": "technology"
-        }
-      },
-      // Additional post objects...
-    ]
+    "id": 11,
+    "name": "New Category",
+    "category_title": "new_category",
+    "created_at": "2025-01-02T00:00:00.000Z"
   }
 }
 ```
+
+### 5. Update Category
+**API Endpoint**: `PUT /api/admin/categories/:id`
+**Authentication Required**: Yes (Admin privileges)
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| id | Int | Yes | Category ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| name | String | No | Category name |
+| category_title | String | No | English title for URL routing |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Category updated successfully",
+  "data": {
+    "id": 1,
+    "name": "Updated Category Name",
+    "category_title": "updated_category",
+    "created_at": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 6. Delete Category
+**API Endpoint**: `DELETE /api/admin/categories/:id`
+**Authentication Required**: Yes (Admin privileges)
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| id | Int | Yes | Category ID |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Category deleted successfully"
+}
+```
+
+### 7. Batch Delete Categories
+**API Endpoint**: `DELETE /api/admin/categories`
+**Authentication Required**: Yes (Admin privileges)
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| ids | Array | Yes | Array of category IDs |
+
+**Request Example**:
+```json
+{
+  "ids": [1, 2, 3]
+}
+```
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Successfully deleted 3 categories",
+  "data": {
+    "deletedCount": 3
+  }
+}
+```
+
+**Error Responses**:
+- 400: Request parameters error (invalid category ID array)
+- 400: Some categories still have notes, cannot be deleted
+- 404: Category to be deleted not found
+
+---
+
+## Note-related Interfaces
+
+### 1. Get Note List
+**API Endpoint**: `GET /api/posts`
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|-------|----------|-------------|
+| page | Int | No | Page number, default 1 |
+| limit | Int | No | Number of items per page, default 20 |
+| category | String | No | Category ID filter, supports "recommend" for recommended channel |
+| is_draft | Int | No | Whether to get draft, 1=draft, 0=published (default) |
+| user_id | Int | No | User ID filter (mandatory for viewing drafts) |
+
+**Response Example**:
 
 ```json
 {
@@ -273,15 +788,16 @@ Common parameters for interfaces supporting pagination:
         "id": 1,
         "user_id": 1,
         "title": "Note Title",
-        "content": "Note content",
+        "content": "Note Content",
         "category_id": 2,
         "view_count": 100,
         "like_count": 10,
         "comment_count": 5,
         "collect_count": 3,
         "created_at": "2025-08-30T00:00:00.000Z",
-        "nickname": "Little Peach",
+        "nickname": "Xiao Shisui",
         "user_avatar": "https://example.com/avatar.jpg",
+        "verified": 0,
         "images": [
           "https://example.com/image1.jpg",
           "https://example.com/image2.jpg"
@@ -314,7 +830,7 @@ Common parameters for interfaces supporting pagination:
 
 **Description**: Accessing note details will automatically increase the view count.
 
-### 3. Create Note
+### 3. Create a Note
 **API Endpoint**: `POST /api/posts`
 **Authentication Required**: Yes
 
@@ -324,14 +840,14 @@ Common parameters for interfaces supporting pagination:
 | title | string | No* | Note Title (required when publishing, optional when drafting) |
 | content | string | No* | Note Content (required when publishing, optional when drafting) |
 | category_id | int | No | Category ID |
-| images | array | No | Array of image URLs |
-| tags | array | No | Array of tag names (string array) |
+| images | array | No | Array of Image URLs |
+| tags | array | No | Array of Tag Names (string array) |
 | is_draft | boolean | No | Whether it is a draft, default false |
 
 **Request Example**:
 ```json
 {
-  "title": "Share a beautiful afternoon",
+  "title": "Share a Beautiful Afternoon",
   "content": "Today the weather is nice, walking in the park...",
   "category_id": 5,
   "images": [
@@ -343,7 +859,7 @@ Common parameters for interfaces supporting pagination:
 }
 ```
 
-### 4. Retrieve Note Comments
+### 4. Get Note Comments
 **API Endpoint**: `GET /api/posts/:id/comments`
 
 **Path Parameters**:
@@ -357,7 +873,7 @@ Common parameters for interfaces supporting pagination:
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 
-### 5. Collect Note
+### 5. Collect a Note
 **API Endpoint**: `POST /api/posts/:id/collect`
 **Authentication Required**: Yes
 
@@ -381,26 +897,39 @@ Common parameters for interfaces supporting pagination:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | keyword | string | Yes | Search keyword (supports title and content search) |
-| page | integer | No | Page number, default 1 |
-| limit | integer | No | Number of items per page, default 20 |
-| category_id | integer | No | Category ID filter |
+| page | int | No | Page number, default 1 |
+| limit | int | No | Number of items per page, default 20 |
+| category_id | int | No | Category ID filter |
 
 **Response Example**:
 
 ```json
 {
   "code": 200,
-  "message": "成功",
+  "message": "success",
   "data": {
-    "drafts": [
+    "posts": [
       {
         "id": 1,
-        "title": "Draft Title",
-        "content": "This is a draft content.",
-        "category_id": 3,
-        "tags": ["Draft", "Note"],
-        "is_draft": true,
-        "created_at": "2025-08-31T00:00:00.000Z"
+        "title": "Beautiful Scenery",
+        "content": "I took some beautiful scenery today",
+        "images": ["https://example.com/image1.jpg"],
+        "category": "Photography",
+        "tags": ["Scenery", "Photography"],
+        "like_count": 10,
+        "comment_count": 5,
+        "collection_count": 3,
+        "view_count": 100,
+        "isLiked": false,
+        "isCollected": false,
+        "created_at": "2025-08-30T00:00:00.000Z",
+        "user": {
+          "id": 1,
+          "user_id": "user_001",
+          "nickname": "Xiao Shiliu",
+          "avatar": "https://example.com/avatar.jpg",
+          "verified": 0
+        }
       }
     ],
     "pagination": {
@@ -413,6 +942,64 @@ Common parameters for interfaces supporting pagination:
 }
 ```
 
+### 7. Update Note
+**API Endpoint**: `PUT /api/posts/:id`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Note ID |
+
+---
+### 8. Delete Note
+**API Endpoint**: `DELETE /api/posts/:id`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Note ID |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Note deleted successfully"
+}
+```
+
+---
+### 9. Cancel Collecting Note
+**API Endpoint**: `DELETE /api/posts/:id/collect`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Note ID |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Collect cancel successfully"
+}
+```
+
+---
+### 10. Get Draft List
+**API Endpoint**: `GET /api/posts/drafts`
+**Authentication Required**: Yes
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | int | No | Page number, default 1 |
+| limit | int | No | Number of items per page, default 20 |
+| keyword | string | No | Search keyword |
+
+**Response Example**:
 ```json
 {
   "code": 200,
@@ -422,7 +1009,7 @@ Common parameters for interfaces supporting pagination:
       {
         "id": 1,
         "title": "Draft Title",
-        "content": "Draft Content",
+        "content": "Draft content",
         "category": "Life",
         "images": ["image1.jpg", "image2.jpg"],
         "tags": ["Tag1", "Tag2"],
@@ -442,12 +1029,12 @@ Common parameters for interfaces supporting pagination:
 
 ---
 ### 4. Delete Comment
-**Interface Location**: `DELETE /api/comments/:id`
+**API Endpoint**: `DELETE /api/comments/:id`
 **Authentication Required**: Yes
 
 **Path Parameters**:
-| Parameter | Data Type | Required | Description |
-|-----------|-----------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | id | int | Yes | Comment ID |
 
 **Response Example**:
@@ -460,35 +1047,35 @@ Common parameters for interfaces supporting pagination:
 
 ---
 ### 4. Get Note Comments
-**Interface Location**: `GET /api/posts/:id/comments`
+**API Endpoint**: `GET /api/posts/:id/comments`
 
 **Path Parameters**:
-| Parameter | Data Type | Required | Description |
-|-----------|-----------|----------|-------------|
-| id | int | Yes | Note ID |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Record ID |
 
 **Request Parameters**:
-| Parameter | Data Type | Required | Description |
-|-----------|-----------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 
 ---
 
-## Comment Related Interfaces
+## Review-related Interfaces
 
-### 1. Get Comment List
-**Interface Location**: `GET /api/posts/:id/comments`
+### 1. Retrieve Comment List
+**Endpoint**: `GET /api/posts/:id/comments`
 **Authentication Required**: No (optional)
 
 **Path Parameters**:
-| Parameter | Data Type | Required | Description |
-|-----------|-----------|----------|-------------|
-| id | int | Yes | Note ID |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Record ID |
 
 **Request Parameters**:
-| Parameter | Data Type | Required | Description |
-|-----------|-----------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 | sort | string | No | Sorting method: desc (default) or asc |
@@ -496,17 +1083,59 @@ Common parameters for interfaces supporting pagination:
 **Response Example**:
 ```json
 {
-  // Response content
+  "code": 200,
+  "message": "success",
+  "data": {
+    "comments": [
+      {
+        "id": 1,
+        "content": "This is a normal comment",
+        "user_id": 1,
+        "nickname": "Zhang San",
+        "user_avatar": "https://img.example.com/avatar1.jpg",
+        "verified": 0,
+        "user_auto_id": 1,
+        "user_display_id": "user123",
+        "post_id": 1,
+        "parent_id": null,
+        "created_at": "2025-08-30T00:00:00.000Z",
+        "reply_count": 2,
+        "liked": false
+      },
+      {
+        "id": 2,
+        "content": "<p><a href=\"/user/user012\" data-user-id=\"user012\" class=\"mention-link\" contenteditable=\"false\">@Photography Lover</a>&nbsp;Your work is really great!</p>",
+        "user_id": 2,
+        "nickname": "Li Si",
+        "user_avatar": "https://img.example.com/avatar2.jpg",
+        "verified": 0,
+        "user_auto_id": 2,
+        "user_display_id": "user456",
+        "post_id": 1,
+        "parent_id": null,
+        "created_at": "2025-08-30T01:00:00.000Z",
+        "reply_count": 0,
+        "liked": false
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 50,
+      "pages": 3
+    }
+  }
 }
 ```
 
 **Description**:
-- The `content` field may contain HTML formatted @user tags
-- The front-end needs to correctly render HTML content to display @user links
-- @user links contain `href`, `data-user-id`, and `class` attributes for front-end processing
+- The `content` field may contain HTML-formatted @user mentions
+- The frontend needs to correctly render HTML content to display @user links
+- @user links contain `href`, `data-user-id`, `class` attributes for frontend processing
+```
 
 ### 2. Create Comment
-**Interface Location**: `POST /api/posts/:id/comments`
+**Endpoint**: `POST /api/posts/:id/comments`
 **Authentication Required**: Yes
 
 **Path Parameters**:
@@ -522,14 +1151,16 @@ Common parameters for interfaces supporting pagination:
 
 **@Functionality Description**:
 - Comment content supports @user functionality
-- @user HTML format: `<a href="/user/{user_id}" data-user-id="{user_id}" class="mention-link" contenteditable="false">@{nickname}</a>`
-- The system will automatically parse @user tags and send notifications to the @users
+- HTML format for @user: `<a href="/user/{user_id}" data-user-id="{user_id}" class="mention-link" contenteditable="false">@{nickname}</a>`
+- The system will automatically parse @user tags and send notifications to the mentioned users
 - Supports mentioning multiple users in a single comment
 
 **Request Example**:
+```
+
 ```json
 {
-  "content": "This is a regular comment",
+  "content": "This is a normal comment",
   "parent_id": null
 }
 ```
@@ -537,124 +1168,11 @@ Common parameters for interfaces supporting pagination:
 **Request Example with @User Mention**:
 ```json
 {
-  "content": "This is a comment mentioning @JohnDoe and @JaneSmith",
+  "content": "This is a comment mentioning @Photography Lover and @Tech Enthusiast",
   "parent_id": null
 }
 ```
 
-```json
-{
-  "content": "<p><a href=\"/user/user012\" data-user-id=\"user012\" class=\"mention-link\" contenteditable=\"false\">@Photography Lover</a> Your work is really great!</p>",
-  "parent_id": null
-}
-**Response Example**:
-```json
-{
-  "code": 200,
-  "message": "Comment created successfully",
-  "data": {
-    "id": 1,
-    "content": "<p><a href=\"/user/user012\" data-user-id=\"user012\" class=\"mention-link\" contenteditable=\"false\">@Photography Lover</a> Your work is really great!</p>",
-    "user_id": 1,
-    "parent_id": null,
-    "created_at": "2025-08-30T00:00:00.000Z"
-  }
-}
-
-**@Feature Processing Description**:
-- When a comment contains an @user mention, the system will automatically:
-  1. Parse the `data-user-id` attribute in the HTML to obtain the ID of the mentioned user
-  2. Verify that the mentioned user exists
-  3. Send a mention notification to the mentioned user
-  4. Will not send an @notification to oneself
-
-### 3. Retrieve Comment Replies
-**API Endpoint**: `GET /api/comments/:id/replies`
-**Authentication Required**: No (optional)
-
-**Path Parameters**:
-| Parameter | Type | Required | Description |
-|----------|------|----------|------------|
-| id | int | Yes | Comment ID |
-
-**Request Parameters**:
-| Parameter | Type | Required | Description |
-|----------|------|----------|------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 10 |
-
-**Response Example**:
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "replies": [
-      {
-        "id": 2,
-        "content": "This is a reply",
-        "user_id": 2,
-        "nickname": "Li Si",
-        "user_avatar": "https://img.example.com/avatar2.jpg",
-        "parent_id": 1,
-        "created_at": "2025-08-30T01:00:00.000Z",
-        "liked": false
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 10,
-      "total": 5,
-      "pages": 1
-    }
-  }
-}
-```
-
-### 4. Delete Comment
-**API Endpoint**: `DELETE /api/comments/:id`
-**Authentication Required**: Yes
-
-**Path Parameters**:
-| Parameter | Type | Required | Description |
-|----------|------|----------|------------|
-| id | int | Yes | Comment ID |
-
-**Response Example**:
-```json
-{
-  "code": 200,
-  "message": "Comment deleted successfully"
-}
-```
-
----
-
-## Notification-related APIs
-
-### Notification Type Description
-The notification system supports the following types:
-- **1**: Like Post
-- **2**: Like Comment
-- **3**: Collection
-- **4**: Comment Post
-- **5**: Reply Comment
-- **6**: Follow User
-- **7**: Comment Mention (mentioning user in comment)
-- **8**: Post Mention (mentioning user in post)
-
-### 1. Retrieve Comment Notifications
-**API Endpoint**: `GET /api/notifications/comments`
-**Authentication Required**: Yes
-
-**Request Parameters**:
-| Parameter | Type | Required | Description |
-|----------|------|----------|------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 20 |
-
-**Response Example**:
 ```json
 {
   "code": 200,
@@ -663,10 +1181,77 @@ The notification system supports the following types:
     "notifications": [
       {
         "id": 1,
+        "type": 2,
+        "user_id": 2,
+        "nickname": "李四",
+        "user_avatar": "https://img.example.com/avatar2.jpg",
+        "content": "赞了你的评论",
+        "related_id": 1,
+        "created_at": "2025-08-30T02:00:00.000Z",
+        "liked": false
+      },
+      {
+        "id": 2,
+        "type": 4,
+        "user_id": 3,
+        "nickname": "王五",
+        "user_avatar": "https://img.example.com/avatar3.jpg",
+        "content": "评论了你的笔记",
+        "related_id": 2,
+        "created_at": "2025-08-30T03:00:00.000Z",
+        "liked": false
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 2,
+      "pages": 1
+    }
+  }
+}
+```
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "notifications": [
+      {
+        "id": 1,
+        "type": 1,
+        "user_id": 2,
+        "nickname": "Wang Wu",
+        "content": "Your note has been liked",
+        "created_at": "2025-08-30T00:00:00.000Z"
+      },
+      {
+        "id": 2,
+        "type": 2,
+        "user_id": 3,
+        "nickname": "Zhao Liu",
+        "content": "Your comment has been liked",
+        "created_at": "2025-08-30T01:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+```json
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "notifications": [
+      {
+        "id": 1,
         "type": "comment",
-        "sender_id": 2,
-        "sender_nickname": "User 2",
-        "sender_avatar": "https://example.com/avatar2.jpg",
+        "user_id": 2,
+        "nickname": "User 2",
+        "avatar": "https://example.com/avatar2.jpg",
+        "verified": 0,
         "post_id": 1,
         "post_title": "Note Title",
         "comment_content": "Comment content",
@@ -675,24 +1260,24 @@ The notification system supports the following types:
       }
     ],
     "pagination": {
-      "page": 1,
-      "limit": 20,
+      "page_number": 1,
+      "per_page": 20,
       "total": 10,
-      "pages": 1
+      "total_pages": 1
     }
   }
 }
 ```
 
-### 2. Retrieve Like Notifications
-**Interface Address**: `GET /api/notifications/likes`
+### 2. Get Like Notifications
+**API Endpoint**: `GET /api/notifications/likes`
 **Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 20 |
+| Page Number | int | No | Page number, default 1 |
+| Per Page Quantity | int | No | Number of items per page, default 20 |
 
 **Response Example**:
 ```json
@@ -704,35 +1289,36 @@ The notification system supports the following types:
       {
         "id": 2,
         "type": "like",
-        "senderID": 3,
-        "senderNickname": "User3",
-        "senderAvatar": "https://example.com/avatar3.jpg",
-        "targetType": "article",
-        "articleID": 1,
-        "articleTitle": "Note Title",
-        "isRead": 0,
-        "createTime": "2025-08-30T00:00:00.000Z"
+        "user_id": 3,
+        "nickname": "User 3",
+        "avatar": "https://example.com/avatar3.jpg",
+        "verified": 0,
+        "target_type": "post",
+        "post_id": 1,
+        "post_title": "Note Title",
+        "is_read": 0,
+        "created_at": "2025-08-30T00:00:00.000Z"
       }
     ],
     "pagination": {
-      "pageNumber": 1,
-      "itemsPerPage": 20,
+      "page_number": 1,
+      "per_page": 20,
       "total": 5,
-      "pages": 1
+      "total_pages": 1
     }
   }
 }
 ```
 
 ### 3. Get Follow Notifications
-**Interface Address**: `GET /api/notifications/follows`
+**API Endpoint**: `GET /api/notifications/follows`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Options | Required | Description |
-|-----------|---------|----------|-------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 20 |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| Page Number | int | No | Page number, default 1 |
+| Per Page Quantity | int | No | Number of items per page, default 20 |
 
 **Response Example**:
 ```json
@@ -744,31 +1330,32 @@ The notification system supports the following types:
       {
         "id": 3,
         "type": "follow",
-        "senderID": 4,
-        "senderNickname": "User4",
-        "senderAvatar": "https://example.com/avatar4.jpg",
-        "isRead": 0,
-        "createTime": "2025-08-30T00:00:00.000Z"
+        "user_id": 4,
+        "nickname": "User 4",
+        "avatar": "https://example.com/avatar4.jpg",
+        "verified": 0,
+        "is_read": 0,
+        "created_at": "2025-08-30T00:00:00.000Z"
       }
     ],
     "pagination": {
-      "pageNumber": 1,
-      "itemsPerPage": 20,
+      "page_number": 1,
+      "per_page": 20,
       "total": 3,
-      "pages": 1
+      "total_pages": 1
     }
   }
 }
 ```
 
 ### 4. Mark Notifications as Read
-**Interface Address**: `PUT /api/notifications/:id/read`
+**API Endpoint**: `PUT /api/notifications/:id/read`
 **Authentication Required**: Yes
 
 **Path Parameters**:
-| Parameter | Options | Required | Description |
-|-----------|---------|----------|-------------|
-| id | int | Yes | Notification ID |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | int | Yes | Notification identifier |
 
 **Response Example**:
 ```json
@@ -778,15 +1365,15 @@ The notification system supports the following types:
 }
 ```
 
-### 5. Get Collection Notifications
-**Interface Address**: `GET /api/notifications/collections`
+### 5. Retrieve Collection Notifications
+**API Endpoint**: `GET /api/notifications/collections`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Options | Required | Description |
-|-----------|---------|----------|-------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 20 |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| Page | int | No | Page number, default 1 |
+| Limit | int | No | Number of items per page, default 20 |
 
 **Response Example**:
 ```json
@@ -794,39 +1381,58 @@ The notification system supports the following types:
   "code": 200,
   "message": "Success",
   "data": {
-    "notifications": [
+    "Notifications": [
+      // Here should include the relevant information of collection notifications
+    ],
+    "Pagination": {
+      "Page Number": 1,
+      "Items Per Page": 20,
+      "Total Count": // Total number of notifications,
+      "Total Page Count": // Total number of pages
+    }
+  }
+}
+```
+
+```json
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "Notifications": [
       {
         "id": 4,
-        "type": "collection",
+        "type": "Collection",
         "senderID": 5,
         "senderNickname": "User5",
         "senderAvatar": "https://example.com/avatar5.jpg",
-        "articleID": 1,
-        "articleTitle": "Note Title",
-        "articleImage": "https://example.com/post_image.jpg",
+        "senderVerification": 0,
+        "postID": 1,
+        "postTitle": "Note Title",
+        "postImage": "https://example.com/post_image.jpg",
         "isRead": 0,
-        "createTime": "2025-08-30T00:00:00.000Z"
+        "creationTime": "2025-08-30T00:00:00.000Z"
       }
     ],
-    "pagination": {
-      "pageNumber": 1,
-      "itemsPerPage": 20,
-      "total": 2,
-      "pages": 1
+    "Pagination": {
+      "Page Number": 1,
+      "Items Per Page": 20,
+      "Total Count": 2,
+      "Total Page Count": 1
     }
   }
 }
 ```
 
-### 6. Get All Notifications
-**Interface Address**: `GET /api/notifications`
+### 5. Retrieve All Notifications
+**API Endpoint**: `GET /api/notifications`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Options | Required | Description |
-|-----------|---------|----------|------------|
-| page | int | No | Page number, default 1 |
-| limit | int | No | Number of items per page, default 20 |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| Page | int | No | Page number, default 1 |
+| Limit | int | No | Number of items per page, default 20 |
 
 **Response Example**:
 ```json
@@ -834,52 +1440,38 @@ The notification system supports the following types:
   "code": 200,
   "message": "Success",
   "data": {
-    "notifications": [
-      // This section should include all types of notifications
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": // Total number of notifications,
-      "total_pages": // Total number of pages
-    }
-  }
-}
-```
-
-{
-  "code": 200,
-  "message": "Success",
-  "data": {
-    "notifications": [
+    "Notifications": [
       {
         "id": 1,
-        "type": "comment",
+        "type": "Comment",
         "senderID": 2,
         "senderNickname": "User2",
         "senderAvatar": "https://example.com/avatar2.jpg",
+        "senderVerification": 0,
         "postID": 1,
         "postTitle": "Note Title",
         "commentContent": "Comment content",
         "isRead": 0,
-        "createTime": "2025-08-30T00:00:00.000Z"
+        "creationTime": "2025-08-30T00:00:00.000Z"
       }
     ],
-    "pagination": {
-      "page_count": 1,
-      "limit": 20,
-      "total": 15,
-      "total_pages": 1
+    "Pagination": {
+      "Page Number": 1,
+      "Items Per Page": 20,
+      "Total Count": 15,
+      "Total Page Count": 1
     }
   }
 }
+```
+
 ### 6. Mark Notifications as Read
 **API Endpoint**: `PUT /api/notifications/:id/read`
 **Authentication Required**: Yes
 
 **Path Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|------------|
+|-----------|------|----------|-------------|
 | id | int | Yes | Notification ID |
 
 **Response Example**:
@@ -908,7 +1500,7 @@ The notification system supports the following types:
 
 **Path Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|------------|
+|-----------|------|----------|-------------|
 | id | int | Yes | Notification ID |
 
 **Response Example**:
@@ -929,7 +1521,7 @@ The notification system supports the following types:
   "code": 200,
   "message": "Success",
   "data": {
-    "unreadCount": 5
+    "Unread Notification Count": 5
   }
 }
 ```
@@ -954,9 +1546,9 @@ The notification system supports the following types:
   "code": 200,
   "message": "Image upload successful",
   "data": {
-    "originalname": "image.jpg",
-    "size": 1024000,
-    "url": "https://img.example.com/1640995200000_image.jpg"
+    "Original Name": "image.jpg",
+    "Size": 1024000,
+    "URL": "https://img.example.com/1640995200000_image.jpg"
   }
 }
 ```
@@ -976,7 +1568,7 @@ The notification system supports the following types:
 ```json
 {
   "code": 200,
-  "message": "Multiple images uploaded successfully",
+  "message": "File upload successful",
   "data": [
     {
       "originalname": "image1.jpg",
@@ -985,22 +1577,27 @@ The notification system supports the following types:
     },
     {
       "originalname": "image2.jpg",
-      "size": 1024000,
+      "size": 2048000,
       "url": "https://img.example.com/1640995200001_image2.jpg"
     }
-    // More files
   ]
 }
-## Interactive Interface
+```
+
+
+
+---
+
+## Interactive Related Interfaces
 
 ### 1. Like/Unlike
-**Interface Address**: `POST /api/likes`
+**API Endpoint**: `POST /api/likes`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|------------|
-| target_type | int | Yes | Target type (1: Note, 2: Comment) |
+| Parameter | Level | Required | Description |
+|-----------|-------|----------|-------------|
+| target_type | int | Yes | Target Type (1: Note, 2: Comment) |
 | target_id | int | Yes | Target ID |
 
 **Function Description**:
@@ -1027,13 +1624,13 @@ The notification system supports the following types:
 ```
 
 ### 1.1 Unlike (Backup Interface)
-**Interface Address**: `DELETE /api/likes`
+**API Endpoint**: `DELETE /api/likes`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|------------|
-| target_type | int | Yes | Target type (1: Note, 2: Comment) |
+| Parameter | Level | Required | Description |
+|-----------|-------|----------|-------------|
+| target_type | int | Yes | Target Type (1: Note, 2: Comment) |
 | target_id | int | Yes | Target ID |
 
 **Request Example**:
@@ -1052,13 +1649,13 @@ The notification system supports the following types:
 }
 ```
 
-### 2. Favorite/Unfavorite
-**Interface Address**: `POST /api/collections`
+### 2. Collect/Uncollect
+**API Endpoint**: `POST /api/collections`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|------------|
+| Parameter | Level | Required | Description |
+|-----------|-------|----------|-------------|
 | post_id | int | Yes | Post ID |
 
 **Request Example**:
@@ -1072,16 +1669,14 @@ The notification system supports the following types:
 ```json
 {
   "code": 200,
-  "message": "Favorite successful",
+  "message": "Collect successful",
   "data": {
     "collected": true
   }
 }
 ```
 
----
-
-## Tag-related Interface
+## Tag-related Interfaces
 
 ### 1. Get Tag List
 **Interface Address**: `GET /api/tags`
@@ -1106,11 +1701,12 @@ The notification system supports the following types:
 
 ### 2. Get Hot Tags
 **Interface Address**: `GET /api/tags/hot`
+
 **Description**: Returns up to 10 hot tags
 
 ---
 
-## Tag-related Interface
+## Tag-related Interfaces
 
 ### 1. Get All Tags
 **Interface Address**: `GET /api/tags`
@@ -1131,10 +1727,9 @@ The notification system supports the following types:
     }
   ]
 }
-```
 
 ### 2. Get Hot Tags
-**Interface Address**: `GET /api/tags/hot`
+**Interface Location**: `GET /api/tags/hot`
 **Authentication Required**: No
 
 **Request Parameters**:
@@ -1146,45 +1741,29 @@ The notification system supports the following types:
 ```json
 {
   "code": 200,
-  "message": "success",
-  "data": [
-    // Hot tags data
-  ]
-}
-
-```json
-{
-  "code": 200,
-  "message": "success",
+  "message": "成功",
   "data": [
     {
       "id": 1,
       "name": "Photography",
-      "description": "Photography-related content",
+      "description": "Content related to photography",
       "use_count": 150,
       "created_at": "2025-08-30T00:00:00.000Z"
     }
   ]
 }
+```
+
 ---
 
-## Statistical Interfaces
+## Statistical-related Interfaces
 
-### 1. Obtain System Statistical Information
+### 1. Get System Statistical Information
 **Interface Address**: `GET /api/stats`
 **Authentication Required**: No
 
 **Response Example**:
 ```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    // Statistical data
-  }
-}
-```
-
 {
   "code": 200,
   "message": "Successfully obtained statistical information",
@@ -1195,6 +1774,8 @@ The notification system supports the following types:
     "likes": 15600
   }
 }
+```
+
 ---
 
 ## Health Check Interface
@@ -1215,7 +1796,7 @@ The notification system supports the following types:
 
 ---
 
-## Search Related Interfaces
+## Search-related Interfaces
 
 ### 1. General Search
 **Interface Address**: `GET /api/search`
@@ -1223,7 +1804,7 @@ The notification system supports the following types:
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-----------|------|----------|------------|
 | keyword | string | No | Search keyword |
 | tag | string | No | Tag search |
 | type | string | No | Search type: all (default), posts, users |
@@ -1232,9 +1813,11 @@ The notification system supports the following types:
 
 **Response Example**:
 ```json
+
+```json
 {
   "code": 200,
-  "message": "success",
+  "message": "Success",
   "data": {
     "keyword": "Life",
     "tag": "",
@@ -1261,7 +1844,8 @@ The notification system supports the following types:
           "username": "Zhang San",
           "nickname": "Xiao Zhang",
           "avatar": "https://img.example.com/avatar1.jpg",
-          "bio": "Loves life",
+          "bio": "Loving life",
+          "verified": 0,
           "is_following": false
         }
       ]
@@ -1280,20 +1864,17 @@ The notification system supports the following types:
     }
   }
 }
-```
-
 ---
+## Related APIs
 
-## Statistical Interfaces
-
-### 1. Obtain Statistical Data
-**Interface Address**: `GET /api/stats`
+### 1. Obtain Statistics Data
+**API Endpoint**: `GET /api/stats`
 
 **Response Example**:
 ```json
 {
   "code": 200,
-  "message": "success",
+  "message": "Success",
   "data": {
     "users": 1000,
     "posts": 5000,
@@ -1303,20 +1884,24 @@ The notification system supports the following types:
 }
 ```
 
+---
+
+---
+
 ## Error Code Explanation
 
 | Error Code | Description |
-|-----------|-------------|
-| 400 | Request parameter error |
-| 404 | Resource not found |
-| 500 | Server internal error |
+|------------|-------------|
+| 400 | Request parameters are incorrect |
+| 404 | Resource does not exist |
+| 500 | Internal server error |
 
 ## Usage Examples
 
-### Using curl to Test Interface
+### Testing APIs with curl
 
 ```bash
-# User Registration
+# User registration
 curl -X POST "http://localhost:3001/api/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1325,7 +1910,7 @@ curl -X POST "http://localhost:3001/api/auth/register" \
     "password": "123456"
   }'
 
-# User Login
+# User login
 curl -X POST "http://localhost:3001/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1333,27 +1918,27 @@ curl -X POST "http://localhost:3001/api/auth/login" \
     "password": "123456"
   }'
 
-# Get Current User Information (requires authentication)
+# Get current user information (requires authentication)
 curl -X GET "http://localhost:3001/api/auth/me" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
-# Get User List
+# Get user list
 curl -X GET "http://localhost:3001/api/users?page=1&limit=10"
 
-# Get Post Details
+# Get post details
 curl -X GET "http://localhost:3001/api/posts/1"
 
-# Create Post (requires authentication)
+# Create post (requires authentication)
 curl -X POST "http://localhost:3001/api/posts" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
-    "title": "Test Post",
+    "title": "Test Note",
     "content": "This is test content",
     "category_id": 1
   }'
 
-# Create Comment (requires authentication)
+# Create comment (requires authentication)
 curl -X POST "http://localhost:3001/api/comments" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -1362,30 +1947,42 @@ curl -X POST "http://localhost:3001/api/comments" \
     "content": "This is a test comment"
   }'
 
-# Like Post (requires authentication)
+# Like post (requires authentication)
 curl -X POST "http://localhost:3001/api/posts/1/like" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
-# Collect Post (requires authentication)
+# Favorited Notes (requires authentication)
+```bash
 curl -X POST "http://localhost:3001/api/posts/1/collect" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
-# Follow User (requires authentication)
+# Follow a User (requires authentication)
+```bash
 curl -X POST "http://localhost:3001/api/users/2/follow" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
-# Upload Single File (requires authentication)
+# Upload a Single File (requires authentication)
+```bash
 curl -X POST "http://localhost:3001/api/upload/single" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -F "file=@/path/to/your/image.jpg"
+```
 
 # Get Notifications (requires authentication)
+```bash
 curl -X GET "http://localhost:3001/api/notifications/comments" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
-# Search Posts
+# Search Notes
+```bash
 curl -X GET "http://localhost:3001/api/search?keyword=life"
 ```
+
+### Testing Interfaces with JavaScript
 
 ```javascript
 // Set base URL and token
@@ -1411,7 +2008,8 @@ async function apiRequest(url, options = {}) {
 }
 ```
 
-// User registration
+```javascript
+// User Registration
 async function register() {
   const result = await apiRequest('/api/auth/register', {
     method: 'POST',
@@ -1430,7 +2028,7 @@ async function register() {
   return result;
 }
 
-// User login
+// User Login
 async function login() {
   const result = await apiRequest('/api/auth/login', {
     method: 'POST',
@@ -1448,17 +2046,17 @@ async function login() {
   return result;
 }
 
-// Get current user information
+// Get Current User Information
 async function getCurrentUser() {
   return await apiRequest('/api/auth/me');
 }
 
-// Get note list
+// Get Note List
 async function getPosts(page = 1, limit = 10) {
   return await apiRequest(`/api/posts?page=${page}&limit=${limit}`);
 }
 
-// Create a note
+// Create a Note
 async function createPost(postData) {
   return await apiRequest('/api/posts', {
     method: 'POST',
@@ -1466,28 +2064,28 @@ async function createPost(postData) {
   });
 }
 
-// Like a note
+// Like a Note
 async function likePost(postId) {
   return await apiRequest(`/api/posts/${postId}/like`, {
     method: 'POST'
   });
 }
 
-// Collect a note
+// Collect a Note
 async function collectPost(postId) {
   return await apiRequest(`/api/posts/${postId}/collect`, {
     method: 'POST'
   });
 }
 
-// Follow a user
+// Follow a User
 async function followUser(userId) {
   return await apiRequest(`/api/users/${userId}/follow`, {
     method: 'POST'
   });
 }
 
-// Upload a file
+// Upload a File
 async function uploadFile(file) {
   const formData = new FormData();
   formData.append('file', file);
@@ -1502,41 +2100,38 @@ async function uploadFile(file) {
   });
 }
 
-// Get notifications
+// Get Notifications
 async function getNotifications(type = 'comments', page = 1) {
   return await apiRequest(`/api/notifications/${type}?page=${page}`);
 }
 
-// Example usage
+// Example Usage
 async function example() {
   try {
     // Login
     const loginResult = await login();
-    console.log('Login result:', loginResult);
+    console.log('Login Result:', loginResult);
     
-    // Get note list
+    // Get Note List
     const posts = await getPosts();
-    console.log('Note list:', posts);
+    console.log('Note List:', posts);
     
-    // Create a note
-```
-
-```javascript
+    // Create a Note
     const newPost = await createPost({
       title: 'Test Note',
       content: 'This is test content',
       category_id: 1
     });
-    console.log('Create note result:', newPost);
+    console.log('Create Note Result:', newPost);
     
-    // Like note
+    // Like a Note
     if (posts.data.posts.length > 0) {
       const likeResult = await likePost(posts.data.posts[0].id);
-      console.log('Like result:', likeResult);
+      console.log('Like Result:', likeResult);
     }
     
   } catch (error) {
-    console.error('API call error:', error);
+    console.error('API Call Error:', error);
   }
 }
 
@@ -1544,37 +2139,40 @@ async function example() {
 
 ## Important Notes
 
-1. **Authentication Requirement**: Interfaces requiring authentication must include a valid JWT token in the request header.
-2. **Token Management**: The stored token is valid for 1 hour, and the refresh token is valid for 7 days.
-3. **Request Format**: All POST/PUT requests need to set `Content-Type: application/json` (except for file uploads).
-4. **Image Upload**: The image upload interface uses `multipart/form-data` format, supporting jpg, jpeg, png, gif, and webp formats, with a maximum single image size of 5MB.
-5. **Status Switching**: Operations like liking, favoriting, and following support status switching (cancel like if already liked).
-6. **Automatic Update**: Accessing note details will automatically increase the view count, and creating comments will automatically update the number of comments on the note.
+1. **Authentication Requirement**: Interfaces requiring authentication must include a valid JWT token in the request header
+```
+
+2. **Token Management**: The validity period for token access is 1 hour, and the validity period for refresh tokens is 7 days.
+3. **Request Format**: All POST/PUT requests need to set `Content-Type: application/json` (except for file upload).
+4. **Image Upload**: The image upload interface uses the `multipart/form-data` format, supporting jpg, jpeg, png, gif, and webp formats, with a maximum file size of 5MB for a single image.
+5. **Status Switching**: Operations such as liking, favoriting, and following support status switching (canceling a like if already liked).
+6. **Automatic Update**: Visiting note details will automatically increase the number of views, and creating comments will automatically update the number of comments on the note.
 7. **Relationship Update**: The follow operation will automatically update the user's number of followers and fans.
 8. **Search Function**: The search function supports fuzzy matching of titles and content.
-9. **Notification System**: Operations like comments, likes, and follows will automatically generate notifications.
-10. **Data Validation**: When registering, the user ID uniqueness and password strength (6-20 characters) will be verified.
+9. **Notification System**: Operations such as comments, likes, and follows will automatically generate notifications.
+10. **Data Validation**: When registering, the uniqueness of the user ID and the strength of the password (6-20 characters) will be verified.
 
 ---
 
-## Admin-related Interfaces
+## Administrator-related Interfaces
 
 ### Authentication Instructions
-Admin interfaces use JWT authentication:
-- Admins need to log in through the login interface to obtain the JWT token.
-- In subsequent requests, include `Authorization: Bearer <token>` in the request header.
+Administrator interfaces use JWT authentication:
+- Administrators need to obtain a JWT token through the login interface first
+- In subsequent requests, carry `Authorization: Bearer <token>` in the request header.
 
-### 1. Admin Login
+### 1. Administrator Login
 **API Endpoint**: `POST /api/auth/admin/login`
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|------------|
-| username | string | Yes | Admin username |
-| password | string | Yes | Admin password |
+| username | string | Yes | Administrator username |
+| password | string | Yes | Administrator password |
 
 **Response Example**:
 ```
+
 {
   "code": 200,
   "message": "Login successful",
@@ -1610,28 +2208,28 @@ Admin interfaces use JWT authentication:
 
 ### 3. User Management
 
-#### 3.1 Retrieve User List
+#### 3.1 Get User List
 **API Endpoint**: `GET /api/admin/users`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Content Type | Required | Description |
-|-----------|--------------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | Little Peach ID search |
+| user_display_id | string | No | Xiaosuiliu number search |
 | nickname | string | No | Nickname search |
-| status | int | No | Status filter (1=Active, 0=Disabled) |
-| sortField | string | No | Sort field (id, fans_count, like_count, created_at) |
-| sortOrder | string | No | Sort order (ASC, DESC) |
+| status | int | No | Status filter (1=active, 0=disabled) |
+| sortField | string | No | Sorting field (id, fans_count, like_count, created_at) |
+| sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 3.2 Create User
 **API Endpoint**: `POST /api/admin/users`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Content Type | Required | Description |
-|-----------|--------------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | user_id | string | Yes | User ID |
 | nickname | string | Yes | Nickname |
 | password | string | Yes | Password |
@@ -1652,26 +2250,26 @@ Admin interfaces use JWT authentication:
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Content Type | Required | Description |
-|-----------|--------------|----------|-------------|
-| ids | array | Yes | Array of User IDs |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| ids | array | Yes | Array of user IDs |
 
 ### 4. Record Management
 
-#### 4.1 Retrieve Record List
+#### 4.1 Get Record List
 **API Endpoint**: `GET /api/admin/posts`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Content Type | Required | Description |
-|-----------|--------------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 | title | string | No | Title search |
-| user_display_id | string | No | Author Little Peach ID filter |
+| user_display_id | string | No | Author Xiaosuiliu number filter |
 | category_id | int | No | Category ID filter |
-| sortField | string | No | Sort field (id, view_count, like_count, collect_count, comment_count, created_at) |
-| sortOrder | string | No | Sort order (ASC, DESC) |
+| sortField | string | No | Sorting field (id, view_count, like_count, collect_count, comment_count, created_at) |
+| sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 4.2 Create Record
 **API Endpoint**: `POST /api/admin/posts`
@@ -1692,17 +2290,17 @@ Admin interfaces use JWT authentication:
 ### 5. Comment Management
 
 #### 5.1 Obtain Comment List
-**Interface Location**: `GET /api/admin/comments`
+**Interface Address**: `GET /api/admin/comments`
 **Authentication Required**: Yes
 
 **Request Parameters**:
-| Parameter | Content Type | Required | Description |
-|-----------|--------------|----------|-------------|
+| Parameter | Type | Required | Description |
+|-----------|------|----------|------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 | content | string | No | Content search |
-| user_display_id | string | No | Filter by comment author's nickname |
-| post_id | int | No | Filter by post ID |
+| user_display_id | string | No | Filter by comment author's display ID |
+| post_id | int | No | Filter by record ID |
 | sortField | string | No | Sorting field (id, like_count, created_at) |
 | sortOrder | string | No | Sorting direction (ASC, DESC) |
 
@@ -1797,9 +2395,155 @@ Admin interfaces use JWT authentication:
 **Interface Location**: `GET /api/admin/tags/:id`
 **Authentication Required**: Yes
 
-### 7. Prize Management
+### 7. Certificate Audit Management
 
-#### 7.1 Get Prize List
+#### 7.1 Get Certificate Application List
+**Interface Location**: `GET /api/admin/audit`
+**Authentication Required**: Yes
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | int | No | Page number, default 1 |
+| limit | int | No | Number of items per page, default 20 |
+| type | int | No | Certificate type filter (1-Individual Certificate, 2-Enterprise Certificate) |
+| status | int | No | Audit status filter (0-Pending, 1-Approved, 2-Rejected) |
+| user_display_id | string | No | User WeChat ID search |
+| real_name | string | No | Real name search |
+| Sorting Column | String | No | Sorting Column (id, created_at, audit_time) |
+| Sorting Order | String | No | Sorting Order (ASC, DESC) |
+
+**Response Example**:
+```
+
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "Verification": [
+      {
+        "id": 1,
+        "user_id": 1,
+        "type": 1,
+        "real_name": "Zhang San",
+        "ID_card_number": "110101199001011234",
+        "front_ID_card_image": "https://example.com/id_front.jpg",
+        "back_ID_card_image": "https://example.com/id_back.jpg",
+        "contact_phone": "13800138000",
+        "contact_email": "zhangsan@example.com",
+        "description": "Application for personal verification",
+        "status": 0,
+        "verification_time": null,
+        "reject_reason": null,
+        "creation_time": "2025-01-02T00:00:00.000Z",
+        "user": {
+          "id": 1,
+          "user_ID": "user_001",
+          "nickname": "Zhang San",
+          "avatar": "https://example.com/avatar.jpg"
+        }
+      }
+    ],
+    "Pagination": {
+      "page_number": 1,
+      "limit": 20,
+      "total_count": 1,
+      "total_page_count": 1
+    }
+  }
+}
+```
+
+#### 7.2 Obtain Verification Application Details
+**Interface Location**: `GET /api/admin/audit/:id`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| id | int | Yes | Verification Application ID |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "type": 1,
+    "real_name": "Zhang San",
+    "ID_card_number": "110101199001011234",
+    "front_ID_card_image": "https://example.com/id_front.jpg",
+    "back_ID_card_image": "https://example.com/id_back.jpg",
+    "contact_phone": "13800138000",
+    "contact_email": "zhangsan@example.com",
+    "description": "Application for personal verification",
+    "status": 0,
+    "verification_time": null,
+    "reject_reason": null,
+    "creation_time": "2025-01-02T00:00:00.000Z",
+    "user": {
+      "id": 1,
+      "user_ID": "user_001",
+      "nickname": "Zhang San",
+      "avatar": "https://example.com/avatar.jpg",
+      "verification": 0
+    }
+  }
+}
+```
+
+#### 7.3 Verify Verification Application (Approve)
+**Interface Location**: `PUT /api/admin/audit/:id/approve`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| id | int | Yes | Verification Application ID |
+
+**Function Description**:
+- After verification is approved, the user's verification status will be automatically updated to verified
+- The system will record the verification time
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification application verified"
+}
+```
+
+#### 7.4 Verify Verification Application (Reject)
+**Interface Location**: `PUT /api/admin/audit/:id/reject`
+**Authentication Required**: Yes
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| id | int | Yes | Verification Application ID |
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| reject_reason | string | Yes | Reject reason |
+
+**Function Description**:
+- After verification is rejected, the user can view the reject reason
+- The user can withdraw the application and resubmit it
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification application rejected"
+}
+```
+
+### 8. Like Management
+
+#### 8.1 Obtain Like List
 **Interface Location**: `GET /api/admin/likes`
 **Authentication Required**: Yes
 
@@ -1808,122 +2552,119 @@ Admin interfaces use JWT authentication:
 |-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | User display ID filter |
+| user_display_id | string | No | Filter by user display ID |
 | target_type | int | No | Target type (1=Note, 2=Comment) |
 | sortField | string | No | Sorting field (id, user_id, created_at) |
 | sortOrder | string | No | Sorting direction (ASC, DESC) |
 
-#### 7.2 Create Prize
-
+#### 8.2 Create Like
 **Interface Location**: `POST /api/admin/likes`
-
-**Need Verification**: Yes
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | user_id | int | Yes | User ID |
-| target_id | int | Yes | Target ID (note ID or comment ID) |
-| target_type | int | Yes | Target Type (1=Note, 2=Comment) |
+| target_id | int | Yes | Target ID (Note ID or Comment ID) |
+| target_type | int | Yes | Target type (1=Note, 2=Comment) |
 
-#### 7.3 Update Like
-**API Endpoint**: `PUT /api/admin/likes/:id`
-**Need Verification**: Yes
+#### 8.3 Update Like
+**Interface Location**: `PUT /api/admin/likes/:id`
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| target_type | int | No | Target Type (1=Note, 2=Comment) |
+| target_type | int | No | Target type (1=Note, 2=Comment) |
 
-#### 7.4 Delete Like
-**API Endpoint**: `DELETE /api/admin/likes/:id`
-**Need Verification**: Yes
+#### 8.4 Delete Like
+**Interface Location**: `DELETE /api/admin/likes/:id`
+**Authentication Required**: Yes
 
-#### 7.5 Batch Delete Likes
-**API Endpoint**: `DELETE /api/admin/likes`
-**Need Verification**: Yes
+#### 8.5 Batch Delete Likes
+**Interface Location**: `DELETE /api/admin/likes`
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | ids | array | Yes | Array of Like IDs |
 
-#### 7.6 Get Single Like Detail
-**API Endpoint**: `GET /api/admin/likes/:id`
-**Need Verification**: Yes
+#### 8.6 Get Single Like Detail
+**Interface Location**: `GET /api/admin/likes/:id`
+**Authentication Required**: Yes
 
 ### 8. Collection Management
 
 #### 8.1 Get Collection List
-**API Endpoint**: `GET /api/admin/collections`
-**Need Verification**: Yes
+**Interface Location**: `GET /api/admin/collections`
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | Filter by user's small peach ID |
+| user_display_id | string | No | Filter by user display ID |
 | sortBy | string | No | Sorting field (id, user_id, created_at) |
 | sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 8.2 Create Collection
-**API Endpoint**: `POST /api/admin/collections`
-**Need Verification**: Yes
+**Interface Location**: `POST /api/admin/collections`
+**Authentication Required**: Yes
 
 #### 8.3 Delete Collection
-**API Endpoint**: `DELETE /api/admin/collections/:id`
-**Need Verification**: Yes
+**Interface Location**: `DELETE /api/admin/collections/:id`
+**Authentication Required**: Yes
 
 #### 8.4 Batch Delete Collections
-**API Endpoint**: `DELETE /api/admin/collections`
-**Need Verification**: Yes
+**Interface Location**: `DELETE /api/admin/collections`
+**Authentication Required**: Yes
 
 ### 9. Follow Management
 
 #### 9.1 Get Follow List
-**API Endpoint**: `GET /api/admin/follows`
-**Need Verification**: Yes
+**Interface Location**: `GET /api/admin/follows`
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | Filter by user's small peach ID |
+| user_display_id | string | No | Filter by user display ID |
 | sortField | string | No | Sorting field (id, follower_id, following_id, created_at) |
 | sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 9.2 Create Follow Relationship
-**API Endpoint**: `POST /api/admin/follows`
-**Need Verification**: Yes
+**Interface Location**: `POST /api/admin/follows`
+**Authentication Required**: Yes
 
 #### 9.3 Delete Follow Relationship
-**API Endpoint**: `DELETE /api/admin/follows/:id`
-**Need Verification**: Yes
+
+**Interface Location**: `DELETE /api/admin/follows/:id`
+**Authentication Required**: Yes
 
 #### 9.4 Batch Delete Follow Relationships
-**API Endpoint**: `DELETE /api/admin/follows`
-**Need Verification**: Yes
+**Interface Location**: `DELETE /api/admin/follows`
+**Authentication Required**: Yes
 
 ### 10. Notification Management
 
 #### 10.1 Get Notification List
-**API Endpoint**: `GET /api/admin/notifications`
-
-**Need Verification**: Yes
+**Interface Location**: `GET /api/admin/notifications`
+**Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-----------|------|----------|------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | Filter by user's small peach ID |
+| user_display_id | string | No | Filter by user's little peach ID |
 | type | string | No | Filter by notification type |
 | is_read | int | No | Read status (0=Unread, 1=Read) |
-| Sorting Field | String | No | Sorting Field (id, created_at) |
-|---------------|--------|----|--------------------------------|
-| Sorting Direction | String | No | Sorting Direction (ASC, DESC) |
+| sortField | string | No | Sorting field (id, created_at) |
+| sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 10.2 Create Notification
 **Interface Location**: `POST /api/admin/notifications`
@@ -1952,10 +2693,10 @@ Admin interfaces use JWT authentication:
 |-----------|------|----------|------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
-| user_display_id | string | No | User display ID filter |
+| user_display_id | string | No | Filter by user's little peach ID |
 | is_active | int | No | Active status (0=Inactive, 1=Active) |
-| sortField | string | No | Sorting Field (id, is_active, expires_at, created_at) |
-| sortOrder | string | No | Sorting Direction (ASC, DESC) |
+| sortField | string | No | Sorting field (id, is_active, expires_at, created_at) |
+| sortOrder | string | No | Sorting direction (ASC, DESC) |
 
 #### 11.2 Create Session
 **Interface Location**: `POST /api/admin/sessions`
@@ -1993,60 +2734,59 @@ Admin interfaces use JWT authentication:
     }
   ]
 }
-```
 
-#### 12.2 Retrieve Administrator List
+#### 12.2 Obtain Admin List
 **API Endpoint**: `GET /api/admin/admins` or `GET /api/auth/admin/admins`
 **Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-----------|------|----------|------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 | username | string | No | Username search |
 | sortField | string | No | Sorting field (username, created_at) |
 | sortOrder | string | No | Sorting direction (ASC, DESC) |
 
-#### 12.2 Create Administrator
+#### 12.2 Create Admin
 **API Endpoint**: `POST /api/admin/admins` or `POST /api/auth/admin/admins`
 **Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| username | string | Yes | Administrator username |
-| password | string | Yes | Administrator password |
+|-----------|------|----------|------------|
+| username | string | Yes | Admin username |
+| password | string | Yes | Admin password |
 
-#### 12.3 Update Administrator
+#### 12.3 Update Admin
 **API Endpoint**: `PUT /api/admin/admins/:id` or `PUT /api/auth/admin/admins/:id`
 **Authentication Required**: Yes
 
-#### 12.4 Delete Administrator
+#### 12.4 Delete Admin
 **API Endpoint**: `DELETE /api/admin/admins/:id` or `DELETE /api/auth/admin/admins/:id`
 **Authentication Required**: Yes
 
-#### 12.5 Bulk Delete Administrators
+#### 12.5 Bulk Delete Admins
 **API Endpoint**: `DELETE /api/admin/admins` or `DELETE /api/auth/admin/admins`
 **Authentication Required**: Yes
 
-#### 12.6 Modify Administrator Password
+#### 12.6 Modify Admin Password
 **API Endpoint**: `PUT /api/auth/admin/admins/:id/password`
 **Authentication Required**: Yes (JWT)
 
-#### 12.7 Modify Administrator Status
+#### 12.7 Modify Admin Status
 **API Endpoint**: `PUT /api/auth/admin/admins/:id/status`
 **Authentication Required**: Yes (JWT)
 
 ### 13. Monitoring Management
 
-#### 13.1 Retrieve System Activity Monitoring
+#### 13.1 Obtain System Activity Monitoring
 **API Endpoint**: `GET /api/admin/monitor/activities`
 **Authentication Required**: Yes
 
 **Request Parameters**:
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-----------|------|----------|------------|
 | page | int | No | Page number, default 1 |
 | limit | int | No | Number of items per page, default 20 |
 | date_from | string | No | Start date (YYYY-MM-DD) |
@@ -2078,34 +2818,33 @@ Admin interfaces use JWT authentication:
 }
 ```
 
-### Example Usage of Administrator APIs
+### Example of Admin API Usage
 
 ```bash
-# Administrator Login
+# Admin login
 curl -X POST "http://localhost:3001/api/auth/admin/login" \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "123456"}'
 
-# Retrieve User List
+# Obtain user list
 curl -X GET "http://localhost:3001/api/admin/users?page=1&limit=10" \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
 
-# Retrieve Administrator Information
+# Obtain admin information
 curl -X GET "http://localhost:3001/api/auth/admin/me" \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
 
-# User Creation
-```bash
+# Creating a User
 curl -X POST "http://localhost:3001/api/admin/users" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
   -d '{"user_id": "test_user", "nickname": "Test User", "password": "123456"}'
 
-# Note Deletion
+# Deleting a Note
 curl -X DELETE "http://localhost:3001/api/admin/posts/1" \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
 
-# Bulk Comment Deletion
+# Bulk Deleting Comments
 curl -X DELETE "http://localhost:3001/api/admin/comments" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \

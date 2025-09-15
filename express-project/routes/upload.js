@@ -71,14 +71,14 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
     }
 
     const uploadResults = [];
-    
+
     for (const file of req.files) {
       const result = await uploadFile(
         file.buffer,
         file.originalname,
         file.mimetype
       );
-      
+
       if (result.success) {
         uploadResults.push({
           originalname: file.originalname,
