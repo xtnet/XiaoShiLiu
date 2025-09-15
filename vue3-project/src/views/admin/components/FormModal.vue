@@ -123,7 +123,7 @@
       <div class="modal-footer">
         <div class="form-actions">
           <button type="button" @click="handleClose" class="btn btn-outline">取消</button>
-          <button type="submit" @click="handleSubmit" class="btn btn-primary"
+          <button type="button" @click="handleSubmit" class="btn btn-primary"
             :disabled="props.loading || isSubmitting || isUploadingImages">
             {{ getButtonText() }}
           </button>

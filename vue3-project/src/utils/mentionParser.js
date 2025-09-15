@@ -65,7 +65,6 @@ export function parseMentions(text) {
   if (result.includes('<div></div>')) {
     const lines = result.split('<div></div>')
     if (lines.length > 1 && lines[0]) {
-      lines[0] = lines[0]
       result = lines.join('<div></div>')
     }
   }

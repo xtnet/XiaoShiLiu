@@ -4,7 +4,7 @@
     <div v-if="visible" class="image-viewer-overlay" @click="handleOverlayClick" @keydown="handleKeydown" tabindex="0">
       <div class="image-viewer-container" @click.stop>
         <!-- 关闭按钮 -->
-        <button class="close-btn" @click="closeViewer" aria-label="关闭图片查看器">
+        <button class="close-btn" @click.stop="closeViewer" aria-label="关闭图片查看器">
           <SvgIcon name="close" :width="24" :height="24" />
         </button>
 
@@ -26,11 +26,11 @@
 
         <!-- 导航按钮 (多图时显示) -->
         <template v-if="images.length > 1">
-          <button class="nav-btn prev-btn" :class="{ disabled: currentIndex === 0 }" @click="prevImage"
+          <button class="nav-btn prev-btn" :class="{ disabled: currentIndex === 0 }" @click.stop="prevImage"
             :disabled="currentIndex === 0" aria-label="上一张图片">
             <SvgIcon name="left" :width="24" :height="24" />
           </button>
-          <button class="nav-btn next-btn" :class="{ disabled: currentIndex === images.length - 1 }" @click="nextImage"
+          <button class="nav-btn next-btn" :class="{ disabled: currentIndex === images.length - 1 }" @click.stop="nextImage"
             :disabled="currentIndex === images.length - 1" aria-label="下一张图片">
             <SvgIcon name="right" :width="24" :height="24" />
           </button>
@@ -179,14 +179,22 @@ const handleImageError = (index) => {
 }
 
 // 上一张图片
-const prevImage = () => {
+const prevImage = (event) => {
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
   if (currentIndex.value > 0) {
     currentIndex.value--
   }
 }
 
 // 下一张图片
-const nextImage = () => {
+const nextImage = (event) => {
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
   if (currentIndex.value < props.images.length - 1) {
     currentIndex.value++
   }
@@ -241,22 +249,27 @@ const handleKeydown = (event) => {
 
   switch (event.key) {
     case 'Escape':
+      event.preventDefault()
+      event.stopPropagation()
       closeViewer()
       break
     case 'ArrowLeft':
       event.preventDefault()
-      prevImage()
+      event.stopPropagation()
+      prevImage(event)
       break
     case 'ArrowRight':
       event.preventDefault()
-      nextImage()
+      event.stopPropagation()
+      nextImage(event)
       break
   }
 }
 
 // 组件挂载时添加键盘监听
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
+  // 使用捕获阶段监听，并立即阻止事件传播
+  document.addEventListener('keydown', handleKeydown, true)
 })
 
 // 触摸事件处理
@@ -300,7 +313,7 @@ const handleTouchEnd = (e) => {
 
 // 组件卸载时移除键盘监听
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('keydown', handleKeydown, true)
 })
 </script>
 

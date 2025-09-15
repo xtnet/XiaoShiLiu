@@ -9,11 +9,11 @@
       }" draggable="true" @dragstart="handleDragStart(index, $event)" @dragenter.prevent="handleDragEnter(index)"
         @dragover.prevent @dragend="handleDragEnd" @touchstart="handleTouchStart(index, $event)"
         @touchmove="handleTouchMove($event)" @touchend="handleTouchEnd($event)">
-        <div class="image-preview">
+        <div class="image-preview" @click="handleImagePreviewClick(index)">
           <img :src="imageItem.preview" alt="预览图片" />
           <div class="image-overlay">
             <div class="image-actions">
-              <button @click="removeImage(index)" class="action-btn remove-btn"
+              <button @click.stop="removeImage(index)" class="action-btn remove-btn"
                 :disabled="isUploading || (!props.allowDeleteLast && imageList.length <= 1)">
                 <SvgIcon name="delete" />
               </button>
@@ -53,6 +53,10 @@
 
 
     <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="handleToastClose" />
+
+    <!-- 图片查看器 -->
+    <ImageViewer :visible="showImageViewer" :images="viewerImages" :initial-index="currentImageIndex" image-type="post"
+      @close="handleImageViewerClose" @change="handleImageViewerChange" />
   </div>
 </template>
 
@@ -60,6 +64,7 @@
 import { ref, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import MessageToast from '@/components/MessageToast.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
 import { imageUploadApi } from '@/api/index.js'
 
 const props = defineProps({
@@ -104,6 +109,11 @@ const touchThreshold = 10 // 触摸移动阈值
 const longPressTimer = ref(null)
 const longPressDelay = 300 // 长按延迟时间
 const isLongPressed = ref(false)
+
+// ImageViewer相关状态
+const showImageViewer = ref(false)
+const currentImageIndex = ref(0)
+const viewerImages = ref([])
 
 // 生成唯一ID
 const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9)
@@ -659,6 +669,27 @@ const handleToastClose = () => {
   showToast.value = false
 }
 
+// 处理图片预览点击事件
+const handleImagePreviewClick = (index) => {
+  // 准备图片数据用于ImageViewer
+  viewerImages.value = imageList.value.map(item => ({
+    url: item.preview,
+    alt: `预览图片 ${imageList.value.indexOf(item) + 1}`
+  }))
+  currentImageIndex.value = index
+  showImageViewer.value = true
+}
+
+// 关闭图片查看器
+const handleImageViewerClose = () => {
+  showImageViewer.value = false
+}
+
+// 图片查看器索引变化
+const handleImageViewerChange = (newIndex) => {
+  currentImageIndex.value = newIndex
+}
+
 // 暴露方法和属性给父组件
 defineExpose({
   uploadAllImages,
@@ -697,6 +728,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   position: relative;
+  cursor: zoom-in;
 }
 
 .image-preview img {
