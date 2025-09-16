@@ -1283,11 +1283,11 @@ const handleSaveDraft = async () => {
 
 @media (max-width: 480px) {
   .publish-header {
-    padding: 0.5rem;
+    padding: 16px 14px;
   }
 
   .page-title {
-    font-size: 1rem;
+    margin-left: 12px;
   }
 
   .header-actions {
