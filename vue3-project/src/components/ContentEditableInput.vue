@@ -75,6 +75,38 @@ onMounted(() => {
 
 
 
+// 将[@nickname:user_id]格式转换为HTML mention链接
+const convertTextToMentionLinks = (text) => {
+  if (!text) return ''
+
+  // 保护已存在的HTML mention链接
+  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*data-user-id="([^"]*)"[^>]*>@([^<]*)<\/a>/g
+  const existingLinks = []
+  let linkIndex = 0
+  
+  // 提取并保护现有的mention链接
+  text = text.replace(mentionLinkRegex, (match) => {
+    const placeholder = `__MENTION_LINK_${linkIndex}__`
+    existingLinks[linkIndex] = match
+    linkIndex++
+    return placeholder
+  })
+
+  // 处理[@nickname:user_id]格式（兼容旧格式）
+  const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
+  text = text.replace(mentionRegex, (match, nickname, userId) => {
+    return `<a href="/user/${userId}" data-user-id="${userId}" class="mention-link" contenteditable="false">@${nickname}</a>`
+  })
+
+  // 恢复保护的mention链接
+  existingLinks.forEach((link, index) => {
+    text = text.replace(`__MENTION_LINK_${index}__`, link)
+  })
+
+  // 处理换行符
+  return text.replace(/\n/g, '<br>')
+}
+
 // 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持换行
 const convertMentionLinksToText = (html) => {
   if (!html) return ''
@@ -83,14 +115,8 @@ const convertMentionLinksToText = (html) => {
   const tempDiv = document.createElement('div')
   tempDiv.innerHTML = html
 
-  // 查找所有mention链接并替换
-  const mentionLinks = tempDiv.querySelectorAll('.mention-link')
-  mentionLinks.forEach(link => {
-    const userId = link.getAttribute('data-user-id')
-    const nickname = link.textContent.replace('@', '')
-    const mentionText = document.createTextNode(`[@${nickname}:${userId}]`)
-    link.parentNode.replaceChild(mentionText, link)
-  })
+  // 查找所有mention链接，保持HTML格式不变
+  // 不再转换为[@nickname:user_id]格式，直接保持HTML a标签格式
 
   // 查找所有@符号标记并替换为纯文本@符号
   const atMarkers = tempDiv.querySelectorAll('span[data-at-marker]')
@@ -114,6 +140,9 @@ const convertMentionLinksToText = (html) => {
           result += processNode(child)
         } else if (child.tagName === 'BR') {
           result += '\n'
+        } else if (child.tagName === 'A' && child.classList.contains('mention-link')) {
+          // 保持mention链接的HTML格式
+          result += child.outerHTML
         } else {
           // 其他标签直接处理内容
           result += processNode(child)

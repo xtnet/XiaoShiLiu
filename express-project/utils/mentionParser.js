@@ -13,23 +13,23 @@ function extractMentionedUsers(text) {
   
   const mentionedUsers = []
   
-  // 匹配[@nickname:user_id]格式的正则表达式
-  const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
+  // 匹配HTML格式的mention链接
+  const htmlMentionRegex = /<a[^>]*class="mention-link"[^>]*data-user-id="([^"]+)"[^>]*>@([^<]+)<\/a>/g
   let match
   
-  while ((match = mentionRegex.exec(text)) !== null) {
-    const [, nickname, userId] = match
+  while ((match = htmlMentionRegex.exec(text)) !== null) {
+    const [, userId, nickname] = match
     mentionedUsers.push({
       nickname,
       userId
     })
   }
   
-  // 匹配HTML格式的mention链接
-  const htmlMentionRegex = /<a[^>]*class="mention[^"]*"[^>]*data-user-id="([^"]+)"[^>]*>@([^<]+)<\/a>/g
+  // 兼容旧格式[@nickname:user_id]
+  const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
   
-  while ((match = htmlMentionRegex.exec(text)) !== null) {
-    const [, userId, nickname] = match
+  while ((match = mentionRegex.exec(text)) !== null) {
+    const [, nickname, userId] = match
     // 避免重复添加
     if (!mentionedUsers.some(user => user.userId === userId)) {
       mentionedUsers.push({
@@ -50,12 +50,12 @@ function extractMentionedUsers(text) {
 function hasMentions(text) {
   if (!text) return false
   
-  // 检查[@nickname:user_id]格式
-  const mentionRegex = /\[@([^:]+):([^\]]+)\]/
   // 检查HTML格式的mention链接
-  const htmlMentionRegex = /<a[^>]*class="mention[^"]*"[^>]*data-user-id[^>]*>[^<]*@[^<]*<\/a>/
+  const htmlMentionRegex = /<a[^>]*class="mention-link"[^>]*data-user-id[^>]*>[^<]*@[^<]*<\/a>/
+  // 检查[@nickname:user_id]格式（兼容旧格式）
+  const mentionRegex = /\[@([^:]+):([^\]]+)\]/
   
-  return mentionRegex.test(text) || htmlMentionRegex.test(text)
+  return htmlMentionRegex.test(text) || mentionRegex.test(text)
 }
 
 module.exports = {

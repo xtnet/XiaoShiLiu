@@ -19,7 +19,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import { parseMentions } from '@/utils/mentionParser'
 
 const props = defineProps({
   content: {
@@ -52,11 +51,26 @@ const parsedContent = computed(() => {
   const imgElements = tempDiv.querySelectorAll('img')
   const images = Array.from(imgElements).map(img => img.src)
 
-  // 移除图片元素，获取文本（保留换行信息）
+  // 移除图片元素，获取文本（保留mention链接的HTML格式）
   imgElements.forEach(img => img.remove())
 
-  // 将<br>标签转换为换行符，保留换行信息
+  // 保留mention链接的HTML格式，只处理其他标签
   let htmlContent = tempDiv.innerHTML
+  
+  // 保护mention链接
+  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*>.*?<\/a>/g
+  const mentionLinks = []
+  let linkIndex = 0
+  
+  // 提取并保护mention链接
+  htmlContent = htmlContent.replace(mentionLinkRegex, (match) => {
+    const placeholder = `__MENTION_LINK_${linkIndex}__`
+    mentionLinks[linkIndex] = match
+    linkIndex++
+    return placeholder
+  })
+  
+  // 处理其他HTML标签
   htmlContent = htmlContent.replace(/<br\s*\/?>/gi, '\n')
   htmlContent = htmlContent.replace(/<\/div><div>/gi, '\n')
   htmlContent = htmlContent.replace(/<div>/gi, '')
@@ -64,13 +78,13 @@ const parsedContent = computed(() => {
   htmlContent = htmlContent.replace(/<\/p><p>/gi, '\n')
   htmlContent = htmlContent.replace(/<p>/gi, '')
   htmlContent = htmlContent.replace(/<\/p>/gi, '')
+  
+  // 恢复mention链接
+  mentionLinks.forEach((link, index) => {
+    htmlContent = htmlContent.replace(`__MENTION_LINK_${index}__`, link)
+  })
 
-  // 创建新的临时div来获取纯文本
-  const textDiv = document.createElement('div')
-  textDiv.innerHTML = htmlContent
-  const text = textDiv.textContent || textDiv.innerText || ''
-
-  return { text: text.trim(), images }
+  return { text: htmlContent.trim(), images }
 })
 
 const text = computed(() => parsedContent.value.text)
@@ -78,7 +92,8 @@ const images = computed(() => parsedContent.value.images)
 
 // 解析文本中的mention标记
 const parsedText = computed(() => {
-  return parseMentions(text.value)
+  // 由于text现在已经包含HTML格式的mention链接，直接返回
+  return text.value
 })
 
 // 处理mention链接点击事件
