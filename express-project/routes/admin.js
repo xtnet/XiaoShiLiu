@@ -322,6 +322,8 @@ const postsCrudConfig = {
     for (const tag of tagResult) {
       await pool.execute('UPDATE tags SET use_count = use_count - 1 WHERE id = ?', [String(tag.tag_id)])
     }
+    // 返回验证结果
+    return { isValid: true }
   },
 
   // 批量删除前的处理
