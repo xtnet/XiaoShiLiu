@@ -66,7 +66,7 @@
               <div class="mobile-image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
                 @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
                 <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="`图片 ${index + 1}`"
-                  class="mobile-slider-image" @click="openImageViewer" />
+                  class="mobile-slider-image" @click="openImageViewer" @load="handleImageLoad($event, index)" />
               </div>
 
 
@@ -1699,6 +1699,68 @@ const handleImageLoad = (event, index) => {
     }
 
     imageSectionWidth.value = optimalWidth
+  }
+
+  // 移动端图片显示优化：以第一张图片为基准，所有图片使用相同的容器尺寸
+  if (window.innerWidth <= 768) {
+    // 只有第一张图片加载时才计算容器尺寸
+    if (index === 0) {
+      const img = event.target
+      const aspectRatio = img.naturalWidth / img.naturalHeight
+      const container = img.closest('.mobile-image-container')
+      
+      if (container) {
+        const screenWidth = window.innerWidth
+        const maxHeight = 565 // 最大高度限制
+        const minHeight = 200 // 最小高度限制
+        
+        // 始终按宽度适配，高度按比例变化
+        const containerWidth = window.innerWidth // 直接使用视口宽度
+        const calculatedHeight = containerWidth * (img.naturalHeight / img.naturalWidth)
+        
+        let finalWidth = containerWidth
+        let finalHeight = calculatedHeight
+        let objectFit = 'contain' // 默认使用contain确保完整显示
+        
+        if (calculatedHeight > maxHeight) {
+          finalHeight = maxHeight
+          finalWidth = containerWidth // 容器宽度保持屏幕宽度
+          objectFit = 'contain'
+        } else if (calculatedHeight < minHeight) {
+          finalHeight = minHeight
+          finalWidth = containerWidth
+          objectFit = 'contain'
+        } else {
+          finalWidth = containerWidth
+          finalHeight = calculatedHeight
+          objectFit = 'contain'
+        }
+        
+        // 强制设置容器尺寸，覆盖CSS默认值
+        container.style.width = '100vw' // 使用视口宽度确保占满屏幕
+        container.style.height = finalHeight + 'px'
+        container.style.minHeight = 'unset'
+        container.style.margin = '0 0 16px 0' 
+        container.style.maxWidth = 'none'
+        container.style.left = '0'
+        container.style.position = 'relative'
+        const allImages = container.querySelectorAll('.mobile-slider-image')
+        allImages.forEach(image => {
+          image.style.objectFit = objectFit
+        })
+      }
+    } else {
+      // 非第一张图片加载时，只需要设置object-fit属性与第一张图片保持一致
+      const img = event.target
+      const container = img.closest('.mobile-image-container')
+      if (container) {
+        // 获取第一张图片的object-fit设置
+        const firstImage = container.querySelector('.mobile-slider-image')
+        if (firstImage && firstImage.style.objectFit) {
+          img.style.objectFit = firstImage.style.objectFit
+        }
+      }
+    }
   }
 
   // 当前图片加载完成后，自动预加载下一张图片
@@ -3701,8 +3763,7 @@ function handleAvatarError(event) {
     display: block;
     /* 在移动端显示 */
     width: 100%;
-    height: 280px;
-    /* 固定高度，形成长方形区域 */
+    min-height: 200px;
     margin-bottom: 16px;
     position: relative;
     background: var(--bg-color-secondary);
@@ -3710,6 +3771,7 @@ function handleAvatarError(event) {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
   }
 
   .mobile-image-slider {
@@ -3723,11 +3785,11 @@ function handleAvatarError(event) {
     flex: 0 0 100%;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    /* 改为 contain 以确保完整显示 */
+    object-fit: cover; /* 默认使用cover，JavaScript会根据需要调整为contain */
     object-position: center;
     display: block;
     cursor: zoom-in;
+    transition: object-fit 0.3s ease; /* 添加过渡效果 */
   }
 
   /* 移动端图片控制 */
@@ -3925,6 +3987,7 @@ function handleAvatarError(event) {
   .reply-content {
     margin-left: 12px;
   }
+
   /* 移动端头像和认证徽章调整 */
   .author-avatar {
     width: 36px;
