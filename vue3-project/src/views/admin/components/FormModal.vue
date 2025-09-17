@@ -14,9 +14,23 @@
             <input v-if="field.type === 'text' || field.type === 'password'" :value="getInputValue(field)"
               @input="updateInputField(field, $event.target.value)" :type="field.type" :placeholder="field.placeholder"
               :required="field.required" :maxlength="field.maxlength" />
-            <textarea v-else-if="field.type === 'textarea'" :value="getTextareaValue(field)"
-              @input="updateTextareaField(field, $event.target.value)" :placeholder="field.placeholder"
-              :required="field.required" rows="4"></textarea>
+            <div v-else-if="field.type === 'textarea'" class="input-section">
+              <div class="content-input-wrapper">
+                <ContentEditableInput :ref="el => setContentEditableRef(field.key, el)" v-model="formData[field.key]"
+                  :input-class="'content-textarea'" :placeholder="field.placeholder || '请输入内容'" :enable-mention="true"
+                  :mention-users="mentionUsers" @mention="handleContentEditableMentionInput" />
+                <div class="content-actions">
+                  <button type="button" class="mention-btn" @click="toggleMentionPanel(field.key)">
+                    <SvgIcon name="mention" class="mention-icon" width="20" height="20" />
+                  </button>
+                  <button type="button" class="emoji-btn" @click="toggleEmojiPanel(field.key)">
+                    <SvgIcon name="emoji" class="emoji-icon" width="20" height="20" />
+                  </button>
+                </div>
+              </div>
+              <div v-if="field.maxLength" class="char-count">{{ getPlainTextLength(formData[field.key] || '') }}/{{
+                field.maxLength }}</div>
+            </div>
             <div v-else-if="field.type === 'textarea-with-emoji'" class="textarea-with-emoji-wrapper">
               <textarea :ref="el => setTextareaRef(field.key, el)" :value="getTextareaValue(field)"
                 @input="updateTextareaField(field, $event.target.value)" :placeholder="field.placeholder"

@@ -23,10 +23,19 @@ function escapeHtml(text) {
 export function parseMentions(text) {
   if (!text) return ''
 
-  // 先提取并保护data-at-marker的span标签
+  // 先提取并保护已存在的mention链接
+  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*data-user-id="[^"]*"[^>]*>@[^<]*<\/a>/g
+  const mentionLinks = []
+  let protectedText = text.replace(mentionLinkRegex, (match) => {
+    const placeholder = `__MENTION_LINK_${mentionLinks.length}__`
+    mentionLinks.push(match)
+    return placeholder
+  })
+
+  // 提取并保护data-at-marker的span标签
   const atMarkerRegex = /<span[^>]*data-at-marker[^>]*>@<\/span>/g
   const atMarkers = []
-  let protectedText = text.replace(atMarkerRegex, (match) => {
+  protectedText = protectedText.replace(atMarkerRegex, (match) => {
     const placeholder = `__AT_MARKER_${atMarkers.length}__`
     atMarkers.push(match)
     return placeholder
@@ -59,6 +68,11 @@ export function parseMentions(text) {
   // 恢复data-at-marker的span标签
   atMarkers.forEach((marker, index) => {
     result = result.replace(`__AT_MARKER_${index}__`, marker)
+  })
+
+  // 恢复已存在的mention链接
+  mentionLinks.forEach((link, index) => {
+    result = result.replace(`__MENTION_LINK_${index}__`, link)
   })
 
   // 如果结果包含换行div，需要将第一行内容包装在div中以保持一致性
