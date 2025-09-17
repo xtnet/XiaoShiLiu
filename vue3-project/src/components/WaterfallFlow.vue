@@ -36,7 +36,7 @@ const props = defineProps({
         default: null
     },
     type: {
-        type: String,
+        type: [String, Number],
         default: null
     },
     preloadedPosts: {
@@ -256,6 +256,15 @@ async function initContent() {
         } else {
             // 使用笔记API服务
             // 调用参数已准备完成
+            console.log('WaterfallFlow API调用参数:', {
+                page: 1,
+                limit: pageSize,
+                category: props.category,
+                searchKeyword: props.searchKeyword,
+                searchTag: props.searchTag,
+                userId: props.userId,
+                type: props.type
+            })
             const result = await getPostList({
                 page: 1,
                 limit: pageSize,
@@ -265,6 +274,7 @@ async function initContent() {
                 userId: props.userId,
                 type: props.type
             })
+            console.log('WaterfallFlow API响应:', result)
             content = result.posts || []
             hasMore.value = result.hasMore !== false // 默认为true，除非明确返回false
         }

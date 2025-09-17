@@ -29,7 +29,14 @@ const postsCrudConfig = {
     title: { operator: 'LIKE' },
     user_display_id: { operator: '=' },
     category_id: { operator: '=' },
-    is_draft: { operator: '=' }
+    type: { 
+      operator: '=',
+      transform: (value) => parseInt(value) // 将字符串转换为数字
+    },
+    is_draft: { 
+      operator: '=',
+      transform: (value) => parseInt(value) // 将字符串转换为数字
+    }
   },
   allowedSortFields: ['id', 'view_count', 'like_count', 'collect_count', 'comment_count', 'created_at'],
   defaultOrderBy: 'created_at DESC',
@@ -409,6 +416,11 @@ const postsCrudConfig = {
         }
       }
 
+      if (req.query.type !== undefined && req.query.type !== '') {
+        whereClause += whereClause ? ' AND p.type = ?' : ' WHERE p.type = ?'
+        params.push(req.query.type)
+      }
+
       if (req.query.is_draft !== undefined && req.query.is_draft !== '') {
         whereClause += whereClause ? ' AND p.is_draft = ?' : ' WHERE p.is_draft = ?'
         params.push(req.query.is_draft)
@@ -440,7 +452,7 @@ const postsCrudConfig = {
 
       // 获取数据
       const dataQuery = `
-        SELECT p.id, p.user_id, p.title, p.content, c.name as category,
+        SELECT p.id, p.user_id, p.title, p.content, p.type, c.name as category,
                p.view_count, p.like_count, p.collect_count, p.comment_count,
                p.is_draft, p.created_at,
                u.nickname, COALESCE(u.user_id, CONCAT('user', LPAD(u.id, 3, '0'))) as user_display_id

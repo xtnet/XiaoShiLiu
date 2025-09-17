@@ -3,7 +3,7 @@ import SvgIcon from '@/components/SvgIcon.vue';
 import { ref } from 'vue';
 import { useScroll } from '@vueuse/core';
 
-const emit = defineEmits(['reload'])
+const emit = defineEmits(['reload', 'toggle-img-only'])
 
 const { y: scrollY } = useScroll(window);
 const btn_1_name = ref('imgNote');
@@ -13,6 +13,10 @@ function onlyImgNote() {
     btn_1_name.value = btn_1_name.value === 'imgNote'
         ? 'imgNoteSelect'
         : 'imgNote';
+    
+    // 发射状态变化事件
+    const isImgOnly = btn_1_name.value === 'imgNoteSelect';
+    emit('toggle-img-only', isImgOnly);
 }
 
 function goTop() {

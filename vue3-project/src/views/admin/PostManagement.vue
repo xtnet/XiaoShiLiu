@@ -32,6 +32,7 @@ const columns = [
   { key: 'user_id', label: '作者ID', sortable: false },
   { key: 'user_display_id', label: '小石榴号', type: 'user-link', sortable: false },
   { key: 'category', label: '分类', sortable: false },
+  { key: 'type', label: '类型', type: 'mapped', map: { 1: '图文', 2: '视频' }, sortable: false },
   { key: 'is_draft', label: '草稿', sortable: false, type: 'boolean', trueText: '是', falseText: '否' },
   { key: 'content', label: '内容', type: 'content', sortable: false },
   { key: 'tags', label: '标签', type: 'tags', sortable: false },
@@ -71,6 +72,17 @@ const searchFields = computed(() => [
       { value: '', label: '全部分类' },
       { value: 'null', label: '未知' },
       ...categories.value.map(cat => ({ value: cat.id, label: cat.name }))
+    ]
+  },
+  {
+    key: 'type',
+    label: '类型',
+    type: 'select',
+    placeholder: '选择类型',
+    options: [
+      { value: '', label: '全部类型' },
+      { value: '1', label: '图文' },
+      { value: '2', label: '视频' }
     ]
   },
   {

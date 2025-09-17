@@ -356,8 +356,8 @@ class DataGenerator {
   async insertPosts(connection, posts) {
     for (const post of posts) {
       await connection.execute(
-        'INSERT INTO posts (user_id, title, content, category_id, is_draft, view_count, like_count, collect_count, comment_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [post.user_id, post.title, post.content, post.category_id, post.is_draft, post.view_count, 0, 0, 0]
+        'INSERT INTO posts (user_id, title, content, category_id, type, is_draft, view_count, like_count, collect_count, comment_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [post.user_id, post.title, post.content, post.category_id, 1, post.is_draft, post.view_count, 0, 0, 0]
       );
       await this.delay(50);
     }

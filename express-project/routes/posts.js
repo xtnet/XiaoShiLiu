@@ -15,6 +15,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const category = req.query.category;
     const isDraft = req.query.is_draft !== undefined ? parseInt(req.query.is_draft) : 0;
     const userId = req.query.user_id ? parseInt(req.query.user_id) : null;
+    const type = req.query.type ? parseInt(req.query.type) : null;
     const currentUserId = req.user ? req.user.id : null;
 
     if (isDraft === 1) {
@@ -35,6 +36,11 @@ router.get('/', optionalAuth, async (req, res) => {
       if (category) {
         query += ` AND p.category_id = ?`;
         queryParams.push(category);
+      }
+
+      if (type) {
+        query += ` AND p.type = ?`;
+        queryParams.push(type);
       }
 
       query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
@@ -63,8 +69,10 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取草稿总数
       const [countResult] = await pool.execute(
-        'SELECT COUNT(*) as total FROM posts p WHERE p.is_draft = ? AND p.user_id = ?' + (category ? ' AND p.category_id = ?' : ''),
-        category ? [isDraft.toString(), forcedUserId.toString(), category] : [isDraft.toString(), forcedUserId.toString()]
+        'SELECT COUNT(*) as total FROM posts p WHERE p.is_draft = ? AND p.user_id = ?' + 
+        (category ? ' AND p.category_id = ?' : '') + 
+        (type ? ' AND p.type = ?' : ''),
+        [isDraft.toString(), forcedUserId.toString(), ...(category ? [category] : []), ...(type ? [type] : [])]
       );
       const total = countResult[0].total;
       const pages = Math.ceil(total / limit);
@@ -96,11 +104,27 @@ router.get('/', optionalAuth, async (req, res) => {
     // 特殊处理推荐频道：热度新鲜度评分前20%的笔记按分数排序
     if (category === 'recommend') {
       // 先获取总笔记数计算20%的数量
-      const [totalCountResult] = await pool.execute('SELECT COUNT(*) as total FROM posts WHERE is_draft = ?', [isDraft.toString()]);
+      let countQuery = 'SELECT COUNT(*) as total FROM posts WHERE is_draft = ?';
+      let countParams = [isDraft.toString()];
+      
+      if (type) {
+        countQuery += ' AND type = ?';
+        countParams.push(type);
+      }
+      
+      const [totalCountResult] = await pool.execute(countQuery, countParams);
       const totalPosts = totalCountResult[0].total;
       const recommendLimit = Math.ceil(totalPosts * 0.2);
       
       // 推荐算法：70%热度+30%新鲜度评分，筛选前20%按分数排序
+      let innerWhere = 'p.is_draft = ?';
+      let innerParams = [isDraft.toString()];
+      
+      if (type) {
+        innerWhere += ' AND p.type = ?';
+        innerParams.push(type);
+      }
+      
       query = `
         SELECT 
           p.*, 
@@ -116,7 +140,7 @@ router.get('/', optionalAuth, async (req, res) => {
             p.*,
             (p.view_count * 0.7 + TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) as score
           FROM posts p 
-          WHERE p.is_draft = ?
+          WHERE ${innerWhere}
           ORDER BY score DESC
           LIMIT ?
         ) p
@@ -128,7 +152,7 @@ router.get('/', optionalAuth, async (req, res) => {
       
       // 参数设置
       queryParams = [
-        isDraft.toString(),
+        ...innerParams,
         recommendLimit.toString(),
         limit.toString(),
         offset.toString()
@@ -145,6 +169,11 @@ router.get('/', optionalAuth, async (req, res) => {
       if (userId) {
         whereConditions.push('p.user_id = ?');
         additionalParams.push(userId);
+      }
+
+      if (type) {
+        whereConditions.push('p.type = ?');
+        additionalParams.push(type);
       }
 
       if (whereConditions.length > 0) {
@@ -194,7 +223,15 @@ router.get('/', optionalAuth, async (req, res) => {
     let total;
     if (category === 'recommend') {
       // 推荐频道的总数限制为总笔记数的20%
-      const [totalCountResult] = await pool.execute('SELECT COUNT(*) as total FROM posts WHERE is_draft = ?', [isDraft.toString()]);
+      let countQuery = 'SELECT COUNT(*) as total FROM posts WHERE is_draft = ?';
+      let countParams = [isDraft.toString()];
+      
+      if (type) {
+        countQuery += ' AND type = ?';
+        countParams.push(type);
+      }
+      
+      const [totalCountResult] = await pool.execute(countQuery, countParams);
       const totalPosts = totalCountResult[0].total;
       total = Math.ceil(totalPosts * 0.2);
     } else {
@@ -211,6 +248,11 @@ router.get('/', optionalAuth, async (req, res) => {
       if (userId) {
         countWhereConditions.push('user_id = ?');
         countParams.push(userId);
+      }
+
+      if (type) {
+        countWhereConditions.push('type = ?');
+        countParams.push(type);
       }
 
       if (countWhereConditions.length > 0) {

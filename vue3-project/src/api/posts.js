@@ -41,6 +41,7 @@ function transformPostData(backendPost) {
     created_at: backendPost.created_at,
     path: `/post/${backendPost.id}`,
     category: backendPost.category,
+    type: backendPost.type || 1,
     author_auto_id: backendPost.author_auto_id,
     author_account: backendPost.author_account,
     user_id: backendPost.user_id,
@@ -176,12 +177,18 @@ export async function getPostList(params = {}) {
       if (category && category !== 'general') {
         apiParams.category = category
       }
+      if (type) {
+        apiParams.type = type
+      }
       response = await postApi.getPosts(apiParams)
     } else {
       // 否则使用普通的获取笔记列表API
       const apiParams = { page, limit }
       if (category && category !== 'general') {
         apiParams.category = category
+      }
+      if (type) {
+        apiParams.type = type
       }
       response = await postApi.getPosts(apiParams)
     }

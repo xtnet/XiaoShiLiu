@@ -255,10 +255,16 @@ function createCrudHandlers(config) {
 
           whereClause += whereClause ? ` AND ${condition}` : condition
 
+          let paramValue = value
+          // 如果有transform函数，使用它转换值
+          if (config.transform && typeof config.transform === 'function') {
+            paramValue = config.transform(value)
+          }
+
           if (operator === 'LIKE') {
-            params.push(`%${value}%`)
+            params.push(`%${paramValue}%`)
           } else {
-            params.push(value)
+            params.push(paramValue)
           }
         }
       }

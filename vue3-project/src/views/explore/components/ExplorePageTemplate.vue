@@ -11,10 +11,20 @@ const props = defineProps({
 })
 
 const refreshKey = ref(0)
+const isImgOnly = ref(false)
 
 function handleReload() {
     // 通知父组件显示加载动画
     window.dispatchEvent(new CustomEvent('floating-btn-reload-request'))
+}
+
+function handleToggleImgOnly(imgOnlyState) {
+    console.log('FloatingBtn toggle-img-only event received:', imgOnlyState)
+    isImgOnly.value = imgOnlyState
+    console.log('isImgOnly updated to:', isImgOnly.value)
+    // 切换状态时刷新内容
+    refreshKey.value++
+    console.log('refreshKey updated to:', refreshKey.value)
 }
 
 function handleFloatingBtnReload() {
@@ -39,8 +49,8 @@ onUnmounted(() => {
 
 <template>
     <div class="explore-page">
-        <WaterfallFlow :refresh-key="refreshKey" :category="category" />
-        <FloatingBtn @reload="handleReload" />
+        <WaterfallFlow :refresh-key="refreshKey" :category="category" :type="isImgOnly ? 1 : null" />
+        <FloatingBtn @reload="handleReload" @toggle-img-only="handleToggleImgOnly" />
     </div>
 </template>
 

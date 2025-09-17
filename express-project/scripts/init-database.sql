@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `title` varchar(200) NOT NULL COMMENT '标题',
   `content` text NOT NULL COMMENT '内容',
   `category_id` int(11) DEFAULT NULL COMMENT '分类ID',
+  `type` int(11) DEFAULT 1 COMMENT '笔记类型：1-图片笔记，2-视频笔记',
   `view_count` bigint(20) DEFAULT 0 COMMENT '浏览量',
   `like_count` int(11) DEFAULT 0 COMMENT '点赞数',
   `collect_count` int(11) DEFAULT 0 COMMENT '收藏数',
