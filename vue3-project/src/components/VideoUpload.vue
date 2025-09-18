@@ -61,6 +61,7 @@
 import { ref, watch } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 import MessageToast from './MessageToast.vue'
+import { videoApi } from '@/api/video.js'
 
 const props = defineProps({
   modelValue: {
@@ -128,62 +129,92 @@ const handleFileDrop = (event) => {
   }
 }
 
-// 处理文件
-const handleFile = (file) => {
-  error.value = ''
-
+// 验证视频文件
+const validateVideoFile = (file) => {
   // 验证文件类型
   if (!file.type.startsWith('video/')) {
-    error.value = '请选择视频文件'
-    emit('error', error.value)
-    return
+    return { valid: false, message: '请选择视频文件' }
   }
 
   // 验证文件大小
   if (file.size > props.maxSize) {
-    error.value = `文件大小不能超过${formatFileSize(props.maxSize)}`
-    emit('error', error.value)
+    return { valid: false, message: `文件大小不能超过${formatFileSize(props.maxSize)}` }
+  }
+
+  return { valid: true }
+}
+
+// 处理文件
+const handleFile = (file) => {
+  if (!file) return
+
+  // 验证文件
+  const validation = validateVideoFile(file)
+  if (!validation.valid) {
+    error.value = validation.message
+    emit('error', validation.message)
     return
   }
 
-  // 创建预览URL
-  const previewUrl = URL.createObjectURL(file)
-
+  // 创建预览
+  const preview = URL.createObjectURL(file)
+  
   videoData.value = {
     file: file,
-    preview: previewUrl,
-    uploaded: false,
+    preview: preview,
     name: file.name,
     size: file.size,
+    uploaded: false,
     url: null
   }
 
-  // 模拟上传过程（实际项目中应该调用真实的上传API）
-  simulateUpload()
+  // 清空错误
+  error.value = ''
+  
+  // 传递文件名作为modelValue（字符串类型）
+  emit('update:modelValue', file.name)
+  showMessage('视频文件已选择，点击发布按钮后将上传', 'info')
 }
 
-// 模拟上传过程
-const simulateUpload = () => {
+// 开始上传过程
+const startUpload = async () => {
+  if (!videoData.value || !videoData.value.file) {
+    return { success: false, message: '没有视频文件' }
+  }
+
   isUploading.value = true
   uploadProgress.value = 0
 
-  const interval = setInterval(() => {
-    uploadProgress.value += Math.random() * 10
-    if (uploadProgress.value >= 100) {
-      uploadProgress.value = 100
-      clearInterval(interval)
+  try {
+    const result = await videoApi.uploadVideo(videoData.value.file, (progress) => {
+      uploadProgress.value = progress
+    })
 
-      setTimeout(() => {
-        isUploading.value = false
-        if (videoData.value) {
-          videoData.value.uploaded = true
-          videoData.value.url = videoData.value.preview // 实际项目中这里应该是服务器返回的URL
-          emit('update:modelValue', videoData.value.url)
-          showMessage('视频上传成功', 'success')
-        }
-      }, 500)
+    if (result.success) {
+      isUploading.value = false
+      if (videoData.value) {
+        videoData.value.uploaded = true
+        videoData.value.url = result.data.url
+        videoData.value.coverUrl = result.data.coverUrl
+        emit('update:modelValue', videoData.value.url)
+        showMessage('视频上传成功', 'success')
+        return result // 返回上传结果
+      }
+    } else {
+      isUploading.value = false
+      error.value = result.message || '视频上传失败'
+      emit('error', error.value)
+      showMessage(error.value, 'error')
+      return result // 返回失败结果
     }
-  }, 200)
+  } catch (err) {
+    console.error('视频上传失败:', err)
+    isUploading.value = false
+    error.value = '视频上传失败，请重试'
+    emit('error', error.value)
+    showMessage(error.value, 'error')
+    return { success: false, message: '视频上传失败，请重试' }
+  }
 }
 
 // 移除视频
@@ -236,7 +267,8 @@ const reset = () => {
 defineExpose({
   getVideoData,
   reset,
-  removeVideo
+  removeVideo,
+  startUpload
 })
 </script>
 

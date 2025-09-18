@@ -17,15 +17,21 @@ export const apiConfig = {
     maxPageSize: 100
   },
 
-  // 图片上传配置
+  // 上传配置
   upload: {
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxImageCount: 9 // 最多上传9张图片
+    // 图片上传配置
+    image: {
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      maxCount: 9 // 最多上传9张图片
+    },
+    // 视频上传配置
+    video: {
+      maxFileSize: 100 * 1024 * 1024, // 100MB
+      allowedTypes: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm'],
+      maxCount: 1 // 最多上传1个视频
+    }
   }
 }
-
-// 本地开发环境配置
-// 所有环境都使用 localhost:3001/api
 
 export default apiConfig

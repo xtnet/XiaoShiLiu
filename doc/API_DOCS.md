@@ -1868,6 +1868,38 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+### 3. 单视频上传
+**接口地址**: `POST /api/upload/video`
+**需要认证**: 是
+
+**请求参数**:
+- 使用 `multipart/form-data` 格式
+- 文件字段名: `file`
+- 支持格式: mp4, avi, mov, wmv, flv, webm
+- 文件大小限制: 100MB
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "上传成功",
+  "data": {
+    "originalname": "video.mp4",
+    "size": 10240000,
+    "url": "https://video.example.com/1640995200000_video.mp4",
+    "filePath": "/uploads/videos/1640995200000_video.mp4",
+    "coverUrl": "https://img.example.com/1640995200000_video_thumbnail.jpg"
+  }
+}
+```
+
+**说明**:
+- `url`: 视频文件的访问URL
+- `filePath`: 视频文件在服务器上的存储路径
+- `coverUrl`: 视频封面图片URL（如果FFmpeg可用则自动生成，否则为null）
+- 视频封面图片会自动从视频第一帧提取，尺寸为640x360
+- 如果系统未安装FFmpeg，视频仍可正常上传，但不会生成封面图片
+
 
 
 ---

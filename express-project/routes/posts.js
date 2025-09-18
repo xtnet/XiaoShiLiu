@@ -5,6 +5,7 @@ const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
+const { extractVideoThumbnail } = require('../utils/videoHelper');
 
 // 获取笔记列表
 router.get('/', optionalAuth, async (req, res) => {
@@ -304,9 +305,16 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     const post = rows[0];
 
-    // 获取笔记图片
-    const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [postId]);
-    post.images = images.map(img => img.image_url);
+    // 根据帖子类型获取对应的媒体文件
+    if (post.type === 1) {
+      // 图文类型：获取图片
+      const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [postId]);
+      post.images = images.map(img => img.image_url);
+    } else if (post.type === 2) {
+      // 视频类型：获取视频
+      const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId]);
+      post.videos = videos;
+    }
 
     // 获取笔记标签
     const [tags] = await pool.execute(
@@ -357,24 +365,45 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // 创建笔记
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, content, category_id, images, tags, is_draft } = req.body;
+    const { title, content, category_id, images, video, tags, is_draft, type } = req.body;
     const userId = req.user.id;
+    const postType = type || 1; // 默认为图文类型
+
+    console.log('=== 创建笔记请求 ===');
+    console.log('用户ID:', userId);
+    console.log('标题:', title);
+    console.log('内容长度:', content ? content.length : 0);
+    console.log('分类ID:', category_id);
+    console.log('发布类型:', postType);
+    console.log('是否草稿:', is_draft);
+    console.log('图片数量:', images ? images.length : 0);
+    console.log('视频数据:', video ? JSON.stringify(video) : 'null');
+    console.log('标签:', tags);
 
     // 验证必填字段：发布时要求标题和内容，草稿时不强制要求
     if (!is_draft && (!title || !content)) {
+      console.log('❌ 验证失败: 标题或内容为空');
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题和内容不能为空' });
     }
 
+    // 验证发布类型
+    if (postType !== 1 && postType !== 2) {
+      console.log('❌ 验证失败: 无效的发布类型');
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '无效的发布类型' });
+    }
+
     // 插入笔记
+    console.log('📝 开始插入笔记到数据库...');
     const [result] = await pool.execute(
-      'INSERT INTO posts (user_id, title, content, category_id, is_draft) VALUES (?, ?, ?, ?, ?)',
-      [userId, title || '', content || '', category_id || null, is_draft ? 1 : 0]
+      'INSERT INTO posts (user_id, title, content, category_id, is_draft, type) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, title || '', content || '', category_id || null, is_draft ? 1 : 0, postType]
     );
 
     const postId = result.insertId;
+    console.log('✅ 笔记插入成功，ID:', postId);
 
-    // 处理图片
-    if (images && images.length > 0) {
+    // 处理图片（图文类型）
+    if (postType === 1 && images && images.length > 0) {
       const validUrls = []
 
       // 处理所有有效的URL
@@ -391,6 +420,40 @@ router.post('/', authenticateToken, async (req, res) => {
           [postId.toString(), imageUrl]
         );
       }
+    }
+
+    // 处理视频（视频类型）- 修改为单个视频
+    if (postType === 2 && video && video.url && typeof video.url === 'string') {
+      console.log('🎥 开始处理视频数据...');
+      console.log('视频URL:', video.url);
+      console.log('封面URL:', video.coverUrl);
+      
+      let coverUrl = video.coverUrl || null;
+      let duration = null;
+
+      // 如果提供了视频缓冲区，提取封面
+      if (video.buffer) {
+        try {
+          console.log('🖼️ 开始提取视频封面...');
+          const thumbnailResult = await extractVideoThumbnail(video.buffer, video.filename || 'video.mp4');
+          if (thumbnailResult.success) {
+            coverUrl = thumbnailResult.coverUrl;
+            console.log('✅ 视频封面提取成功:', coverUrl);
+          } else {
+            console.log('❌ 视频封面提取失败:', thumbnailResult.error);
+          }
+        } catch (error) {
+          console.error('❌ 处理视频封面失败:', error);
+        }
+      }
+
+      // 插入视频记录
+      console.log('💾 插入视频记录到数据库...');
+      await pool.execute(
+        'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
+        [postId.toString(), video.url, coverUrl]
+      );
+      console.log('✅ 视频记录插入成功');
     }
 
     // 处理标签
@@ -446,7 +509,7 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
-    console.log(`创建笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}`);
+    console.log(`✅ 创建笔记成功 - 用户ID: ${userId}, 笔记ID: ${postId}, 类型: ${postType}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,
@@ -454,7 +517,7 @@ router.post('/', authenticateToken, async (req, res) => {
       data: { id: postId }
     });
   } catch (error) {
-    console.error('创建笔记失败:', error);
+    console.error('❌ 创建笔记失败:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
