@@ -86,7 +86,18 @@ CREATE TABLE IF NOT EXISTS `post_images` (
   CONSTRAINT `post_images_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记图片表';
 
--- 6. 标签表
+-- 6. 笔记视频表
+CREATE TABLE IF NOT EXISTS `post_videos` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '视频ID',
+  `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
+  `cover_url` varchar(500) DEFAULT NULL COMMENT '视频封面URL',
+  `video_url` varchar(500) NOT NULL COMMENT '视频URL',
+  PRIMARY KEY (`id`),
+  KEY `idx_post_id` (`post_id`),
+  CONSTRAINT `post_videos_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记视频表';
+
+-- 7. 标签表
 CREATE TABLE IF NOT EXISTS `tags` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标签ID',
   `name` varchar(50) NOT NULL COMMENT '标签名',
@@ -98,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `tags` (
   KEY `idx_use_count` (`use_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
 
--- 7. 笔记标签关联表
+-- 8. 笔记标签关联表
 CREATE TABLE IF NOT EXISTS `post_tags` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关联ID',
   `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
@@ -112,7 +123,7 @@ CREATE TABLE IF NOT EXISTS `post_tags` (
   CONSTRAINT `post_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记标签关联表';
 
--- 8. 关注关系表
+-- 9. 关注关系表
 CREATE TABLE IF NOT EXISTS `follows` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '关注ID',
   `follower_id` bigint(20) NOT NULL COMMENT '关注者ID',
@@ -127,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `follows` (
   CONSTRAINT `follows_ibfk_2` FOREIGN KEY (`following_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='关注关系表';
 
--- 9. 点赞表
+-- 10. 点赞表
 CREATE TABLE IF NOT EXISTS `likes` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '点赞ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -142,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `likes` (
   CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='点赞表';
 
--- 10. 收藏表
+-- 11. 收藏表
 CREATE TABLE IF NOT EXISTS `collections` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -156,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `collections` (
   CONSTRAINT `collections_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
 
--- 11. 评论表
+-- 12. 评论表
 CREATE TABLE IF NOT EXISTS `comments` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `post_id` bigint(20) NOT NULL COMMENT '笔记ID',
@@ -175,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   CONSTRAINT `comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论表';
 
--- 12. 通知表
+-- 13. 通知表
 CREATE TABLE IF NOT EXISTS `notifications` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '通知ID',
   `user_id` bigint(20) NOT NULL COMMENT '接收用户ID',
@@ -199,7 +210,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   CONSTRAINT `fk_notifications_comment_id` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';
 
--- 13. 用户会话表
+-- 14. 用户会话表
 CREATE TABLE IF NOT EXISTS `user_sessions` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '会话ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -218,7 +229,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
 
--- 14. 审核表
+-- 15. 审核表
 CREATE TABLE IF NOT EXISTS `audit` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '审核ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',

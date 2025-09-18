@@ -27,10 +27,46 @@
       </div>
 
       <form v-if="isLoggedIn" @submit.prevent="handlePublish" class="publish-form">
-        <div class="image-upload-section">
-          <MultiImageUpload ref="multiImageUploadRef" v-model="form.images" :max-images="9" :allow-delete-last="true"
-            @error="handleUploadError" />
-          <div class="text-image-section">
+        <div class="upload-section">
+          <!-- Tab选项 -->
+          <div class="upload-tabs">
+            <button 
+              type="button" 
+              class="tab-btn" 
+              :class="{ active: uploadType === 'image' }"
+              @click="switchUploadType('image')"
+            >
+              上传图文
+            </button>
+            <button 
+              type="button" 
+              class="tab-btn" 
+              :class="{ active: uploadType === 'video' }"
+              @click="switchUploadType('video')"
+            >
+              上传视频
+            </button>
+          </div>
+
+          <!-- 上传组件 -->
+          <div class="upload-content">
+            <MultiImageUpload 
+              v-if="uploadType === 'image'"
+              ref="multiImageUploadRef" 
+              v-model="form.images" 
+              :max-images="9" 
+              :allow-delete-last="true"
+              @error="handleUploadError" 
+            />
+            <VideoUpload 
+              v-if="uploadType === 'video'"
+              ref="videoUploadRef"
+              v-model="form.video"
+              @error="handleUploadError"
+            />
+          </div>
+
+          <div v-if="uploadType === 'image'" class="text-image-section">
             <button type="button" class="text-image-btn" @click="openTextImageModal">
               <SvgIcon name="magic" width="16" height="16" />
               <span>文字配图</span>
@@ -111,6 +147,7 @@ import { hasMentions, cleanMentions } from '@/utils/mentionParser'
 import { sanitizeContent } from '@/utils/contentSecurity'
 
 import MultiImageUpload from '@/components/MultiImageUpload.vue'
+import VideoUpload from '@/components/VideoUpload.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import TagSelector from '@/components/TagSelector.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
@@ -128,7 +165,11 @@ const navigationStore = useNavigationStore()
 const { lock, unlock } = useScrollLock()
 
 const multiImageUploadRef = ref(null)
+const videoUploadRef = ref(null)
 const contentTextarea = ref(null)
+
+// 上传类型状态
+const uploadType = ref('image') // 'image' 或 'video'
 
 const isPublishing = ref(false)
 const isSavingDraft = ref(false)
@@ -145,6 +186,7 @@ const form = reactive({
   title: '',
   content: '',
   images: [],
+  video: '', // 添加视频字段
   tags: [],
   category_id: null
 })
@@ -159,14 +201,20 @@ const categories = ref([])
 const mentionUsers = ref([])
 
 const canPublish = computed(() => {
-  return form.title.trim() &&
-    form.content.trim() &&
-    form.images.length > 0 &&
-    form.category_id
+  const hasContent = form.title.trim() && form.content.trim() && form.category_id
+  if (uploadType.value === 'image') {
+    return hasContent && form.images.length > 0
+  } else {
+    return hasContent && form.video.trim()
+  }
 })
 
 const canSaveDraft = computed(() => {
-  return form.images.length > 0
+  if (uploadType.value === 'image') {
+    return form.images.length > 0
+  } else {
+    return form.video.trim()
+  }
 })
 
 // 登录状态检查
@@ -238,6 +286,26 @@ const goToDraftBox = () => {
 
 const handleUploadError = (error) => {
   showMessage(error, 'error')
+}
+
+// 切换上传类型
+const switchUploadType = (type) => {
+  if (uploadType.value === type) return
+  
+  uploadType.value = type
+  
+  // 切换时清空对应的数据
+  if (type === 'image') {
+    form.video = ''
+    if (videoUploadRef.value) {
+      videoUploadRef.value.reset()
+    }
+  } else {
+    form.images = []
+    if (multiImageUploadRef.value) {
+      multiImageUploadRef.value.reset()
+    }
+  }
 }
 
 const openTextImageModal = () => {
@@ -401,9 +469,17 @@ const handlePublish = async () => {
     return
   }
 
-  if (form.images.length === 0) {
-    showMessage('请至少上传一张图片', 'error')
-    return
+  // 根据上传类型验证内容
+  if (uploadType.value === 'image') {
+    if (form.images.length === 0) {
+      showMessage('请至少上传一张图片', 'error')
+      return
+    }
+  } else {
+    if (!form.video.trim()) {
+      showMessage('请上传视频', 'error')
+      return
+    }
   }
 
   if (!form.category_id) {
@@ -411,26 +487,33 @@ const handlePublish = async () => {
     return
   }
 
-  const imageComponent = multiImageUploadRef.value
-  if (!imageComponent) {
-    showMessage('图片组件未初始化', 'error')
-    return
-  }
-
   isPublishing.value = true
 
   try {
-    // 处理图片上传
-    if (imageComponent.getImageCount() > 0) {
-      showMessage('正在上传图片...', 'info')
-      const uploadedImages = await imageComponent.uploadAllImages()
-
-      if (uploadedImages.length === 0) {
-        showMessage('图片上传失败', 'error')
+    let mediaData = []
+    
+    if (uploadType.value === 'image') {
+      const imageComponent = multiImageUploadRef.value
+      if (!imageComponent) {
+        showMessage('图片组件未初始化', 'error')
         return
       }
 
-      form.images = uploadedImages
+      // 处理图片上传
+      if (imageComponent.getImageCount() > 0) {
+        showMessage('正在上传图片...', 'info')
+        const uploadedImages = await imageComponent.uploadAllImages()
+
+        if (uploadedImages.length === 0) {
+          showMessage('图片上传失败', 'error')
+          return
+        }
+
+        mediaData = uploadedImages
+      }
+    } else {
+      // 视频上传（暂时使用现有的video字段值）
+      mediaData = [form.video]
     }
 
     // 对内容进行安全过滤
@@ -439,9 +522,11 @@ const handlePublish = async () => {
     const postData = {
       title: form.title.trim(),
       content: sanitizedContent,
-      images: form.images,
+      images: uploadType.value === 'image' ? mediaData : [],
+      video: uploadType.value === 'video' ? mediaData[0] : '',
       tags: form.tags,
       category_id: form.category_id,
+      type: uploadType.value === 'image' ? 1 : 2, // 1: 图文, 2: 视频
       is_draft: false // 发布状态
     }
 
@@ -457,12 +542,7 @@ const handlePublish = async () => {
 
     if (response.success) {
       showMessage('发布成功！', 'success')
-      form.title = ''
-      form.content = ''
-      form.images = []
-      form.tags = []
-      form.category_id = null
-      imageComponent.reset()
+      resetForm()
 
       setTimeout(() => {
         router.push('/post-management')
@@ -475,6 +555,23 @@ const handlePublish = async () => {
     showMessage('发布失败，请重试', 'error')
   } finally {
     isPublishing.value = false
+  }
+}
+
+// 重置表单
+const resetForm = () => {
+  form.title = ''
+  form.content = ''
+  form.images = []
+  form.video = ''
+  form.tags = []
+  form.category_id = null
+  
+  if (multiImageUploadRef.value) {
+    multiImageUploadRef.value.reset()
+  }
+  if (videoUploadRef.value) {
+    videoUploadRef.value.reset()
   }
 }
 
@@ -798,6 +895,42 @@ const handleSaveDraft = async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.upload-section {
+  margin-bottom: 0.5rem;
+}
+
+.upload-tabs {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color-primary);
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+
+.tab-btn:hover {
+  color: var(--text-color-primary);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.upload-content {
+  margin-bottom: 1rem;
 }
 
 .image-upload-section {

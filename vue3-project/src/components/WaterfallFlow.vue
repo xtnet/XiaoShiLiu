@@ -256,15 +256,6 @@ async function initContent() {
         } else {
             // 使用笔记API服务
             // 调用参数已准备完成
-            console.log('WaterfallFlow API调用参数:', {
-                page: 1,
-                limit: pageSize,
-                category: props.category,
-                searchKeyword: props.searchKeyword,
-                searchTag: props.searchTag,
-                userId: props.userId,
-                type: props.type
-            })
             const result = await getPostList({
                 page: 1,
                 limit: pageSize,
@@ -274,7 +265,6 @@ async function initContent() {
                 userId: props.userId,
                 type: props.type
             })
-            console.log('WaterfallFlow API响应:', result)
             content = result.posts || []
             hasMore.value = result.hasMore !== false // 默认为true，除非明确返回false
         }
@@ -527,7 +517,6 @@ watch(() => props.preloadedPosts, async (newPosts, oldPosts) => {
     if ((!newPosts || newPosts.length === 0) &&
         oldPosts && oldPosts.length > 0 &&
         contentList.value.length > 0) {
-        console.log('跳过空数据更新，保持当前内容')
         return
     }
     if (newPosts && oldPosts && newPosts.length === oldPosts.length && newPosts.length > 0) {
@@ -535,7 +524,6 @@ watch(() => props.preloadedPosts, async (newPosts, oldPosts) => {
             oldPosts[index] && post.id === oldPosts[index].id
         )
         if (isSameData) {
-            console.log('数据未发生实际变化，跳过重新初始化')
             return
         }
     }

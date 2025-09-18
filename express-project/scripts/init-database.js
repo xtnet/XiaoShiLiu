@@ -51,6 +51,9 @@ class DatabaseInitializer {
       // 创建笔记图片表
       await this.createPostImagesTable(connection);
 
+      // 创建笔记视频表
+      await this.createPostVideosTable(connection);
+
       // 创建标签表
       await this.createTagsTable(connection);
 
@@ -196,6 +199,22 @@ class DatabaseInitializer {
     `;
     await connection.execute(sql);
     console.log('✓ post_images 表创建成功');
+  }
+
+  async createPostVideosTable(connection) {
+    const sql = `
+      CREATE TABLE IF NOT EXISTS \`post_videos\` (
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '视频ID',
+        \`post_id\` bigint(20) NOT NULL COMMENT '笔记ID',
+        \`cover_url\` varchar(500) DEFAULT NULL COMMENT '视频封面URL',
+        \`video_url\` varchar(500) NOT NULL COMMENT '视频URL',
+        PRIMARY KEY (\`id\`),
+        KEY \`idx_post_id\` (\`post_id\`),
+        CONSTRAINT \`post_videos_ibfk_1\` FOREIGN KEY (\`post_id\`) REFERENCES \`posts\` (\`id\`) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='笔记视频表';
+    `;
+    await connection.execute(sql);
+    console.log('✓ post_videos 表创建成功');
   }
 
   async createTagsTable(connection) {

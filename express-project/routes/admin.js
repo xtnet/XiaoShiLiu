@@ -29,11 +29,11 @@ const postsCrudConfig = {
     title: { operator: 'LIKE' },
     user_display_id: { operator: '=' },
     category_id: { operator: '=' },
-    type: { 
+    type: {
       operator: '=',
       transform: (value) => parseInt(value) // 将字符串转换为数字
     },
-    is_draft: { 
+    is_draft: {
       operator: '=',
       transform: (value) => parseInt(value) // 将字符串转换为数字
     }
@@ -1942,7 +1942,7 @@ const categoriesCrudConfig = {
   // 创建前的自定义验证
   beforeCreate: async (data) => {
     const { name, category_title } = data
-    
+
     if (!name || name.trim() === '') {
       return { isValid: false, message: '分类名称不能为空' }
     }
@@ -1956,7 +1956,7 @@ const categoriesCrudConfig = {
       'SELECT id FROM categories WHERE name = ?',
       [name.trim()]
     )
-    
+
     if (existingName.length > 0) {
       return { isValid: false, message: '分类名称已存在' }
     }
@@ -1966,7 +1966,7 @@ const categoriesCrudConfig = {
       'SELECT id FROM categories WHERE category_title = ?',
       [category_title.trim()]
     )
-    
+
     if (existingTitle.length > 0) {
       return { isValid: false, message: '分类英文标题已存在' }
     }
@@ -1974,14 +1974,14 @@ const categoriesCrudConfig = {
     // 清理数据
     data.name = name.trim()
     data.category_title = category_title.trim()
-    
+
     return { isValid: true }
   },
 
   // 更新前的自定义验证
   beforeUpdate: async (data, id, req) => {
     const { name, category_title } = data
-    
+
     if (name && name.trim() === '') {
       return { isValid: false, message: '分类名称不能为空' }
     }
@@ -1996,7 +1996,7 @@ const categoriesCrudConfig = {
         'SELECT id FROM categories WHERE name = ? AND id != ?',
         [name.trim(), id]
       )
-      
+
       if (existingName.length > 0) {
         return { isValid: false, message: '分类名称已存在' }
       }
@@ -2010,7 +2010,7 @@ const categoriesCrudConfig = {
         'SELECT id FROM categories WHERE category_title = ? AND id != ?',
         [category_title.trim(), id]
       )
-      
+
       if (existingTitle.length > 0) {
         return { isValid: false, message: '分类英文标题已存在' }
       }
@@ -2028,11 +2028,11 @@ const categoriesCrudConfig = {
       'SELECT COUNT(*) as count FROM posts WHERE category_id = ?',
       [id]
     )
-    
+
     if (posts[0].count > 0) {
       return { isValid: false, message: `该分类下还有 ${posts[0].count} 篇笔记，无法删除` }
     }
-    
+
     return { isValid: true }
   },
 
@@ -2043,12 +2043,12 @@ const categoriesCrudConfig = {
       `SELECT category_id, COUNT(*) as count FROM posts WHERE category_id IN (${placeholders}) GROUP BY category_id`,
       ids
     )
-    
+
     if (posts.length > 0) {
       const categoryIds = posts.map(p => p.category_id).join(', ')
       return { isValid: false, message: `分类 ${categoryIds} 下还有笔记，无法删除` }
     }
-    
+
     return { isValid: true }
   },
 
@@ -2100,35 +2100,35 @@ const categoriesCrudConfig = {
     getList: async (req) => {
       const { page = 1, limit = 10, sortField = 'id', sortOrder = 'asc', name, category_title } = req.query
       const offset = (parseInt(page) - 1) * parseInt(limit)
-      
+
       // 构建WHERE条件
       const conditions = []
       const queryParams = []
-      
+
       if (name && name.trim()) {
         conditions.push('c.name LIKE ?')
         queryParams.push(`%${name.trim()}%`)
       }
-      
+
       if (category_title && category_title.trim()) {
         conditions.push('c.category_title LIKE ?')
         queryParams.push(`%${category_title.trim()}%`)
       }
-      
+
       const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''
-      
+
       // 验证排序字段
       const allowedSortFields = ['id', 'name', 'category_title', 'created_at', 'post_count']
       const validSortField = allowedSortFields.includes(sortField) ? sortField : 'id'
       const validSortOrder = ['asc', 'desc'].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC'
-      
+
       // 获取总数
       const [countResult] = await pool.execute(`
         SELECT COUNT(DISTINCT c.id) as total
         FROM categories c
         ${whereClause}
       `, queryParams)
-      
+
       // 获取数据
       const [categories] = await pool.execute(`
         SELECT 
@@ -2144,7 +2144,7 @@ const categoriesCrudConfig = {
         ORDER BY ${validSortField} ${validSortOrder}
         LIMIT ? OFFSET ?
       `, [...queryParams, parseInt(limit), offset])
-      
+
       return {
         data: categories,
         pagination: {

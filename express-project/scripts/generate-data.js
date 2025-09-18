@@ -289,7 +289,7 @@ class DataGenerator {
     const tables = [
       'user_sessions', 'notifications', 'comments', 'collections',
       'likes', 'post_tags', 'follows', 'post_images', 'posts',
-      'tags', 'users', 'admin', 'categories','audit'
+      'tags', 'users', 'admin', 'categories','audit','post_videos'
     ];
 
     for (const table of tables) {

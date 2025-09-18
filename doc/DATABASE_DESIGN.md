@@ -91,7 +91,16 @@
 | post_id | BIGINT | 笔记ID | 外键关联posts |
 | image_url | VARCHAR(500) | 图片URL | 原图地址 |
 
-### 4. 标签表 (tags)
+### 4. 笔记视频表 (post_videos)
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| id | BIGINT | 视频ID | 主键，自增 |
+| post_id | BIGINT | 笔记ID | 外键关联posts |
+| cover_url | VARCHAR(500) | 视频封面URL | 视频封面图片，可为空 |
+| video_url | VARCHAR(500) | 视频URL | 视频文件地址 |
+
+### 5. 标签表 (tags)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -100,7 +109,7 @@
 | use_count | INT | 使用次数 | 热度统计，默认0 |
 | created_at | TIMESTAMP | 创建时间 | 首次使用时间 |
 
-### 5. 笔记标签关联表 (post_tags)
+### 6. 笔记标签关联表 (post_tags)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -109,7 +118,7 @@
 | tag_id | INT | 标签ID | 外键关联tags |
 | created_at | TIMESTAMP | 创建时间 | 关联时间 |
 
-### 6. 关注关系表 (follows)
+### 7. 关注关系表 (follows)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -118,7 +127,7 @@
 | following_id | BIGINT | 被关注者ID | 外键关联users |
 | created_at | TIMESTAMP | 关注时间 | 创建时间 |
 
-### 7. 点赞表 (likes)
+### 8. 点赞表 (likes)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -128,7 +137,7 @@
 | target_id | BIGINT | 目标ID | 笔记或评论ID |
 | created_at | TIMESTAMP | 点赞时间 | 创建时间 |
 
-### 8. 收藏表 (collections)
+### 9. 收藏表 (collections)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -137,7 +146,7 @@
 | post_id | BIGINT | 笔记ID | 外键关联posts |
 | created_at | TIMESTAMP | 收藏时间 | 创建时间 |
 
-### 9. 评论表 (comments)
+### 10. 评论表 (comments)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -149,7 +158,7 @@
 | like_count | INT | 点赞数 | 统计字段，默认0 |
 | created_at | TIMESTAMP | 评论时间 | 创建时间 |
 
-### 10. 通知表 (notifications)
+### 11. 通知表 (notifications)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -165,7 +174,7 @@
 
 
 
-### 11. 用户会话表 (user_sessions)
+### 12. 用户会话表 (user_sessions)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -179,7 +188,7 @@
 | created_at | TIMESTAMP | 创建时间 | 会话创建时间 |
 | updated_at | TIMESTAMP | 更新时间 | 自动更新 |
 
-### 12. 管理员表 (admin)
+### 13. 管理员表 (admin)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
@@ -188,7 +197,7 @@
 | password | VARCHAR(255) | 管理员密码 | 加密存储 |
 | created_at | TIMESTAMP | 创建时间 | 账号创建时间 |
 
-### 13. 审核表 (audit)
+### 14. 审核表 (audit)
 
 | 字段名 | 类型 | 说明 | 备注 |
 |--------|------|------|------|
