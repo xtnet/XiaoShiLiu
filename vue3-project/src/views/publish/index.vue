@@ -315,7 +315,6 @@ const handleUploadError = (error) => {
 const switchUploadType = (type) => {
   if (uploadType.value === type) return
   
-  console.log('🔄 切换上传类型:', uploadType.value, '->', type)
   uploadType.value = type
   
   // 切换时清空对应的数据
@@ -343,7 +342,7 @@ const closeTextImageModal = () => {
 }
 
 const handleTextImageGenerate = async (data) => {
-  console.log('生成文字配图:', data)
+
   
   // 将生成的图片添加到MultiImageUpload组件
   const imageComponent = multiImageUploadRef.value
@@ -482,7 +481,7 @@ const handleInputKeydown = (event) => {
 
 
 const handlePublish = async () => {
-  console.log('🚀 开始发布流程，当前上传类型:', uploadType.value)
+
   
   // 验证必填字段
   if (!form.title.trim()) {
@@ -545,7 +544,7 @@ const handlePublish = async () => {
       }
     } else {
       // 视频上传处理
-      console.log('🎥 进入视频发布模式')
+
       const videoComponent = videoUploadRef.value
       if (!videoComponent) {
         console.error('❌ 视频组件未初始化')
@@ -555,15 +554,15 @@ const handlePublish = async () => {
 
       // 检查是否有视频文件需要上传
       const videoData = videoComponent.getVideoData()
-      console.log('🎥 获取视频数据:', videoData)
+
       
       if (videoData && videoData.file && !videoData.uploaded) {
-        console.log('🎥 开始上传新视频文件')
+
         showMessage('正在上传视频...', 'info')
         
         try {
           const uploadResult = await videoComponent.startUpload()
-          console.log('🎥 视频上传结果:', uploadResult)
+
           
           if (uploadResult && uploadResult.success) {
             mediaData = {
@@ -572,7 +571,7 @@ const handlePublish = async () => {
               name: uploadResult.data.originalname || videoData.name,
               size: uploadResult.data.size || videoData.size
             }
-            console.log('✅ 视频上传成功，mediaData:', mediaData)
+
           } else {
             console.error('❌ 视频上传失败:', uploadResult)
             showMessage('视频上传失败: ' + (uploadResult?.message || '未知错误'), 'error')
@@ -585,14 +584,14 @@ const handlePublish = async () => {
         }
       } else if (videoData && videoData.url) {
         // 已经上传过的视频
-        console.log('🎥 使用已上传的视频')
+
         mediaData = {
           url: videoData.url,
           coverUrl: videoData.coverUrl,
           name: videoData.name,
           size: videoData.size
         }
-        console.log('✅ 已上传视频 mediaData:', mediaData)
+
       } else {
         console.error('❌ 视频数据异常:', videoData)
         showMessage('视频数据异常', 'error')
@@ -614,25 +613,25 @@ const handlePublish = async () => {
       is_draft: false // 发布状态
     }
 
-    console.log('📝 当前上传类型:', uploadType.value)
-    console.log('📝 构造的 postData:', JSON.stringify(postData, null, 2))
+
+
 
     showMessage('正在发布笔记...', 'info')
 
-    console.log('=== 前端发布请求 ===')
-    console.log('postData:', JSON.stringify(postData, null, 2))
+
+
 
     let response
     if (isEditMode.value && currentDraftId.value) {
-      console.log('执行更新操作...')
+
       response = await updatePost(currentDraftId.value, postData)
     } else {
       // 普通发布
-      console.log('执行创建操作...')
+
       response = await createPost(postData)
     }
 
-    console.log('后端响应:', response)
+
 
     if (response.success) {
       showMessage('发布成功！', 'success')

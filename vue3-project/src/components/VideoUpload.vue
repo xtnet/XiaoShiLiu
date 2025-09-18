@@ -185,7 +185,7 @@ const handleFile = async (file) => {
 // 生成视频缩略图
 const generateThumbnail = async (file) => {
   try {
-    console.log('🎬 开始生成视频缩略图:', file.name)
+
     
     const result = await generateVideoThumbnail(file, {
       width: 640,
@@ -201,8 +201,8 @@ const generateThumbnail = async (file) => {
       videoData.value.thumbnail = thumbnailFile
       videoData.value.thumbnailDataUrl = result.dataUrl
       
-      console.log('✅ 视频缩略图生成成功')
-      showMessage('缩略图生成成功，点击发布按钮后将上传', 'success')
+
+      showMessage('视频上传成功', 'success')
     } else {
       console.warn('⚠️ 视频缩略图生成失败:', result.error)
       showMessage('缩略图生成失败，但不影响视频上传', 'warning')

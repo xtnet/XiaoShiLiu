@@ -454,11 +454,7 @@ const props = defineProps({
   }
 })
 
-// 调试：检查props.item的数据
-console.log('DetailCard props.item:', props.item)
-console.log('DetailCard video_url:', props.item.video_url)
-console.log('DetailCard type:', props.item.type)
-console.log('DetailCard videos:', props.item.videos)
+
 
 // 处理视频加载
 const handleVideoLoad = (event) => {
@@ -808,9 +804,7 @@ const locateNewComment = async (commentId, replyingToInfo) => {
 
 // 定位目标评论
 const locateTargetComment = async () => {
-  console.log('locateTargetComment被调用，targetCommentId:', props.targetCommentId)
   if (!props.targetCommentId) {
-    console.log('targetCommentId为空，退出定位')
     return
   }
 
@@ -877,7 +871,7 @@ const locateTargetComment = async () => {
       const targetId = String(props.targetCommentId)
       let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
 
-      console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
+
       if (commentElement) {
         // 添加高亮样式
         commentElement.classList.add('comment-highlight')
@@ -889,12 +883,12 @@ const locateTargetComment = async () => {
         setTimeout(() => {
           commentElement.classList.remove('comment-highlight')
         }, 3000)
-        console.log('评论定位成功')
+
       } else {
-        console.log('未找到评论元素')
+
       }
     } else {
-      console.log('未找到目标评论')
+
     }
   } finally {
     // 定位完成后，在移动端解锁页面滚动
