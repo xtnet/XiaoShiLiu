@@ -19,7 +19,6 @@ export const videoApi = {
     // 如果有缩略图，一起上传
     if (thumbnail) {
       formData.append('thumbnail', thumbnail)
-      console.log('包含缩略图文件:', thumbnail.name)
     }
 
     try {
@@ -36,11 +35,8 @@ export const videoApi = {
         }
       })
 
-      console.log('🔍 视频上传API原始响应:', response)
-      console.log('🔍 响应success类型:', typeof response.success, '值:', response.success)
       
       if (response.success) {
-        console.log('✅ 视频上传API成功响应:', response)
         return {
           success: true,
           data: response.data
