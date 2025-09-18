@@ -19,6 +19,7 @@
           <div v-if="props.item.type === 2" class="video-container">
             <video 
               v-if="props.item.video_url"
+              ref="videoPlayer"
               :src="props.item.video_url" 
               :poster="props.item.images && props.item.images[0]"
               controls 
@@ -87,6 +88,7 @@
             <div v-if="props.item.type === 2" class="mobile-video-container">
               <video 
                 v-if="props.item.video_url"
+                ref="mobileVideoPlayer"
                 :src="props.item.video_url" 
                 :poster="props.item.images && props.item.images[0]"
                 controls 
@@ -484,6 +486,29 @@ const handleVideoLoad = (event) => {
   }
 }
 
+// 自动播放视频
+const autoPlayVideo = () => {
+  try {
+    // 检查是否为移动端
+    const isMobile = window.innerWidth <= 768
+    const currentVideoPlayer = isMobile ? mobileVideoPlayer.value : videoPlayer.value
+    
+    if (currentVideoPlayer) {
+      // 尝试自动播放
+      const playPromise = currentVideoPlayer.play()
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // 自动播放失败（通常是由于浏览器策略）
+          console.log('视频自动播放失败，需要用户交互:', error.message)
+        })
+      }
+    }
+  } catch (error) {
+    console.log('视频自动播放异常:', error.message)
+  }
+}
+
 const emit = defineEmits(['close', 'follow', 'unfollow', 'like', 'collect'])
 
 const themeStore = useThemeStore()
@@ -498,6 +523,8 @@ const authStore = useAuthStore()
 const { lock, unlock } = useScrollLock()
 
 const commentInput = ref('')
+const videoPlayer = ref(null)
+const mobileVideoPlayer = ref(null)
 const isLiked = computed(() => likeStore.getPostLikeState(props.item.id)?.liked || false)
 const likeCount = computed(() => likeStore.getPostLikeState(props.item.id)?.likeCount || props.item.likeCount || props.item.like_count || 0)
 const isCollected = computed(() => collectStore.getPostCollectState(props.item.id)?.collected || false)
@@ -2317,6 +2344,13 @@ onMounted(async () => {
   if (props.targetCommentId) {
     nextTick(() => {
       locateTargetComment()
+    })
+  }
+
+  // 自动播放视频
+  if (props.item.type === 2 && props.item.video_url) {
+    nextTick(() => {
+      autoPlayVideo()
     })
   }
 

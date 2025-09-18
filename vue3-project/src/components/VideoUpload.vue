@@ -185,11 +185,8 @@ const handleFile = async (file) => {
 // 生成视频缩略图
 const generateThumbnail = async (file) => {
   try {
-
-    
     const result = await generateVideoThumbnail(file, {
-      width: 640,
-      height: 360,
+      useOriginalSize: true,
       quality: 0.8,
       seekTime: 1
     })

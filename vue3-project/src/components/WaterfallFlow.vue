@@ -732,8 +732,8 @@ function onCardClick(item, event) {
         x: event.clientX,
         y: event.clientY
     }
-    // 设置选中的item并显示详情卡片
-    selectedItem.value = item
+    // 设置选中的item并显示详情卡片（使用深拷贝避免影响原始数据）
+    selectedItem.value = JSON.parse(JSON.stringify(item))
     showDetailCard.value = true
 
     // 修改页面标题

@@ -4,11 +4,12 @@
  */
 
 /**
- * 从视频文件生成缩略图
- * @param {File} videoFile - 视频文件对象
+ * 生成视频缩略图
+ * @param {File} videoFile - 视频文件
  * @param {Object} options - 配置选项
  * @param {number} options.width - 缩略图宽度，默认640
  * @param {number} options.height - 缩略图高度，默认360
+ * @param {boolean} options.useOriginalSize - 是否使用视频原始尺寸，默认false
  * @param {number} options.quality - 图片质量，默认0.8
  * @param {string} options.format - 图片格式，默认'image/jpeg'
  * @param {number} options.seekTime - 截取时间点（秒），默认1秒
@@ -18,6 +19,7 @@ export async function generateVideoThumbnail(videoFile, options = {}) {
   const {
     width = 640,
     height = 360,
+    useOriginalSize = false,
     quality = 0.8,
     format = 'image/jpeg',
     seekTime = 1
@@ -41,25 +43,14 @@ export async function generateVideoThumbnail(videoFile, options = {}) {
 
       // 视频加载完成后的处理
       video.addEventListener('loadedmetadata', () => {
-        // 计算实际的宽高比例，保持视频比例
-        const videoAspectRatio = video.videoWidth / video.videoHeight
-        const canvasAspectRatio = width / height
-        
-        let drawWidth = width
-        let drawHeight = height
-        let offsetX = 0
-        let offsetY = 0
-        
-        if (videoAspectRatio > canvasAspectRatio) {
-          // 视频更宽，以高度为准
-          drawHeight = height
-          drawWidth = height * videoAspectRatio
-          offsetX = (width - drawWidth) / 2
+        // 如果使用原始尺寸，则设置canvas为视频的原始尺寸
+        if (useOriginalSize) {
+          canvas.width = video.videoWidth
+          canvas.height = video.videoHeight
         } else {
-          // 视频更高，以宽度为准
-          drawWidth = width
-          drawHeight = width / videoAspectRatio
-          offsetY = (height - drawHeight) / 2
+          // 使用指定尺寸
+          canvas.width = width
+          canvas.height = height
         }
 
         // 设置视频时间点
@@ -70,30 +61,34 @@ export async function generateVideoThumbnail(videoFile, options = {}) {
       // 视频可以播放时截取帧
       video.addEventListener('seeked', () => {
         try {
-          // 清空canvas
-          ctx.fillStyle = '#000000'
-          ctx.fillRect(0, 0, width, height)
-          
-          // 绘制视频帧到canvas
-          const videoAspectRatio = video.videoWidth / video.videoHeight
-          const canvasAspectRatio = width / height
-          
-          let drawWidth = width
-          let drawHeight = height
-          let offsetX = 0
-          let offsetY = 0
-          
-          if (videoAspectRatio > canvasAspectRatio) {
-            drawHeight = height
-            drawWidth = height * videoAspectRatio
-            offsetX = (width - drawWidth) / 2
+          if (useOriginalSize) {
+            // 使用原始尺寸，直接绘制视频帧
+            ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
           } else {
-            drawWidth = width
-            drawHeight = width / videoAspectRatio
-            offsetY = (height - drawHeight) / 2
+            // 使用指定尺寸，需要计算比例和位置
+            ctx.fillStyle = '#000000'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            
+            const videoAspectRatio = video.videoWidth / video.videoHeight
+            const canvasAspectRatio = canvas.width / canvas.height
+            
+            let drawWidth = canvas.width
+            let drawHeight = canvas.height
+            let offsetX = 0
+            let offsetY = 0
+            
+            if (videoAspectRatio > canvasAspectRatio) {
+              drawHeight = canvas.height
+              drawWidth = canvas.height * videoAspectRatio
+              offsetX = (canvas.width - drawWidth) / 2
+            } else {
+              drawWidth = canvas.width
+              drawHeight = canvas.width / videoAspectRatio
+              offsetY = (canvas.height - drawHeight) / 2
+            }
+            
+            ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
           }
-          
-          ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
           
           // 转换为Blob
           canvas.toBlob((blob) => {
