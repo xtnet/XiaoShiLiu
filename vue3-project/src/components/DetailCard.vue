@@ -15,7 +15,28 @@
       <div class="detail-content">
         <div class="image-section" :style="{ width: imageSectionWidth + 'px' }" @mouseenter="showImageControls = true"
           @mouseleave="showImageControls = false">
-          <div class="image-container">
+          <!-- 视频播放器（桌面端） -->
+          <div v-if="props.item.type === 2" class="video-container">
+            <video 
+              v-if="props.item.video_url"
+              :src="props.item.video_url" 
+              :poster="props.item.images && props.item.images[0]"
+              controls 
+              preload="metadata"
+              class="video-player"
+              @loadedmetadata="handleVideoLoad"
+            >
+              您的浏览器不支持视频播放
+            </video>
+            <div v-else class="video-placeholder">
+              <div class="placeholder-content">
+                <SvgIcon name="video" width="48" height="48" />
+                <p>视频加载中...</p>
+              </div>
+            </div>
+          </div>
+          <!-- 图片轮播（图文笔记） -->
+          <div v-else class="image-container">
             <div class="image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }">
               <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="props.item.title || '图片'"
                 @load="handleImageLoad($event, index)" :style="{ objectFit: 'contain' }"
@@ -62,7 +83,28 @@
           </div>
 
           <div class="scrollable-content" ref="scrollableContent">
-            <div v-if="imageList && imageList.length > 0" class="mobile-image-container">
+            <!-- 视频播放器（移动端） -->
+            <div v-if="props.item.type === 2" class="mobile-video-container">
+              <video 
+                v-if="props.item.video_url"
+                :src="props.item.video_url" 
+                :poster="props.item.images && props.item.images[0]"
+                controls 
+                preload="metadata"
+                class="mobile-video-player"
+                @loadedmetadata="handleVideoLoad"
+              >
+                您的浏览器不支持视频播放
+              </video>
+              <div v-else class="video-placeholder">
+                <div class="placeholder-content">
+                  <SvgIcon name="video" width="48" height="48" />
+                  <p>视频加载中...</p>
+                </div>
+              </div>
+            </div>
+            <!-- 图片轮播（图文笔记） -->
+            <div v-else-if="imageList && imageList.length > 0" class="mobile-image-container">
               <div class="mobile-image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
                 @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
                 <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="`图片 ${index + 1}`"
@@ -411,6 +453,40 @@ const props = defineProps({
     default: null
   }
 })
+
+// 调试：检查props.item的数据
+console.log('DetailCard props.item:', props.item)
+console.log('DetailCard video_url:', props.item.video_url)
+console.log('DetailCard type:', props.item.type)
+console.log('DetailCard videos:', props.item.videos)
+
+// 处理视频加载
+const handleVideoLoad = (event) => {
+  const video = event.target
+  const aspectRatio = video.videoWidth / video.videoHeight
+
+  // 桌面端视频容器宽度计算
+  if (window.innerWidth > 768) {
+    const minWidth = 300
+    const maxWidth = props.pageMode ? 500 : 750
+    const containerHeight = Math.min(window.innerHeight * 0.9, 1020)
+    const idealWidth = containerHeight * aspectRatio
+
+    let optimalWidth = Math.max(minWidth, Math.min(maxWidth, idealWidth))
+
+    if (aspectRatio <= 0.6) {
+      optimalWidth = Math.min(optimalWidth, 500)
+    } else if (aspectRatio <= 0.8) {
+      optimalWidth = Math.min(optimalWidth, 600)
+    } else if (aspectRatio >= 2.0) {
+      optimalWidth = Math.max(optimalWidth, 600)
+    } else if (aspectRatio >= 1.5) {
+      optimalWidth = Math.max(optimalWidth, 550)
+    }
+
+    imageSectionWidth.value = optimalWidth
+  }
+}
 
 const emit = defineEmits(['close', 'follow', 'unfollow', 'like', 'collect'])
 
@@ -2499,6 +2575,48 @@ function handleAvatarError(event) {
   height: 100%;
 }
 
+/* 视频容器样式 */
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color-secondary);
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  object-fit: contain;
+  background: #000;
+}
+
+/* 视频占位符样式 */
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.placeholder-content p {
+  margin: 0;
+  font-size: 14px;
+}
+
 /* 图片容器和控制样式 */
 .image-container {
   position: relative;
@@ -3624,6 +3742,11 @@ function handleAvatarError(event) {
   display: none;
 }
 
+/* 默认隐藏移动端视频容器 */
+.mobile-video-container {
+  display: none;
+}
+
 /* 响应式设计 - 移动端适配 */
 @media (max-width: 768px) {
 
@@ -3694,8 +3817,13 @@ function handleAvatarError(event) {
     overflow: hidden;
   }
 
-  /* 移动端隐藏原来的图片区域 */
+  /* 移动端隐藏原来的图片区域和视频容器 */
   .image-section {
+    display: none;
+  }
+  
+  /* 移动端隐藏桌面端的视频容器 */
+  .video-container {
     display: none;
   }
 
@@ -3772,6 +3900,27 @@ function handleAvatarError(event) {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+  }
+
+  /* 移动端视频容器样式 */
+  .mobile-video-container {
+    display: flex;
+    width: 100%;
+    min-height: 200px;
+    margin-bottom: 16px;
+    position: relative;
+    background: var(--bg-color-secondary);
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-video-player {
+    width: 100%;
+    height: 100%;
+    max-width: 1000px;
+    object-fit: contain;
+    background: #000;
   }
 
   .mobile-image-slider {

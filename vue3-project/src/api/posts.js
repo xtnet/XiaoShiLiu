@@ -19,6 +19,10 @@ function transformPostData(backendPost) {
     title: backendPost.title,
     content: backendPost.content,
     images: backendPost.images || [],
+    // 视频相关字段
+    video_url: backendPost.video_url,
+    cover_url: backendPost.cover_url,
+    videos: backendPost.videos || [],
     avatar: backendPost.user_avatar || new URL('@/assets/imgs/avatar.png', import.meta.url).href,
     author: backendPost.nickname || '匿名用户',
     location: backendPost.location || '',

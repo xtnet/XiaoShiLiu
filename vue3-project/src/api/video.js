@@ -9,11 +9,18 @@ export const videoApi = {
    * 上传单个视频文件
    * @param {File} file - 视频文件
    * @param {Function} onProgress - 上传进度回调
+   * @param {File} thumbnail - 缩略图文件（可选）
    * @returns {Promise} 上传结果
    */
-  async uploadVideo(file, onProgress) {
+  async uploadVideo(file, onProgress, thumbnail = null) {
     const formData = new FormData()
     formData.append('file', file)
+    
+    // 如果有缩略图，一起上传
+    if (thumbnail) {
+      formData.append('thumbnail', thumbnail)
+      console.log('包含缩略图文件:', thumbnail.name)
+    }
 
     try {
       const response = await request.post('/upload/video', formData, {

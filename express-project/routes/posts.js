@@ -5,7 +5,6 @@ const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
-const { extractVideoThumbnail } = require('../utils/videoHelper');
 
 // 获取笔记列表
 router.get('/', optionalAuth, async (req, res) => {
@@ -52,9 +51,21 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取每个草稿的图片和标签
       for (let post of rows) {
-        // 获取笔记图片
-        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id]);
-        post.images = images.map(img => img.image_url);
+        // 根据笔记类型获取图片或视频封面
+        if (post.type === 2) {
+          // 视频笔记：获取视频封面
+          const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [post.id]);
+          post.images = videos.length > 0 && videos[0].cover_url ? [videos[0].cover_url] : [];
+          post.video_url = videos.length > 0 ? videos[0].video_url : null;
+          // 为瀑布流设置image字段
+          post.image = videos.length > 0 && videos[0].cover_url ? videos[0].cover_url : null;
+        } else {
+          // 图文笔记：获取笔记图片
+          const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id]);
+          post.images = images.map(img => img.image_url);
+          // 为瀑布流设置image字段（取第一张图片）
+          post.image = images.length > 0 ? images[0].image_url : null;
+        }
 
         // 获取笔记标签
         const [tags] = await pool.execute(
@@ -189,9 +200,21 @@ router.get('/', optionalAuth, async (req, res) => {
 
     // 获取每个笔记的图片、标签和用户点赞收藏状态
     for (let post of rows) {
-      // 获取笔记图片
-      const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id]);
-      post.images = images.map(img => img.image_url);
+      // 根据笔记类型获取图片或视频封面
+      if (post.type === 2) {
+        // 视频笔记：获取视频封面
+        const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [post.id]);
+        post.images = videos.length > 0 && videos[0].cover_url ? [videos[0].cover_url] : [];
+        post.video_url = videos.length > 0 ? videos[0].video_url : null;
+        // 为瀑布流设置image字段
+        post.image = videos.length > 0 && videos[0].cover_url ? videos[0].cover_url : null;
+      } else {
+        // 图文笔记：获取笔记图片
+        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id]);
+        post.images = images.map(img => img.image_url);
+        // 为瀑布流设置image字段（取第一张图片）
+        post.image = images.length > 0 ? images[0].image_url : null;
+      }
 
       // 获取笔记标签
       const [tags] = await pool.execute(
@@ -314,6 +337,11 @@ router.get('/:id', optionalAuth, async (req, res) => {
       // 视频类型：获取视频
       const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId]);
       post.videos = videos;
+      // 将第一个视频的URL和封面提取到主对象中，方便前端使用
+      if (videos.length > 0) {
+        post.video_url = videos[0].video_url;
+        post.cover_url = videos[0].cover_url;
+      }
     }
 
     // 获取笔记标签

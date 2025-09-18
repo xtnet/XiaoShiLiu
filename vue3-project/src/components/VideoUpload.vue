@@ -62,6 +62,7 @@ import { ref, watch } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 import MessageToast from './MessageToast.vue'
 import { videoApi } from '@/api/video.js'
+import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail.js'
 
 const props = defineProps({
   modelValue: {
@@ -145,7 +146,7 @@ const validateVideoFile = (file) => {
 }
 
 // 处理文件
-const handleFile = (file) => {
+const handleFile = async (file) => {
   if (!file) return
 
   // 验证文件
@@ -165,7 +166,9 @@ const handleFile = (file) => {
     name: file.name,
     size: file.size,
     uploaded: false,
-    url: null
+    url: null,
+    thumbnail: null, // 缩略图数据
+    thumbnailDataUrl: null // 缩略图预览URL
   }
 
   // 清空错误
@@ -173,7 +176,41 @@ const handleFile = (file) => {
   
   // 传递文件名作为modelValue（字符串类型）
   emit('update:modelValue', file.name)
-  showMessage('视频文件已选择，点击发布按钮后将上传', 'info')
+  showMessage('视频文件已选择，正在生成缩略图...', 'info')
+  
+  // 生成缩略图
+  await generateThumbnail(file)
+}
+
+// 生成视频缩略图
+const generateThumbnail = async (file) => {
+  try {
+    console.log('🎬 开始生成视频缩略图:', file.name)
+    
+    const result = await generateVideoThumbnail(file, {
+      width: 640,
+      height: 360,
+      quality: 0.8,
+      seekTime: 1
+    })
+    
+    if (result.success && videoData.value) {
+      // 将Blob转换为File对象
+      const thumbnailFile = blobToFile(result.blob, generateThumbnailFilename(file.name))
+      
+      videoData.value.thumbnail = thumbnailFile
+      videoData.value.thumbnailDataUrl = result.dataUrl
+      
+      console.log('✅ 视频缩略图生成成功')
+      showMessage('缩略图生成成功，点击发布按钮后将上传', 'success')
+    } else {
+      console.warn('⚠️ 视频缩略图生成失败:', result.error)
+      showMessage('缩略图生成失败，但不影响视频上传', 'warning')
+    }
+  } catch (error) {
+    console.error('❌ 生成视频缩略图异常:', error)
+    showMessage('缩略图生成异常，但不影响视频上传', 'warning')
+  }
 }
 
 // 开始上传过程
@@ -186,9 +223,14 @@ const startUpload = async () => {
   uploadProgress.value = 0
 
   try {
-    const result = await videoApi.uploadVideo(videoData.value.file, (progress) => {
-      uploadProgress.value = progress
-    })
+    // 传递缩略图文件（如果有的话）
+    const result = await videoApi.uploadVideo(
+      videoData.value.file, 
+      (progress) => {
+        uploadProgress.value = progress
+      },
+      videoData.value.thumbnail // 传递缩略图
+    )
 
     if (result.success) {
       isUploading.value = false

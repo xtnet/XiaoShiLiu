@@ -46,9 +46,16 @@
 
           <div class="post-thumbnail">
             <img
-              v-if="(post.originalData?.images && post.originalData.images.length > 0) || (post.images && post.images.length > 0)"
+              v-if="post.type === 2 && post.images && post.images.length > 0"
+              :src="post.images[0]"
+              :alt="post.title" @error="handleImageError" />
+            <img
+              v-else-if="post.type !== 2 && ((post.originalData?.images && post.originalData.images.length > 0) || (post.images && post.images.length > 0))"
               :src="(post.originalData?.images && post.originalData.images[0]) || (post.images && post.images[0]) || post.image"
               :alt="post.title" @error="handleImageError" />
+            <div v-else-if="post.type === 2" class="video-thumbnail">
+              <span>视频</span>
+            </div>
             <div v-else class="no-image">
               <SvgIcon name="image" width="24" height="24" />
             </div>
@@ -580,6 +587,22 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: var(--text-color-secondary);
+}
+
+.video-thumbnail {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  gap: 0.25rem;
+}
+
+.video-thumbnail span {
+  font-size: 0.75rem;
 }
 
 .post-info {

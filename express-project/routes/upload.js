@@ -4,7 +4,6 @@ const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
 const { uploadFile, uploadVideo } = require('../utils/uploadHelper');
-const { extractVideoThumbnail } = require('../utils/videoHelper');
 
 // 配置 multer 内存存储（用于云端图床）
 const storage = multer.memoryStorage();
@@ -40,9 +39,30 @@ const upload = multer({
 });
 
 // 配置 multer - 视频
+// 混合文件过滤器（支持视频和图片）
+const mixedFileFilter = (req, file, cb) => {
+  if (file.fieldname === 'file') {
+    // 视频文件验证
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只支持视频文件'), false);
+    }
+  } else if (file.fieldname === 'thumbnail') {
+    // 缩略图文件验证
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('缩略图只支持图片文件'), false);
+    }
+  } else {
+    cb(new Error('不支持的文件字段'), false);
+  }
+};
+
 const videoUpload = multer({
   storage: storage,
-  fileFilter: videoFileFilter,
+  fileFilter: mixedFileFilter, // 使用混合文件过滤器
   limits: {
     fileSize: 100 * 1024 * 1024 // 100MB 限制
   }
@@ -148,18 +168,32 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
   }
 });
 
-// 单视频上传
-router.post('/video', authenticateToken, videoUpload.single('file'), async (req, res) => {
+// 单视频上传到图床
+router.post('/video', authenticateToken, videoUpload.fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 }
+]), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有上传文件' });
+    if (!req.files || !req.files.file || !req.files.file[0]) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        code: RESPONSE_CODES.VALIDATION_ERROR, 
+        message: '没有上传视频文件' 
+      });
+    }
+
+    const videoFile = req.files.file[0];
+    const thumbnailFile = req.files.thumbnail ? req.files.thumbnail[0] : null;
+
+    console.log(`视频上传开始 - 用户ID: ${req.user.id}, 视频文件: ${videoFile.originalname}`);
+    if (thumbnailFile) {
+      console.log(`包含前端生成的缩略图: ${thumbnailFile.originalname}`);
     }
 
     // 上传视频文件
     const uploadResult = await uploadVideo(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
+      videoFile.buffer,
+      videoFile.originalname,
+      videoFile.mimetype
     );
 
     if (!uploadResult.success) {
@@ -171,33 +205,48 @@ router.post('/video', authenticateToken, videoUpload.single('file'), async (req,
 
     let coverUrl = null;
 
-    // 尝试提取视频缩略图（失败不影响上传）
-    try {
-      const thumbnailResult = await extractVideoThumbnail(req.file.buffer);
-      if (thumbnailResult.success) {
-        coverUrl = thumbnailResult.url;
+    // 优先使用前端生成的缩略图
+    if (thumbnailFile) {
+      try {
+        console.log('使用前端生成的缩略图');
+        const thumbnailUploadResult = await uploadFile(
+          thumbnailFile.buffer,
+          thumbnailFile.originalname,
+          thumbnailFile.mimetype
+        );
+        
+        if (thumbnailUploadResult.success) {
+          coverUrl = thumbnailUploadResult.url;
+          console.log('前端缩略图上传成功:', coverUrl);
+        } else {
+          console.warn('前端缩略图上传失败:', thumbnailUploadResult.message);
+        }
+      } catch (error) {
+        console.warn('前端缩略图处理失败:', error.message);
       }
-    } catch (error) {
-      console.log('视频缩略图提取失败:', error.message);
     }
 
+
     // 记录用户上传操作日志
-    console.log(`单视频上传成功 - 用户ID: ${req.user.id}, 文件名: ${req.file.originalname}`);
+    console.log(`视频上传成功 - 用户ID: ${req.user.id}, 文件名: ${videoFile.originalname}, 缩略图: ${coverUrl ? '有' : '无'}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '上传成功',
       data: {
-        originalname: req.file.originalname,
-        size: req.file.size,
+        originalname: videoFile.originalname,
+        size: videoFile.size,
         url: uploadResult.url,
         filePath: uploadResult.filePath,
         coverUrl: coverUrl
       }
     });
   } catch (error) {
-    console.error('单视频上传失败:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '上传失败' });
+    console.error('视频上传失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      code: RESPONSE_CODES.ERROR, 
+      message: '上传失败' 
+    });
   }
 });
 
