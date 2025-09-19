@@ -1,7 +1,13 @@
 // API配置文件
+
+// 解析是否使用真实API
+const useRealApi = String(import.meta.env.VITE_USE_REAL_API || '').toLowerCase() === 'true'
+// 根据配置决定 baseURL（当不开启真实API时，强制走相对路径以便使用代理）
+const resolvedBaseURL = useRealApi ? (import.meta.env.VITE_API_BASE_URL || '/api') : '/api'
+
 export const apiConfig = {
   // 后端API基础URL - 使用环境变量或默认值
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: resolvedBaseURL,
 
   // 请求超时时间（毫秒）
   timeout: 60000, // 增加到60秒，适应多图片上传场景
@@ -34,4 +40,11 @@ export const apiConfig = {
   }
 }
 
+
+// 说明：
+// - 当 VITE_USE_REAL_API=false 时，所有请求将使用相对路径 "/api"，
+//   在开发环境走 Vite devServer 代理，在生产环境由 Nginx 反向代理到后端。
+// - 当 VITE_USE_REAL_API=true 时，使用 VITE_API_BASE_URL（若未配置则回退到 "/api"）。
+
 export default apiConfig
+
