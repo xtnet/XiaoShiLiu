@@ -486,7 +486,7 @@ watch(() => props.visible, (newVisible) => {
       const images = formData.value['images'] || []
       const videoUrl = formData.value['video_url']
       const coverUrl = formData.value['cover_url']
-      
+
       // 处理图片数据
       if (images.length === 0) {
         // 如果没有图片数据，说明是新增操作，需要重置
@@ -777,11 +777,19 @@ const handleVideoUpload = async () => {
       const uploadResult = await videoUploadRef.startUpload()
 
       if (uploadResult && uploadResult.success) {
-        // 上传成功后，直接设置分离的字段
+        // 上传成功后，设置video对象用于后端处理（包含旧文件清理）
         const processedData = { ...props.formData }
+        
+        // 设置video对象，后端会根据此对象自动清理旧文件
+        processedData['video'] = {
+          url: uploadResult.data.url,
+          coverUrl: uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl || null
+        }
+        
+        // 同时设置分离的字段用于兼容
         processedData['video_url'] = uploadResult.data.url
         processedData['cover_url'] = uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl || ''
-        
+
         // 同时更新video_upload用于组件显示
         processedData['video_upload'] = {
           url: uploadResult.data.url,
@@ -790,7 +798,7 @@ const handleVideoUpload = async () => {
           size: uploadResult.data.size || videoData.size,
           uploaded: true
         }
-        
+
         emit('update:formData', processedData)
 
         // 标记视频上传完成
@@ -910,9 +918,20 @@ const handleFormSubmit = async () => {
       }
     })
 
-    // 视频数据处理：移除临时的video_upload对象，保留分离的字段
+    // 视频数据处理：移除临时的video_upload对象，但保留video对象用于后端清理旧文件
     if (processedData.video_upload) {
       delete processedData.video_upload
+    }
+    
+    // 如果有视频URL，始终构建video对象发送给后端（用于文件清理和更新）
+    if (processedData.video_url) {
+      processedData.video = {
+        url: processedData.video_url,
+        coverUrl: processedData.cover_url || null
+      }
+    } else {
+      // 如果没有视频URL，确保video字段为null
+      processedData.video = null
     }
 
     emit('submit', processedData)

@@ -52,10 +52,8 @@ async function deleteLocalFile(filePath) {
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-      console.log(`✅ 成功删除视频文件: ${filePath}`);
       return true;
     } else {
-      console.log(`⚠️ 视频文件不存在: ${filePath}`);
       return true; // 文件不存在也算成功
     }
   } catch (error) {
@@ -146,7 +144,6 @@ async function cleanupCoverFiles(coverUrls) {
         }
       } else {
         // 云端文件或其他类型的URL，跳过处理
-        console.log(`⏭️ 跳过非本地封面文件: ${url}`);
       }
     } catch (error) {
       failedCount++;

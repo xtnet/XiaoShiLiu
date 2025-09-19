@@ -233,14 +233,48 @@ const postsCrudConfig = {
       }
     }
 
-    // 处理视频更新
-    if (data.video_url !== undefined || data.cover_url !== undefined) {
-      // 删除原有视频
+    // 处理视频更新 - 只要有任何视频相关字段就触发处理
+    const hasVideoUpdate = data.video_url !== undefined || data.cover_url !== undefined || data.video !== undefined
+    
+    if (hasVideoUpdate) {
+      // 获取原有视频记录用于清理文件
+      const [oldVideoRows] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [String(postId)])
+      
+      // 删除原有视频记录
       await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [String(postId)])
-      if (data.video_url && data.video_url.trim() !== '') {
+
+      // 清理废弃的视频文件
+      if (oldVideoRows.length > 0) {
+        const { batchCleanupFiles } = require('../utils/fileCleanup')
+        const oldVideoUrls = oldVideoRows.map(row => row.video_url).filter(url => url)
+        const oldCoverUrls = oldVideoRows.map(row => row.cover_url).filter(url => url)
+        
+        // 异步清理文件，不阻塞响应
+        batchCleanupFiles(oldVideoUrls, oldCoverUrls).then(result => {
+          // 文件清理完成
+        }).catch(error => {
+          console.error('后台管理系统清理废弃视频文件失败:', error)
+        })
+      }
+
+      // 插入新视频记录 - 优先使用video对象，然后是分离字段
+      let videoUrl = null
+      let coverUrl = null
+      
+      if (data.video && data.video.url) {
+        // FormModal传递的video对象格式
+        videoUrl = data.video.url
+        coverUrl = data.video.coverUrl || ''
+      } else if (data.video_url && data.video_url.trim() !== '') {
+        // 分离字段格式
+        videoUrl = data.video_url
+        coverUrl = data.cover_url || ''
+      }
+      
+      if (videoUrl) {
         await pool.execute(
           'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
-          [postId, data.video_url, data.cover_url || '']
+          [postId, videoUrl, coverUrl]
         )
       }
     }
