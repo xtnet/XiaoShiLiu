@@ -4,6 +4,7 @@ import SkeletonList from './skeleton/SkeletonList.vue'
 import SimpleSpinner from './spinner/SimpleSpinner.vue'
 import DetailCard from './DetailCard.vue'
 import LikeButton from './LikeButton.vue'
+import SvgIcon from './SvgIcon.vue'
 import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -926,6 +927,10 @@ function handleImageError(event) {
                         <div class="content-img" @click="onCardClick(item, $event)">
                             <img v-img-lazy="item.image" alt="" class="lazy-image" @error="handleImageError"
                                 @load="onImageLoaded(item.id, 'imageLoaded')">
+                            <!-- 视频笔记标志 -->
+                            <div v-if="item.type === 2" class="video-indicator">
+                                <SvgIcon name="play" width="12" height="12" />
+                            </div>
                         </div>
                         <div class="content-title">{{ item.title }}</div>
                         <div class="contentlist">
@@ -1081,6 +1086,25 @@ function handleImageError(event) {
     z-index: 1;
 }
 
+/* 视频笔记标志样式 */
+.video-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.323);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+
+
 .content-img img {
     width: 100%;
     height: auto;
@@ -1091,16 +1115,16 @@ function handleImageError(event) {
     opacity: 1;
     visibility: visible;
     object-position: center;
+    transition: filter 0.8s ease;
 }
 
 .content-img img:hover {
     filter: brightness(0.7);
-    transition: filter 0.2s ease;
 }
 
 /* 懒加载图片样式 */
 .lazy-image {
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease, filter 0.3s ease !important;
     opacity: 0;
     visibility: hidden;
 }

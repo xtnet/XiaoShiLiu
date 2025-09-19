@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         <form @submit.prevent="handleSubmit">
-          <div v-for="field in formFields" :key="field.key" class="form-group">
+          <div v-for="field in visibleFields" :key="field.key" class="form-group">
             <label>{{ field.label }}{{ field.required ? ' *' : '' }}:</label>
             <input v-if="field.type === 'text' || field.type === 'password'" :value="getInputValue(field)"
               @input="updateInputField(field, $event.target.value)" :type="field.type" :placeholder="field.placeholder"
@@ -91,7 +91,7 @@
 
                 <div v-if="!avatarUploading[field.key] && !formData[field.key]" class="avatar-upload-placeholder">
                   <SvgIcon name="publish" width="40" height="40" />
-                  <p>点击或拖拽上传头像</p>
+                  <p>{{ field.placeholder || '点击或拖拽上传头像' }}</p>
                   <p class="upload-hint">支持 JPG、PNG、GIF 格式，将自动裁剪为正方形</p>
                 </div>
 
@@ -130,6 +130,11 @@
             </div>
             <MbtiPicker v-else-if="field.type === 'mbti-picker'" :model-value="formData[field.key] || ''"
               @update:model-value="updateField(field.key, $event)" :dimensions="field.dimensions" />
+            <div v-else-if="field.type === 'video-upload'" class="video-upload-field">
+              <!-- 视频上传组件 -->
+              <VideoUpload :ref="el => setVideoUploadRef(field.key, el)" :model-value="formData[field.key]"
+                @update:model-value="handleVideoUploadChange" @error="handleVideoUploadError" />
+            </div>
 
           </div>
         </form>
@@ -138,7 +143,7 @@
         <div class="form-actions">
           <button type="button" @click="handleClose" class="btn btn-outline">取消</button>
           <button type="button" @click="handleSubmit" class="btn btn-primary"
-            :disabled="props.loading || isSubmitting || isUploadingImages">
+            :disabled="props.loading || isSubmitting || isUploadingImages || isUploadingVideo">
             {{ getButtonText() }}
           </button>
         </div>
@@ -166,6 +171,7 @@ import { computed, ref, watch, nextTick } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import CropModal from '@/views/user/components/CropModal.vue'
 import MultiImageUpload from '@/components/MultiImageUpload.vue'
+import VideoUpload from '@/components/VideoUpload.vue'
 import TagSelector from '@/components/TagSelector.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
 import MbtiPicker from '@/components/MbtiPicker.vue'
@@ -177,6 +183,7 @@ import messageManager from '@/utils/messageManager'
 import { imageUploadApi } from '@/api/index.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
+import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail'
 // import { getFriendsList } from '@/api/friends'
 
 const props = defineProps({
@@ -204,10 +211,16 @@ const hasNewImages = ref(false)
 const isUploadingImages = ref(false)
 const uploadCompleted = ref(false)
 
+// 视频上传状态管理
+const hasNewVideo = ref(false)
+const isUploadingVideo = ref(false)
+const videoUploadCompleted = ref(false)
+
 // 防滚动穿透
 const { lock, unlock } = useScrollLock()
 
 const multiImageUploadRefs = ref({})
+const videoUploadRefs = ref({})
 const interestInput = ref({})
 const textareaRefs = ref({})
 const contentEditableRefs = ref({})
@@ -224,15 +237,44 @@ const showAvatarCropModal = ref(false)
 const avatarCropImageSrc = ref('')
 const avatarCropUploading = ref(false)
 const currentAvatarField = ref('')
+
+// 视频上传相关
+const videoFileInputRefs = ref({})
+const videoUploading = ref({})
+const videoErrors = ref({})
+
 // 提及用户数据（实际使用中应该从 API 获取）
 const mentionUsers = ref([])
 const isSubmitting = ref(false)
+
+// 计算可见字段
+const visibleFields = computed(() => {
+  return props.formFields.filter(field => {
+    // 如果字段没有条件，直接显示
+    if (!field.condition) return true
+
+    // 检查条件是否满足
+    const conditionField = field.condition.field
+    const conditionValue = field.condition.value
+    const currentValue = props.formData[conditionField]
+
+    return currentValue === conditionValue
+  })
+})
 
 const setMultiImageUploadRef = (fieldName, el) => {
   if (el) {
     multiImageUploadRefs.value[fieldName] = el
   } else {
     delete multiImageUploadRefs.value[fieldName]
+  }
+}
+
+const setVideoUploadRef = (fieldName, el) => {
+  if (el) {
+    videoUploadRefs.value[fieldName] = el
+  } else {
+    delete videoUploadRefs.value[fieldName]
   }
 }
 
@@ -434,15 +476,20 @@ watch(() => props.visible, (newVisible) => {
     hasNewImages.value = false
     isUploadingImages.value = false
     uploadCompleted.value = false
+    // 重置视频上传进行中状态，但不重置完成状态，让video_upload的watch来决定
+    isUploadingVideo.value = false
     // 锁定滚动
     lock()
 
     // 当模态框打开时，根据是否有数据来决定处理方式
     nextTick(() => {
       const images = formData.value['images'] || []
-
-      // 如果没有图片数据，说明是新增操作，需要重置
+      const videoUrl = formData.value['video_url']
+      const coverUrl = formData.value['cover_url']
+      
+      // 处理图片数据
       if (images.length === 0) {
+        // 如果没有图片数据，说明是新增操作，需要重置
         Object.values(multiImageUploadRefs.value).forEach(ref => {
           if (ref && ref.reset) {
             ref.reset()
@@ -455,6 +502,21 @@ watch(() => props.visible, (newVisible) => {
             ref.syncWithUrls(images)
           }
         })
+      }
+
+      // 处理视频数据：如果有video_url，构造video_upload对象用于显示
+      if (videoUrl) {
+        formData.value['video_upload'] = {
+          url: videoUrl,
+          coverUrl: coverUrl || '',
+          uploaded: true
+        }
+        hasNewVideo.value = false
+        videoUploadCompleted.value = true
+      } else {
+        // 没有视频数据，重置状态
+        hasNewVideo.value = false
+        videoUploadCompleted.value = false
       }
     })
   } else {
@@ -481,6 +543,28 @@ watch(() => formData.value['images'], (newImages, oldImages) => {
     imagesUploadRef.syncWithUrls(newImages || [])
   }
 }, { deep: true })
+
+// 监听video_upload字段的变化，更新视频上传状态
+watch(() => formData.value['video_upload'], (newVideoData, oldVideoData) => {
+  if (newVideoData === undefined && oldVideoData) {
+    return
+  }
+
+  // 更新视频上传状态
+  if (newVideoData && typeof newVideoData === 'object' && (newVideoData.url || newVideoData.uploaded)) {
+    // 有已上传的视频数据
+    hasNewVideo.value = false
+    videoUploadCompleted.value = true
+  } else if (newVideoData && typeof newVideoData === 'string') {
+    // 有新选择的视频文件名
+    hasNewVideo.value = true
+    videoUploadCompleted.value = false
+  } else if (!newVideoData) {
+    // 没有视频数据
+    hasNewVideo.value = false
+    videoUploadCompleted.value = false
+  }
+}, { deep: true, immediate: true })
 
 // 处理图片上传组件的变化
 const handleImageUploadChange = (value) => {
@@ -530,16 +614,65 @@ const handleImageUploadChange = (value) => {
   })
 }
 
+// 处理视频上传组件的变化
+const handleVideoUploadChange = (value) => {
+
+  let processedValue = value
+
+  // 检测视频上传状态
+  if (value) {
+    // 如果是文件名字符串，说明选择了新视频文件但还未上传
+    if (typeof value === 'string') {
+      hasNewVideo.value = true
+      videoUploadCompleted.value = false
+    } else if (typeof value === 'object' && value.file && !value.uploaded) {
+      // 如果是包含file的对象但未上传，说明是新选择的视频
+      hasNewVideo.value = true
+      videoUploadCompleted.value = false
+    } else if (typeof value === 'object' && (value.url || value.uploaded)) {
+      // 如果是包含url的对象，或者已标记为uploaded，说明是已有视频
+      hasNewVideo.value = false
+      videoUploadCompleted.value = true
+
+      // 清理数据，只保留后端需要的字段
+      processedValue = {
+        url: value.url,
+        coverUrl: value.coverUrl || value.cover_url,
+        uploaded: true
+      }
+    }
+  } else {
+    hasNewVideo.value = false
+    videoUploadCompleted.value = false
+  }
+  // 更新表单数据
+  const newData = { ...props.formData }
+  newData['video_upload'] = processedValue
+  emit('update:formData', newData)
+}
+
+// 处理视频更换
+const handleVideoChange = (fieldKey) => {
+  // 清空当前视频数据，触发显示VideoUpload组件
+  const newData = { ...props.formData }
+  newData[fieldKey] = null
+  emit('update:formData', newData)
+
+  // 重置视频状态
+  hasNewVideo.value = false
+  videoUploadCompleted.value = false
+}
+
 // 处理从URL组件删除图片的请求
 // 获取按钮文本
 const getButtonText = () => {
-  if (isUploadingImages.value) {
+  if (isUploadingImages.value || isUploadingVideo.value) {
     return '上传中...'
   }
   if (props.loading || isSubmitting.value) {
     return '提交中...'
   }
-  if (hasNewImages.value && !uploadCompleted.value) {
+  if ((hasNewImages.value && !uploadCompleted.value) || (hasNewVideo.value && !videoUploadCompleted.value)) {
     return '上传'
   }
   return props.confirmText
@@ -607,8 +740,80 @@ const handleSubmit = async () => {
     return
   }
 
-  // 如果没有新图片或图片已上传完成，直接提交表单
+  // 如果有新视频需要上传，先上传视频
+  if (hasNewVideo.value && !videoUploadCompleted.value) {
+    await handleVideoUpload()
+    return
+  }
+
+  // 如果没有新图片/视频或已上传完成，直接提交表单
   await handleFormSubmit()
+}
+
+// 处理视频上传
+const handleVideoUpload = async () => {
+  if (isUploadingVideo.value) {
+    return
+  }
+
+  isUploadingVideo.value = true
+  isSubmitting.value = true
+
+  try {
+    // 获取视频组件引用
+    const videoUploadRef = videoUploadRefs.value['video_upload']
+    if (!videoUploadRef) {
+      messageManager.error('视频组件未找到')
+      return
+    }
+
+    // 获取视频数据
+    const videoData = videoUploadRef.getVideoData()
+
+    if (videoData && videoData.file && !videoData.uploaded) {
+      messageManager.info('正在上传视频...')
+
+      // 调用视频组件的上传方法
+      const uploadResult = await videoUploadRef.startUpload()
+
+      if (uploadResult && uploadResult.success) {
+        // 上传成功后，直接设置分离的字段
+        const processedData = { ...props.formData }
+        processedData['video_url'] = uploadResult.data.url
+        processedData['cover_url'] = uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl || ''
+        
+        // 同时更新video_upload用于组件显示
+        processedData['video_upload'] = {
+          url: uploadResult.data.url,
+          coverUrl: uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl,
+          name: uploadResult.data.originalname || videoData.name,
+          size: uploadResult.data.size || videoData.size,
+          uploaded: true
+        }
+        
+        emit('update:formData', processedData)
+
+        // 标记视频上传完成
+        hasNewVideo.value = false
+        videoUploadCompleted.value = true
+
+        messageManager.success('视频上传成功')
+
+        // 自动提交表单
+        await handleFormSubmit()
+      } else {
+        messageManager.error('视频上传失败，请重试')
+      }
+    } else {
+      messageManager.warning('没有需要上传的视频')
+    }
+  } catch (error) {
+    console.error('视频上传失败:', error)
+    messageManager.error(`视频上传失败: ${error.message}`)
+  } finally {
+    isUploadingVideo.value = false
+    isSubmitting.value = false
+  }
 }
 
 // 处理图片上传
@@ -705,6 +910,11 @@ const handleFormSubmit = async () => {
       }
     })
 
+    // 视频数据处理：移除临时的video_upload对象，保留分离的字段
+    if (processedData.video_upload) {
+      delete processedData.video_upload
+    }
+
     emit('submit', processedData)
 
     // 如果有图片上传，在提交后触发异步更新
@@ -735,6 +945,80 @@ const setAvatarFileInputRef = (fieldKey, el) => {
 
 const triggerAvatarFileInput = (fieldKey) => {
   avatarFileInputRefs.value[fieldKey]?.click()
+}
+
+// 处理视频上传错误
+const handleVideoUploadError = (error) => {
+  messageManager.error(error)
+}
+
+// 视频上传相关方法（保留原有方法以防其他地方使用）
+const setVideoFileInputRef = (fieldKey, el) => {
+  if (el) {
+    videoFileInputRefs.value[fieldKey] = el
+  }
+}
+
+const triggerVideoFileInput = (fieldKey) => {
+  videoFileInputRefs.value[fieldKey]?.click()
+}
+
+const handleVideoFileSelect = async (event, fieldKey) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 验证文件类型和大小
+  const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv']
+  const maxSize = 100 * 1024 * 1024 // 100MB
+
+  if (!validTypes.includes(file.type)) {
+    videoErrors.value[fieldKey] = '请选择有效的视频格式 (MP4, AVI, MOV, WMV, FLV)'
+    return
+  }
+
+  if (file.size > maxSize) {
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
+    videoErrors.value[fieldKey] = `视频大小为 ${fileSizeMB}MB，超过 100MB 限制，请选择更小的视频`
+    return
+  }
+
+  videoErrors.value[fieldKey] = ''
+
+  try {
+    // 生成视频缩略图用于预览
+    const thumbnailResult = await generateVideoThumbnail(file, {
+      width: 640,
+      height: 360,
+      quality: 0.8,
+      seekTime: 1
+    })
+
+    if (!thumbnailResult.success) {
+      console.error('生成缩略图失败:', thumbnailResult.error)
+      videoErrors.value[fieldKey] = '生成缩略图失败，请重试'
+      return
+    }
+
+    // 创建缩略图URL用于预览
+    const thumbnailUrl = URL.createObjectURL(thumbnailResult.blob)
+
+    // 构造视频对象，包含文件和预览信息，但不上传到服务器
+    const videoData = {
+      file: file,
+      name: file.name,
+      size: file.size,
+      coverUrl: thumbnailUrl,
+      preview: URL.createObjectURL(file),
+      uploaded: false,
+      url: null
+    }
+
+    // 更新表单数据
+    updateField(fieldKey, videoData)
+  } catch (error) {
+    console.error('处理视频文件失败:', error)
+    videoErrors.value[fieldKey] = '处理视频文件失败，请重试'
+  }
 }
 
 const handleAvatarFileSelect = (event, fieldKey) => {
@@ -810,7 +1094,6 @@ const handleAvatarCropConfirm = async (blob) => {
     if (result.success) {
       // 使用服务器返回的URL
       updateField(fieldKey, result.data.url)
-      console.log('头像上传成功:', result.data.url)
     } else {
       console.error('头像上传失败:', result.message)
       avatarErrors.value[fieldKey] = result.message || '头像上传失败，请重试'
@@ -827,6 +1110,11 @@ const handleAvatarCropConfirm = async (blob) => {
     avatarCropUploading.value = false
   }
 }
+
+// 暴露给父组件的方法和数据
+defineExpose({
+  videoUploadRefs
+})
 
 </script>
 
@@ -1379,5 +1667,10 @@ const handleAvatarCropConfirm = async (blob) => {
   font-size: 12px;
   margin-top: 5px;
   text-align: center;
+}
+
+/* 视频上传样式 */
+.video-upload-field {
+  width: 100%;
 }
 </style>

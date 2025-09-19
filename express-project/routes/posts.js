@@ -5,6 +5,7 @@ const { pool } = require('../config/config');
 const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
+const { batchCleanupFiles } = require('../utils/fileCleanup');
 
 // 获取笔记列表
 router.get('/', optionalAuth, async (req, res) => {
@@ -81,8 +82,8 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取草稿总数
       const [countResult] = await pool.execute(
-        'SELECT COUNT(*) as total FROM posts p WHERE p.is_draft = ? AND p.user_id = ?' + 
-        (category ? ' AND p.category_id = ?' : '') + 
+        'SELECT COUNT(*) as total FROM posts p WHERE p.is_draft = ? AND p.user_id = ?' +
+        (category ? ' AND p.category_id = ?' : '') +
         (type ? ' AND p.type = ?' : ''),
         [isDraft.toString(), forcedUserId.toString(), ...(category ? [category] : []), ...(type ? [type] : [])]
       );
@@ -118,25 +119,21 @@ router.get('/', optionalAuth, async (req, res) => {
       // 先获取总笔记数计算20%的数量
       let countQuery = 'SELECT COUNT(*) as total FROM posts WHERE is_draft = ?';
       let countParams = [isDraft.toString()];
-      
+
       if (type) {
         countQuery += ' AND type = ?';
         countParams.push(type);
       }
-      
       const [totalCountResult] = await pool.execute(countQuery, countParams);
       const totalPosts = totalCountResult[0].total;
       const recommendLimit = Math.ceil(totalPosts * 0.2);
-      
-      // 推荐算法：70%热度+30%新鲜度评分，筛选前20%按分数排序
+      // 推荐算法：70%热度+30%新鲜度评分，新发布24小时内的笔记获得新鲜度加分，筛选前20%按分数排序
       let innerWhere = 'p.is_draft = ?';
       let innerParams = [isDraft.toString()];
-      
       if (type) {
         innerWhere += ' AND p.type = ?';
         innerParams.push(type);
       }
-      
       query = `
         SELECT 
           p.*, 
@@ -150,7 +147,7 @@ router.get('/', optionalAuth, async (req, res) => {
         FROM (
           SELECT 
             p.*,
-            (p.view_count * 0.7 + TIMESTAMPDIFF(HOUR, p.created_at, NOW()) * -0.3) as score
+            (p.view_count * 0.7 + (24 - LEAST(TIMESTAMPDIFF(HOUR, p.created_at, NOW()), 24)) * 0.3) as score
           FROM posts p 
           WHERE ${innerWhere}
           ORDER BY score DESC
@@ -161,7 +158,7 @@ router.get('/', optionalAuth, async (req, res) => {
         ORDER BY p.score DESC
         LIMIT ? OFFSET ? 
       `;
-      
+
       // 参数设置
       queryParams = [
         ...innerParams,
@@ -249,12 +246,12 @@ router.get('/', optionalAuth, async (req, res) => {
       // 推荐频道的总数限制为总笔记数的20%
       let countQuery = 'SELECT COUNT(*) as total FROM posts WHERE is_draft = ?';
       let countParams = [isDraft.toString()];
-      
+
       if (type) {
         countQuery += ' AND type = ?';
         countParams.push(type);
       }
-      
+
       const [totalCountResult] = await pool.execute(countQuery, countParams);
       const totalPosts = totalCountResult[0].total;
       total = Math.ceil(totalPosts * 0.2);
@@ -455,7 +452,7 @@ router.post('/', authenticateToken, async (req, res) => {
       console.log('🎥 开始处理视频数据...');
       console.log('视频URL:', video.url);
       console.log('封面URL:', video.coverUrl);
-      
+
       let coverUrl = video.coverUrl || null;
       let duration = null;
 
@@ -782,17 +779,18 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const postId = req.params.id;
-    const { title, content, category_id, images, tags, is_draft } = req.body;
+    const { title, content, category_id, images, video, tags, is_draft } = req.body;
     const userId = req.user.id;
 
     // 验证必填字段：如果不是草稿（is_draft=0），则要求标题、内容和分类不能为空
     if (!is_draft && (!title || !content || !category_id)) {
+      console.log('验证失败 - 必填字段缺失:', { title, content, category_id, is_draft });
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题、内容和分类不能为空' });
     }
 
     // 检查笔记是否存在且属于当前用户
     const [postRows] = await pool.execute(
-      'SELECT user_id FROM posts WHERE id = ?',
+      'SELECT user_id, type FROM posts WHERE id = ?',
       [postId.toString()]
     );
 
@@ -803,6 +801,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (postRows[0].user_id !== userId) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({ code: RESPONSE_CODES.FORBIDDEN, message: '无权限修改此笔记' });
     }
+
+    const postType = postRows[0].type;
 
     // 在更新之前获取原始笔记信息（用于对比@用户变化）
     const [originalPostRows] = await pool.execute('SELECT is_draft, content FROM posts WHERE id = ?', [postId.toString()]);
@@ -815,26 +815,55 @@ router.put('/:id', authenticateToken, async (req, res) => {
       [title || '', content || '', category_id || null, (is_draft ? 1 : 0).toString(), postId.toString()]
     );
 
-    // 删除原有图片
-    await pool.execute('DELETE FROM post_images WHERE post_id = ?', [postId.toString()]);
+    // 根据笔记类型处理媒体文件
+    if (postType === 2) {
+      // 视频笔记：获取原有视频记录用于清理文件
+      const [oldVideoRows] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId.toString()]);
+      
+      // 删除原有视频记录
+      await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [postId.toString()]);
 
-    // 处理新图片
-    if (images && images.length > 0) {
-      const validUrls = []
-
-      // 处理所有有效的URL
-      for (const imageUrl of images) {
-        if (imageUrl && typeof imageUrl === 'string') {
-          validUrls.push(imageUrl)
-        }
+      // 清理废弃的视频文件
+      if (oldVideoRows.length > 0) {
+        const oldVideoUrls = oldVideoRows.map(row => row.video_url).filter(url => url);
+        const oldCoverUrls = oldVideoRows.map(row => row.cover_url).filter(url => url);
+        
+        // 异步清理文件，不阻塞响应
+        batchCleanupFiles(oldVideoUrls, oldCoverUrls).catch(error => {
+          console.error('清理废弃视频文件失败:', error);
+        });
       }
 
-      // 插入所有有效的图片URL
-      for (const imageUrl of validUrls) {
+      if (video && video.url) {
+        // 视频笔记使用video字段传递视频信息
+        const videoUrl = video.url;
+        const coverUrl = video.coverUrl || null;
         await pool.execute(
-          'INSERT INTO post_images (post_id, image_url) VALUES (?, ?)',
-          [postId, imageUrl]
+          'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
+          [postId.toString(), videoUrl, coverUrl]
         );
+      }
+    } else {
+      // 图文笔记：删除原有图片并插入新的
+      await pool.execute('DELETE FROM post_images WHERE post_id = ?', [postId.toString()]);
+
+      if (images && images.length > 0) {
+        const validUrls = []
+
+        // 处理所有有效的URL
+        for (const imageUrl of images) {
+          if (imageUrl && typeof imageUrl === 'string') {
+            validUrls.push(imageUrl)
+          }
+        }
+
+        // 插入所有有效的图片URL
+        for (const imageUrl of validUrls) {
+          await pool.execute(
+            'INSERT INTO post_images (post_id, image_url) VALUES (?, ?)',
+            [postId, imageUrl]
+          );
+        }
       }
     }
 
@@ -868,29 +897,29 @@ router.put('/:id', authenticateToken, async (req, res) => {
       // 获取新内容中的@用户
       const newMentionedUsers = hasMentions(content) ? extractMentionedUsers(content) : [];
       const newMentionedUserIds = new Set(newMentionedUsers.map(user => user.userId));
-      
+
       // 获取原内容中的@用户（如果不是从草稿变为发布）
       let oldMentionedUserIds = new Set();
       if (!wasOriginallyDraft && originalContent && hasMentions(originalContent)) {
         const oldMentionedUsers = extractMentionedUsers(originalContent);
         oldMentionedUserIds = new Set(oldMentionedUsers.map(user => user.userId));
       }
-      
+
       // 找出需要删除通知的用户（在旧列表中但不在新列表中）
       const usersToRemoveNotification = [...oldMentionedUserIds].filter(userId => !newMentionedUserIds.has(userId));
-      
+
       // 找出需要添加通知的用户（在新列表中但不在旧列表中）
       const usersToAddNotification = [...newMentionedUserIds].filter(userId => !oldMentionedUserIds.has(userId));
-      
+
       // 删除不再需要的@通知
       for (const mentionedUserId of usersToRemoveNotification) {
         try {
           // 根据小石榴号查找用户的自增ID
           const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ?', [mentionedUserId]);
-          
+
           if (userRows.length > 0) {
             const mentionedUserAutoId = userRows[0].id;
-            
+
             // 删除该用户的@通知
             await NotificationHelper.deleteNotifications(pool, {
               type: NotificationHelper.TYPES.MENTION,
@@ -898,14 +927,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
               senderId: userId,
               userId: mentionedUserAutoId
             });
-            
-            console.log(`删除@通知 - 笔记ID: ${postId}, 用户: ${mentionedUserId}`);
           }
         } catch (error) {
           console.error(`删除@用户通知失败 - 用户: ${mentionedUserId}:`, error);
         }
       }
-      
+
       // 添加新的@通知
       for (const mentionedUserId of usersToAddNotification) {
         try {
@@ -926,7 +953,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
               });
 
               await NotificationHelper.insertNotification(pool, mentionNotificationData);
-              
+
               console.log(`添加@通知 - 笔记ID: ${postId}, 用户: ${mentionedUserId}`);
             }
           }
@@ -980,13 +1007,28 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       await pool.execute('UPDATE tags SET use_count = GREATEST(use_count - 1, 0) WHERE id = ?', [tag.tag_id.toString()]);
     }
 
+    // 获取笔记关联的视频文件，用于清理
+    const [videoRows] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId.toString()]);
+
     // 删除相关数据（由于外键约束，需要按顺序删除）
     await pool.execute('DELETE FROM post_images WHERE post_id = ?', [postId.toString()]);
+    await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [postId.toString()]);
     await pool.execute('DELETE FROM post_tags WHERE post_id = ?', [postId.toString()]);
     await pool.execute('DELETE FROM likes WHERE target_type = 1 AND target_id = ?', [postId.toString()]);
     await pool.execute('DELETE FROM collections WHERE post_id = ?', [postId.toString()]);
     await pool.execute('DELETE FROM comments WHERE post_id = ?', [postId.toString()]);
     await pool.execute('DELETE FROM notifications WHERE target_id = ?', [postId.toString()]);
+
+    // 清理关联的视频文件
+    if (videoRows.length > 0) {
+      const videoUrls = videoRows.map(row => row.video_url).filter(url => url);
+      const coverUrls = videoRows.map(row => row.cover_url).filter(url => url);
+      
+      // 异步清理文件，不阻塞响应
+      batchCleanupFiles(videoUrls, coverUrls).catch(error => {
+        console.error('清理笔记关联视频文件失败:', error);
+      });
+    }
 
     // 最后删除笔记
     await pool.execute('DELETE FROM posts WHERE id = ?', [postId.toString()]);

@@ -122,8 +122,9 @@
                 <span v-if="loadingGallery === item.id" class="loading-text">
                   加载中...
                 </span>
-                <span v-else class="content-link" @click="showImageGallery(item.id)" :title="'查看笔记图片'">
-                  图片
+                <span v-else class="content-link" @click="showMediaGallery(item)"
+                  :title="item.type === 2 ? '查看视频' : '查看笔记图片'">
+                  {{ item.type === 2 ? '视频' : '图片' }}
                 </span>
               </span>
               <span v-else-if="column.type === 'date'">
@@ -133,8 +134,10 @@
                 {{ column.map && column.map[item[column.key]] ? column.map[item[column.key]] : item[column.key] || '-'
                 }}
               </span>
-              <span v-else-if="column.type === 'status'" :class="column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].class : ''">
-                {{ column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].text : item[column.key] || '-' }}
+              <span v-else-if="column.type === 'status'"
+                :class="column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].class : ''">
+                {{ column.statusMap && column.statusMap[item[column.key]] ? column.statusMap[item[column.key]].text :
+                  item[column.key] || '-' }}
               </span>
               <span v-else-if="column.type === 'boolean'">
                 {{ item[column.key] ? (column.trueText || '是') : (column.falseText || '否') }}
@@ -183,14 +186,9 @@
             </td>
             <td>
               <template v-if="customActions.length > 0">
-                <SvgIcon 
-                  v-for="action in customActions" 
-                  :key="action.key"
-                  :name="action.icon" 
-                  @click="handleCustomAction(action.key, item)" 
-                  class="action-icon" 
-                  :title="action.title || action.key"
-                />
+                <SvgIcon v-for="action in customActions" :key="action.key" :name="action.icon"
+                  @click="handleCustomAction(action.key, item)" class="action-icon"
+                  :title="action.title || action.key" />
               </template>
               <template v-else>
                 <SvgIcon name="edit" @click="editItem(item)" class="action-icon" />
@@ -238,6 +236,10 @@
       :initial-index="0" @close="closeImageCarousel" />
 
 
+    <VideoPlayerModal v-model:visible="showVideoModalVisible" :video-url="currentVideoUrl"
+      :poster-url="currentPosterUrl" @close="closeVideoModal" />
+
+
     <TagsModal v-model:visible="showTagsModalVisible" :title="tagsModalTitle" :tags="currentTags"
       @close="closeTagsModal" />
 
@@ -272,7 +274,7 @@ import ConfirmDialog from '../../../components/ConfirmDialog.vue'
 import DetailModal from './DetailModal.vue'
 import FormModal from './FormModal.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
-
+import VideoPlayerModal from './VideoPlayerModal.vue'
 import TagsModal from './TagsModal.vue'
 import PersonalityTagsModal from './PersonalityTagsModal.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
@@ -401,6 +403,9 @@ const currentTags = ref([])
 const tagsModalTitle = ref('')
 const showPersonalityTagsModalVisible = ref(false)
 const currentUserData = ref({})
+const showVideoModalVisible = ref(false)
+const currentVideoUrl = ref('')
+const currentPosterUrl = ref('')
 const formData = ref({})
 const editingItem = ref(null)
 const formLoading = ref(false)
@@ -740,8 +745,30 @@ const editItem = async (item) => {
               newFormData[key] = []
             }
           } else if (key === 'images') {
-            // 对于MultiImageUpload组件，直接设置images字段
-            newFormData[key] = Array.isArray(fullItem[key]) ? fullItem[key] : []
+            // 根据笔记类型处理媒体字段
+            if (fullItem.type === 2) {
+              // 视频笔记：设置分离的视频字段，并构造video_upload对象用于显示
+              const videoUrl = Array.isArray(fullItem[key]) && fullItem[key].length > 0 ? fullItem[key][0] : ''
+              newFormData['video_url'] = videoUrl
+              newFormData['cover_url'] = fullItem.cover_url || ''
+
+              if (videoUrl) {
+                newFormData['video_upload'] = {
+                  url: videoUrl,
+                  coverUrl: fullItem.cover_url,
+                  name: '已上传的视频',
+                  size: 0,
+                  uploaded: true,
+                  preview: videoUrl
+                }
+              } else {
+                newFormData['video_upload'] = null
+              }
+              newFormData[key] = []  // 清空images字段
+            } else {
+              // 图文笔记：对于MultiImageUpload组件，直接设置images字段
+              newFormData[key] = Array.isArray(fullItem[key]) ? fullItem[key] : []
+            }
           } else {
             newFormData[key] = fullItem[key]
           }
@@ -764,8 +791,18 @@ const editItem = async (item) => {
               newFormData[key] = []
             }
           } else if (key === 'images') {
-            // 对于MultiImageUpload组件，直接设置images字段
-            newFormData[key] = Array.isArray(item[key]) ? item[key] : []
+            // 根据笔记类型处理媒体字段
+            if (item.type === 2) {
+              // 视频笔记：设置分离的视频字段
+              const videoUrl = Array.isArray(item[key]) && item[key].length > 0 ? item[key][0] : ''
+              newFormData['video_url'] = videoUrl
+              newFormData['cover_url'] = item.cover_url || ''
+              newFormData['video_upload'] = videoUrl
+              newFormData[key] = []  // 清空images字段
+            } else {
+              // 图文笔记：对于MultiImageUpload组件，直接设置images字段
+              newFormData[key] = Array.isArray(item[key]) ? item[key] : []
+            }
           } else {
             newFormData[key] = item[key]
           }
@@ -787,9 +824,30 @@ const editItem = async (item) => {
             newFormData[key] = []
           }
         } else if (key === 'images') {
-          // 对于MultiImageUpload组件，不设置images字段
-          const images = Array.isArray(item[key]) ? item[key] : []
-          newFormData['image_urls'] = images
+          // 根据笔记类型处理媒体字段
+          if (item.type === 2) {
+            // 视频笔记：设置分离的视频字段，并构造video_upload对象用于显示
+            const videoUrl = Array.isArray(item[key]) && item[key].length > 0 ? item[key][0] : ''
+            newFormData['video_url'] = videoUrl
+            newFormData['cover_url'] = item.cover_url || ''
+
+            if (videoUrl) {
+              newFormData['video_upload'] = {
+                url: videoUrl,
+                coverUrl: item.cover_url,
+                name: '已上传的视频',
+                size: 0,
+                uploaded: true,
+                preview: videoUrl
+              }
+            } else {
+              newFormData['video_upload'] = null
+            }
+            newFormData[key] = []  // 清空images字段
+          } else {
+            // 图文笔记：对于MultiImageUpload组件，直接设置images字段
+            newFormData[key] = Array.isArray(item[key]) ? item[key] : []
+          }
         } else {
           newFormData[key] = item[key]
         }
@@ -972,6 +1030,42 @@ const showImageGallery = async (postId) => {
 const closeImageCarousel = () => {
   showImageCarouselVisible.value = false
   currentImages.value = []
+}
+
+const showMediaGallery = async (item) => {
+  if (item.type === 2) {
+    // 视频笔记，显示视频播放器
+    loadingGallery.value = item.id
+    try {
+      const response = await fetch(`${apiConfig.baseURL}/posts/${item.id}`, {
+        headers: getAuthHeaders()
+      })
+      const result = await response.json()
+
+      if (result.code === 200) {
+        currentVideoUrl.value = result.data.video_url || ''
+        currentPosterUrl.value = result.data.images && result.data.images[0] ? result.data.images[0] : ''
+        showVideoModalVisible.value = true
+      } else {
+        console.error('获取视频信息失败:', result.message)
+        await showError('获取视频信息失败: ' + result.message)
+      }
+    } catch (error) {
+      console.error('获取视频信息失败:', error)
+      await showError('获取视频信息失败: ' + error.message)
+    } finally {
+      loadingGallery.value = null
+    }
+  } else {
+    // 图文笔记，显示图片轮播
+    showImageGallery(item.id)
+  }
+}
+
+const closeVideoModal = () => {
+  showVideoModalVisible.value = false
+  currentVideoUrl.value = ''
+  currentPosterUrl.value = ''
 }
 
 const showTags = (item) => {

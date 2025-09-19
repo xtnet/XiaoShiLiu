@@ -233,6 +233,18 @@ const postsCrudConfig = {
       }
     }
 
+    // 处理视频更新
+    if (data.video_url !== undefined || data.cover_url !== undefined) {
+      // 删除原有视频
+      await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [String(postId)])
+      if (data.video_url && data.video_url.trim() !== '') {
+        await pool.execute(
+          'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
+          [postId, data.video_url, data.cover_url || '']
+        )
+      }
+    }
+
     // 更新标签信息
     if (tags !== undefined) {
       // 获取原有标签，用于更新使用次数
@@ -356,7 +368,7 @@ const postsCrudConfig = {
 
       // 获取笔记基本信息
       const [postResult] = await pool.execute(`
-        SELECT p.id, p.user_id, p.title, p.content, p.category_id, c.name as category,
+        SELECT p.id, p.user_id, p.title, p.content, p.type, p.category_id, c.name as category,
                p.view_count, p.like_count, p.collect_count, p.comment_count,
                p.is_draft, p.created_at,
                u.nickname, COALESCE(u.user_id, CONCAT('user', LPAD(u.id, 3, '0'))) as user_display_id
@@ -372,9 +384,22 @@ const postsCrudConfig = {
 
       const post = postResult[0]
 
-      // 获取笔记图片
-      const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [String(postId)])
-      post.images = images.map(img => img.image_url)
+      // 根据笔记类型获取媒体信息
+      if (post.type === 2) {
+        // 视频笔记：获取视频信息
+        const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [String(postId)])
+        if (videos.length > 0) {
+          post.video_url = videos[0].video_url
+          post.cover_url = videos[0].cover_url
+          post.images = [videos[0].video_url] // 将视频URL放入images数组以兼容现有逻辑
+        } else {
+          post.images = []
+        }
+      } else {
+        // 图文笔记：获取图片信息
+        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [String(postId)])
+        post.images = images.map(img => img.image_url)
+      }
 
       // 获取笔记标签
       const [tags] = await pool.execute(`
@@ -452,7 +477,7 @@ const postsCrudConfig = {
 
       // 获取数据
       const dataQuery = `
-        SELECT p.id, p.user_id, p.title, p.content, p.type, c.name as category,
+        SELECT p.id, p.user_id, p.title, p.content, p.type, p.category_id, c.name as category,
                p.view_count, p.like_count, p.collect_count, p.comment_count,
                p.is_draft, p.created_at,
                u.nickname, COALESCE(u.user_id, CONCAT('user', LPAD(u.id, 3, '0'))) as user_display_id
