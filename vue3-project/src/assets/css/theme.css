@@ -71,7 +71,7 @@
   --shadow-color: rgba(0, 0, 0, 0.3);
 
   /* 通用遮罩背景（半透明） */
-  --overlay-bg: rgba(18, 18, 18, 0.6);
+  --overlay-bg: rgba(27, 27, 27, 0.6);
 
   /* 按钮文字颜色 */
   --button-text-color: #fff;

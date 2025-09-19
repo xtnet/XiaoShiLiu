@@ -15,7 +15,29 @@
       <div class="detail-content">
         <div class="image-section" :style="{ width: imageSectionWidth + 'px' }" @mouseenter="showImageControls = true"
           @mouseleave="showImageControls = false">
-          <div class="image-container">
+          <!-- 视频播放器（桌面端） -->
+          <div v-if="props.item.type === 2" class="video-container">
+            <video 
+              v-if="props.item.video_url"
+              ref="videoPlayer"
+              :src="props.item.video_url" 
+              :poster="props.item.images && props.item.images[0]"
+              controls 
+              preload="metadata"
+              class="video-player"
+              @loadedmetadata="handleVideoLoad"
+            >
+              您的浏览器不支持视频播放
+            </video>
+            <div v-else class="video-placeholder">
+              <div class="placeholder-content">
+                <SvgIcon name="video" width="48" height="48" />
+                <p>视频加载中...</p>
+              </div>
+            </div>
+          </div>
+          <!-- 图片轮播（图文笔记） -->
+          <div v-else class="image-container">
             <div class="image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }">
               <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="props.item.title || '图片'"
                 @load="handleImageLoad($event, index)" :style="{ objectFit: 'contain' }"
@@ -62,7 +84,29 @@
           </div>
 
           <div class="scrollable-content" ref="scrollableContent">
-            <div v-if="imageList && imageList.length > 0" class="mobile-image-container">
+            <!-- 视频播放器（移动端） -->
+            <div v-if="props.item.type === 2" class="mobile-video-container">
+              <video 
+                v-if="props.item.video_url"
+                ref="mobileVideoPlayer"
+                :src="props.item.video_url" 
+                :poster="props.item.images && props.item.images[0]"
+                controls 
+                preload="metadata"
+                class="mobile-video-player"
+                @loadedmetadata="handleVideoLoad"
+              >
+                您的浏览器不支持视频播放
+              </video>
+              <div v-else class="video-placeholder">
+                <div class="placeholder-content">
+                  <SvgIcon name="video" width="48" height="48" />
+                  <p>视频加载中...</p>
+                </div>
+              </div>
+            </div>
+            <!-- 图片轮播（图文笔记） -->
+            <div v-else-if="imageList && imageList.length > 0" class="mobile-image-container">
               <div class="mobile-image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
                 @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
                 <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="`图片 ${index + 1}`"
@@ -412,6 +456,59 @@ const props = defineProps({
   }
 })
 
+
+
+// 处理视频加载
+const handleVideoLoad = (event) => {
+  const video = event.target
+  const aspectRatio = video.videoWidth / video.videoHeight
+
+  // 桌面端视频容器宽度计算
+  if (window.innerWidth > 768) {
+    const minWidth = 300
+    const maxWidth = props.pageMode ? 500 : 750
+    const containerHeight = Math.min(window.innerHeight * 0.9, 1020)
+    const idealWidth = containerHeight * aspectRatio
+
+    let optimalWidth = Math.max(minWidth, Math.min(maxWidth, idealWidth))
+
+    if (aspectRatio <= 0.6) {
+      optimalWidth = Math.min(optimalWidth, 500)
+    } else if (aspectRatio <= 0.8) {
+      optimalWidth = Math.min(optimalWidth, 600)
+    } else if (aspectRatio >= 2.0) {
+      optimalWidth = Math.max(optimalWidth, 600)
+    } else if (aspectRatio >= 1.5) {
+      optimalWidth = Math.max(optimalWidth, 550)
+    }
+
+    imageSectionWidth.value = optimalWidth
+  }
+}
+
+// 自动播放视频
+const autoPlayVideo = () => {
+  try {
+    // 检查是否为移动端
+    const isMobile = window.innerWidth <= 768
+    const currentVideoPlayer = isMobile ? mobileVideoPlayer.value : videoPlayer.value
+    
+    if (currentVideoPlayer) {
+      // 尝试自动播放
+      const playPromise = currentVideoPlayer.play()
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // 自动播放失败（通常是由于浏览器策略）
+          console.log('视频自动播放失败，需要用户交互:', error.message)
+        })
+      }
+    }
+  } catch (error) {
+    console.log('视频自动播放异常:', error.message)
+  }
+}
+
 const emit = defineEmits(['close', 'follow', 'unfollow', 'like', 'collect'])
 
 const themeStore = useThemeStore()
@@ -426,6 +523,8 @@ const authStore = useAuthStore()
 const { lock, unlock } = useScrollLock()
 
 const commentInput = ref('')
+const videoPlayer = ref(null)
+const mobileVideoPlayer = ref(null)
 const isLiked = computed(() => likeStore.getPostLikeState(props.item.id)?.liked || false)
 const likeCount = computed(() => likeStore.getPostLikeState(props.item.id)?.likeCount || props.item.likeCount || props.item.like_count || 0)
 const isCollected = computed(() => collectStore.getPostCollectState(props.item.id)?.collected || false)
@@ -732,9 +831,7 @@ const locateNewComment = async (commentId, replyingToInfo) => {
 
 // 定位目标评论
 const locateTargetComment = async () => {
-  console.log('locateTargetComment被调用，targetCommentId:', props.targetCommentId)
   if (!props.targetCommentId) {
-    console.log('targetCommentId为空，退出定位')
     return
   }
 
@@ -801,7 +898,7 @@ const locateTargetComment = async () => {
       const targetId = String(props.targetCommentId)
       let commentElement = document.querySelector(`[data-comment-id="${targetId}"]`)
 
-      console.log('查找评论元素:', `[data-comment-id="${targetId}"]`, commentElement)
+
       if (commentElement) {
         // 添加高亮样式
         commentElement.classList.add('comment-highlight')
@@ -813,12 +910,12 @@ const locateTargetComment = async () => {
         setTimeout(() => {
           commentElement.classList.remove('comment-highlight')
         }, 3000)
-        console.log('评论定位成功')
+
       } else {
-        console.log('未找到评论元素')
+
       }
     } else {
-      console.log('未找到目标评论')
+
     }
   } finally {
     // 定位完成后，在移动端解锁页面滚动
@@ -2250,6 +2347,13 @@ onMounted(async () => {
     })
   }
 
+  // 自动播放视频
+  if (props.item.type === 2 && props.item.video_url) {
+    nextTick(() => {
+      autoPlayVideo()
+    })
+  }
+
 })
 
 onUnmounted(() => {
@@ -2497,6 +2601,48 @@ function handleAvatarError(event) {
 .image-section img {
   width: 100%;
   height: 100%;
+}
+
+/* 视频容器样式 */
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color-secondary);
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  object-fit: contain;
+  background: #000;
+}
+
+/* 视频占位符样式 */
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.placeholder-content p {
+  margin: 0;
+  font-size: 14px;
 }
 
 /* 图片容器和控制样式 */
@@ -3624,6 +3770,11 @@ function handleAvatarError(event) {
   display: none;
 }
 
+/* 默认隐藏移动端视频容器 */
+.mobile-video-container {
+  display: none;
+}
+
 /* 响应式设计 - 移动端适配 */
 @media (max-width: 768px) {
 
@@ -3694,8 +3845,13 @@ function handleAvatarError(event) {
     overflow: hidden;
   }
 
-  /* 移动端隐藏原来的图片区域 */
+  /* 移动端隐藏原来的图片区域和视频容器 */
   .image-section {
+    display: none;
+  }
+  
+  /* 移动端隐藏桌面端的视频容器 */
+  .video-container {
     display: none;
   }
 
@@ -3772,6 +3928,27 @@ function handleAvatarError(event) {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+  }
+
+  /* 移动端视频容器样式 */
+  .mobile-video-container {
+    display: flex;
+    width: 100%;
+    min-height: 200px;
+    margin-bottom: 16px;
+    position: relative;
+    background: var(--bg-color-secondary);
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-video-player {
+    width: 100%;
+    height: 100%;
+    max-width: 1000px;
+    object-fit: contain;
+    background: #000;
   }
 
   .mobile-image-slider {

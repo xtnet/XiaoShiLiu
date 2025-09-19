@@ -10,9 +10,16 @@
 
       <!-- 视频上传成功状态 -->
       <div v-if="videoData && !isUploading" class="video-success">
+        <!-- 缩略图 -->
+        <div class="video-thumbnail">
+          <img v-if="videoData.thumbnailDataUrl || videoData.coverUrl"
+            :src="videoData.thumbnailDataUrl || videoData.coverUrl" alt="视频缩略图" class="thumbnail-image" />
+          <div v-else class="thumbnail-placeholder">
+            <SvgIcon name="publish" width="24" height="24" />
+          </div>
+        </div>
+
         <div class="video-info">
-          <p class="video-name">{{ videoData.name }}</p>
-          <p class="video-size">{{ formatFileSize(videoData.size) }}</p>
           <div class="success-text">
             <div class="success-icon">
               <SvgIcon name="tick" width="14" height="14" />
@@ -20,9 +27,6 @@
             上传成功
           </div>
         </div>
-        <button @click.stop="removeVideo" class="remove-btn">
-          <SvgIcon name="delete" />
-        </button>
       </div>
 
       <!-- 上传占位符 -->
@@ -61,10 +65,12 @@
 import { ref, watch } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 import MessageToast from './MessageToast.vue'
+import { videoApi } from '@/api/video.js'
+import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail.js'
 
 const props = defineProps({
   modelValue: {
-    type: String,
+    type: [String, Object], // 支持字符串和对象类型
     default: ''
   },
   maxSize: {
@@ -94,12 +100,25 @@ watch(() => props.modelValue, (newValue) => {
     error.value = ''
   } else if (newValue && !videoData.value) {
     // 外部设置了值，但组件没有数据，可能是从外部加载的视频
-    videoData.value = {
-      preview: newValue,
-      url: newValue,
-      uploaded: true,
-      name: '已上传的视频',
-      size: 0
+    if (typeof newValue === 'object' && newValue.url) {
+      // 如果是对象，包含url和coverUrl
+      videoData.value = {
+        preview: newValue.url,
+        url: newValue.url,
+        coverUrl: newValue.coverUrl,
+        uploaded: true,
+        name: '已上传的视频',
+        size: 0
+      }
+    } else if (typeof newValue === 'string') {
+      // 如果是字符串，只有url
+      videoData.value = {
+        preview: newValue,
+        url: newValue,
+        uploaded: true,
+        name: '已上传的视频',
+        size: 0
+      }
     }
   }
 })
@@ -128,62 +147,128 @@ const handleFileDrop = (event) => {
   }
 }
 
-// 处理文件
-const handleFile = (file) => {
-  error.value = ''
-
+// 验证视频文件
+const validateVideoFile = (file) => {
   // 验证文件类型
   if (!file.type.startsWith('video/')) {
-    error.value = '请选择视频文件'
-    emit('error', error.value)
-    return
+    return { valid: false, message: '请选择视频文件' }
   }
 
   // 验证文件大小
   if (file.size > props.maxSize) {
-    error.value = `文件大小不能超过${formatFileSize(props.maxSize)}`
-    emit('error', error.value)
+    return { valid: false, message: `文件大小不能超过${formatFileSize(props.maxSize)}` }
+  }
+
+  return { valid: true }
+}
+
+// 处理文件
+const handleFile = async (file) => {
+  if (!file) return
+
+  // 验证文件
+  const validation = validateVideoFile(file)
+  if (!validation.valid) {
+    error.value = validation.message
+    emit('error', validation.message)
     return
   }
 
-  // 创建预览URL
-  const previewUrl = URL.createObjectURL(file)
+  // 创建预览
+  const preview = URL.createObjectURL(file)
 
   videoData.value = {
     file: file,
-    preview: previewUrl,
-    uploaded: false,
+    preview: preview,
     name: file.name,
     size: file.size,
-    url: null
+    uploaded: false,
+    url: null,
+    thumbnail: null, // 缩略图数据
+    thumbnailDataUrl: null // 缩略图预览URL
   }
 
-  // 模拟上传过程（实际项目中应该调用真实的上传API）
-  simulateUpload()
+  // 清空错误
+  error.value = ''
+
+  // 传递文件名作为modelValue（字符串类型）
+  emit('update:modelValue', file.name)
+
+  // 生成缩略图
+  await generateThumbnail(file)
 }
 
-// 模拟上传过程
-const simulateUpload = () => {
+// 生成视频缩略图
+const generateThumbnail = async (file) => {
+  try {
+    const result = await generateVideoThumbnail(file, {
+      useOriginalSize: true,
+      quality: 0.8,
+      seekTime: 1
+    })
+
+    if (result.success && videoData.value) {
+      // 将Blob转换为File对象
+      const thumbnailFile = blobToFile(result.blob, generateThumbnailFilename(file.name))
+
+      videoData.value.thumbnail = thumbnailFile
+      videoData.value.thumbnailDataUrl = result.dataUrl
+
+      // 移除成功消息提示，避免误导用户
+    } else {
+      console.warn('⚠️ 视频缩略图生成失败:', result.error)
+      showMessage('缩略图生成失败，但不影响视频上传', 'warning')
+    }
+  } catch (error) {
+    console.error('❌ 生成视频缩略图异常:', error)
+    showMessage('缩略图生成异常，但不影响视频上传', 'warning')
+  }
+}
+
+// 开始上传过程
+const startUpload = async () => {
+  if (!videoData.value || !videoData.value.file) {
+    return { success: false, message: '没有视频文件' }
+  }
+
   isUploading.value = true
   uploadProgress.value = 0
 
-  const interval = setInterval(() => {
-    uploadProgress.value += Math.random() * 10
-    if (uploadProgress.value >= 100) {
-      uploadProgress.value = 100
-      clearInterval(interval)
+  try {
+    // 传递缩略图文件（如果有的话）
+    const result = await videoApi.uploadVideo(
+      videoData.value.file,
+      (progress) => {
+        uploadProgress.value = progress
+      },
+      videoData.value.thumbnail // 传递缩略图
+    )
 
-      setTimeout(() => {
-        isUploading.value = false
-        if (videoData.value) {
-          videoData.value.uploaded = true
-          videoData.value.url = videoData.value.preview // 实际项目中这里应该是服务器返回的URL
-          emit('update:modelValue', videoData.value.url)
-          showMessage('视频上传成功', 'success')
-        }
-      }, 500)
+    if (result.success) {
+      isUploading.value = false
+      if (videoData.value) {
+        videoData.value.uploaded = true
+        videoData.value.url = result.data.url
+        videoData.value.coverUrl = result.data.coverUrl
+        emit('update:modelValue', videoData.value.url)
+        showMessage('视频上传成功', 'success')
+        return result // 返回上传结果
+      }
+    } else {
+      isUploading.value = false
+      error.value = result.message || '视频上传失败'
+      emit('error', error.value)
+      showMessage(error.value, 'error')
+      return result // 返回失败结果
     }
-  }, 200)
+  } catch (err) {
+    console.error('视频上传失败:', err)
+    isUploading.value = false
+    error.value = '视频上传失败，请重试'
+    emit('error', error.value)
+    showMessage(error.value, 'error')
+    return { success: false, message: '视频上传失败，请重试' }
+  }
 }
 
 // 移除视频
@@ -236,7 +321,8 @@ const reset = () => {
 defineExpose({
   getVideoData,
   reset,
-  removeVideo
+  removeVideo,
+  startUpload
 })
 </script>
 
@@ -295,10 +381,36 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: 10px;
   background: var(--bg-color-secondary);
   border-radius: 4px;
   border: 1px solid var(--success-color);
+  cursor: pointer;
+}
+
+.video-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-color-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-placeholder {
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .success-icon {
@@ -315,22 +427,9 @@ defineExpose({
 }
 
 .video-info {
-  margin-left: 20px;
+  margin-left: 12px;
   flex: 1;
   color: var(--text-color-primary);
-}
-
-.video-name {
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0 0 4px 0;
-  word-break: break-all;
-}
-
-.video-size {
-  font-size: 12px;
-  margin: 0 0 4px 0;
-  color: var(--text-color-secondary);
 }
 
 .success-text {
@@ -342,27 +441,6 @@ defineExpose({
   align-items: center;
 }
 
-.remove-btn {
-  background: var(--bg-color-primary);
-  border: 1px solid var(--border-color-primary);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--text-color-secondary);
-  margin-right: 20px;
-  flex-shrink: 0;
-}
-
-.remove-btn:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-}
 
 .upload-placeholder {
   display: flex;

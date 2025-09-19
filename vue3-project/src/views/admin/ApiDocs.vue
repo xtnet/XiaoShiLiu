@@ -3,9 +3,9 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.1.5</span>
+        <span class="version">版本: v1.2.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-13</span>
+        <span class="update-time">更新时间: 2025-09-19</span>
       </div>
     </div>
 
@@ -158,7 +158,59 @@ onMounted(() => {
         contentBody.scrollTop = position
         // 同步更新scrollY值
         scrollY.value = position
-      }, 100)
+      },
+        {
+          method: 'GET',
+          path: '/api/admin/verifications',
+          title: '获取认证申请列表（管理员）',
+          description: '管理员获取用户认证申请列表，支持分页、搜索和排序',
+          auth: true,
+          expanded: false,
+          params: [
+            { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+            { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+            { name: 'search', type: 'string', required: false, description: '搜索关键词（用户名或真实姓名）' },
+            { name: 'status', type: 'int', required: false, description: '申请状态筛选（0=待审核，1=已通过，2=已拒绝）' },
+            { name: 'type', type: 'int', required: false, description: '认证类型筛选（1=个人认证，2=企业认证）' },
+            { name: 'sortField', type: 'string', required: false, description: '排序字段（id, created_at, updated_at）' },
+            { name: 'order', type: 'string', required: false, description: '排序方向（asc, desc），默认desc' }
+          ]
+        },
+        {
+          method: 'PUT',
+          path: '/api/admin/verifications/:id/approve',
+          title: '通过认证申请（管理员）',
+          description: '管理员通过用户的认证申请',
+          auth: true,
+          expanded: false,
+          params: [
+            { name: 'id', type: 'int', required: true, description: '认证申请ID' },
+            { name: 'admin_note', type: 'string', required: false, description: '管理员备注' }
+          ]
+        },
+        {
+          method: 'PUT',
+          path: '/api/admin/verifications/:id/reject',
+          title: '拒绝认证申请（管理员）',
+          description: '管理员拒绝用户的认证申请',
+          auth: true,
+          expanded: false,
+          params: [
+            { name: 'id', type: 'int', required: true, description: '认证申请ID' },
+            { name: 'admin_note', type: 'string', required: true, description: '拒绝原因' }
+          ]
+        },
+        {
+          method: 'DELETE',
+          path: '/api/admin/verifications/:id',
+          title: '删除认证申请（管理员）',
+          description: '管理员删除认证申请记录',
+          auth: true,
+          expanded: false,
+          params: [
+            { name: 'id', type: 'int', required: true, description: '认证申请ID' }
+          ]
+        }, 100)
     }
   }
 })
@@ -278,6 +330,33 @@ const apiGroups = ref([
         description: '获取当前登录用户的详细信息',
         auth: true,
         expanded: false
+      }
+    ]
+  },
+  {
+    name: '视频上传接口',
+    apis: [
+      {
+        method: 'POST',
+        path: '/api/upload/video',
+        title: '视频上传',
+        description: '上传视频文件，限制100MB，支持mp4、avi、mov格式',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'video', type: 'file', required: true, description: '要上传的视频文件（mp4, avi, mov）' }
+        ],
+        example: `{
+  "code": 200,
+  "message": "视频上传成功",
+  "data": {
+    "originalname": "video.mp4",
+    "size": 52428800,
+    "url": "https://video.example.com/1234567890.mp4",
+    "cover": "https://img.example.com/1234567890_cover.jpg",
+    "duration": 120
+  }
+}`
       }
     ]
   },
@@ -502,14 +581,16 @@ const apiGroups = ref([
         method: 'POST',
         path: '/api/posts',
         title: '创建笔记',
-        description: '发布新笔记或保存草稿，支持图片和标签',
+        description: '发布新笔记或保存草稿，支持图文和视频两种类型',
         auth: true,
         expanded: false,
         params: [
           { name: 'title', type: 'string', required: false, description: '笔记标题（发布时必填，草稿时可选）' },
           { name: 'content', type: 'string', required: false, description: '笔记内容（发布时必填，草稿时可选）' },
           { name: 'category_id', type: 'int', required: false, description: '分类ID（发布时必填，草稿时可选）' },
-          { name: 'images', type: 'array', required: false, description: '图片URL数组' },
+          { name: 'type', type: 'int', required: false, description: '笔记类型：1-图文笔记（默认），2-视频笔记' },
+          { name: 'images', type: 'array', required: false, description: '图片URL数组（图文笔记使用）' },
+          { name: 'video', type: 'object', required: false, description: '视频信息对象（视频笔记使用）' },
           { name: 'tags', type: 'array', required: false, description: '标签名称数组（字符串数组）' },
           { name: 'is_draft', type: 'int', required: false, description: '是否为草稿，1=草稿，0=发布（默认0）' }
         ]
@@ -521,9 +602,23 @@ const apiGroups = ref([
         description: '根据关键词搜索笔记',
         expanded: false,
         params: [
-          { name: 'keyword', type: 'string', required: true, description: '搜索关键词' },
+          { name: 'keyword', type: 'string', required: true, description: '搜索关键词（支持标题和内容搜索）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'category_id', type: 'int', required: false, description: '分类ID筛选' }
+        ]
+      },
+      {
+        method: 'GET',
+        path: '/api/posts/drafts',
+        title: '获取草稿列表',
+        description: '获取当前用户的草稿列表',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'page', type: 'int', required: false, description: '页码，默认1' },
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'keyword', type: 'string', required: false, description: '搜索关键词' }
         ]
       },
       {
@@ -533,9 +628,10 @@ const apiGroups = ref([
         description: '获取指定笔记的评论列表',
         expanded: false,
         params: [
-          { name: 'id', type: 'int', required: true, description: '笔记ID' },
+          { name: 'id', type: 'int', required: true, description: '笔记ID（路径参数）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' },
+          { name: 'sort', type: 'string', required: false, description: '排序方式：desc（降序，默认）或 asc（升序）' }
         ]
       },
       {
@@ -572,7 +668,8 @@ const apiGroups = ref([
           { name: 'title', type: 'string', required: false, description: '笔记标题（发布时必填，草稿时可选）' },
           { name: 'content', type: 'string', required: false, description: '笔记内容（发布时必填，草稿时可选）' },
           { name: 'category_id', type: 'int', required: false, description: '分类ID（发布时必填，草稿时可选）' },
-          { name: 'images', type: 'array', required: false, description: '图片URL数组' },
+          { name: 'images', type: 'array', required: false, description: '图片URL数组（图文笔记使用）' },
+          { name: 'video', type: 'object', required: false, description: '视频信息对象（视频笔记使用）' },
           { name: 'tags', type: 'array', required: false, description: '标签名称数组（字符串数组）' },
           { name: 'is_draft', type: 'int', required: false, description: '是否为草稿，1=草稿，0=发布（默认0）' }
         ]
@@ -774,8 +871,8 @@ const apiGroups = ref([
         expanded: false,
         params: [
           { name: 'id', type: 'int', required: true, description: '笔记ID（路径参数）' },
-          { name: 'content', type: 'string', required: true, description: '评论内容' },
-          { name: 'parent_id', type: 'int', required: false, description: '父评论ID（回复时使用）' }
+          { name: 'content', type: 'string', required: true, description: '评论内容（支持@功能的HTML格式）' },
+          { name: 'parent_id', type: 'int', required: false, description: '父评论ID（回复评论时使用）' }
         ]
       },
       {
@@ -787,7 +884,7 @@ const apiGroups = ref([
         params: [
           { name: 'id', type: 'int', required: true, description: '评论ID' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
-          { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
+          { name: 'limit', type: 'int', required: false, description: '每页数量，默认10' }
         ]
       },
       {

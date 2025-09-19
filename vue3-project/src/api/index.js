@@ -239,6 +239,7 @@ export const authApi = {
 
 // 导入新的图片上传API
 import * as imageUploadApi from './upload.js'
+import * as videoUploadApi from './video.js'
 
 // 图片上传API（保持向后兼容）
 export const uploadApi = {
@@ -266,6 +267,10 @@ export const uploadApi = {
     })
   },
 
+  // 视频上传
+  uploadVideo(file, onProgress) {
+    return videoUploadApi.videoApi.uploadVideo(file, onProgress)
+  },
 
   // 上传图片到图床（新接口）
   uploadToImageHost: imageUploadApi.uploadImage,
@@ -283,11 +288,16 @@ export const uploadApi = {
   formatFileSize: imageUploadApi.formatFileSize,
 
   // 生成图片预览（新接口）
-  createImagePreview: imageUploadApi.createImagePreview
+  createImagePreview: imageUploadApi.createImagePreview,
+
+  // 视频上传相关方法
+  validateVideoFile: videoUploadApi.videoApi.validateVideoFile,
+  createVideoPreview: videoUploadApi.videoApi.createVideoPreview,
+  revokeVideoPreview: videoUploadApi.videoApi.revokeVideoPreview
 }
 
 // 导出图片上传API（推荐使用）
-export { imageUploadApi }
+export { imageUploadApi, videoUploadApi }
 
 // 通知相关API
 export const notificationApi = {

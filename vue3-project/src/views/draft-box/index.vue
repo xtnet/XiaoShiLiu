@@ -45,9 +45,17 @@
         <div v-for="draft in drafts" :key="draft.id" class="post-item">
           <div class="post-thumbnail">
             <img
-              v-if="(draft.originalData?.images && draft.originalData.images.length > 0) || (draft.images && draft.images.length > 0)"
+              v-if="draft.type === 2 && draft.images && draft.images.length > 0"
+              :src="draft.images[0]"
+              alt="草稿图片" @error="handleImageError" />
+            <img
+              v-else-if="draft.type !== 2 && ((draft.originalData?.images && draft.originalData.images.length > 0) || (draft.images && draft.images.length > 0))"
               :src="(draft.originalData?.images && draft.originalData.images[0]) || (draft.images && draft.images[0]) || draft.image"
               alt="草稿图片" @error="handleImageError" />
+            <div v-else-if="draft.type === 2" class="video-thumbnail">
+              <SvgIcon name="video" width="24" height="24" />
+              <span>视频</span>
+            </div>
             <div v-else class="no-image">
               <SvgIcon name="image" width="24" height="24" />
             </div>
@@ -567,6 +575,22 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: var(--text-color-secondary);
+}
+
+.video-thumbnail {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  gap: 0.25rem;
+}
+
+.video-thumbnail span {
+  font-size: 0.75rem;
 }
 
 .post-info {

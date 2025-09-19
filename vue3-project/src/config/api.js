@@ -23,13 +23,23 @@ export const apiConfig = {
     maxPageSize: 100
   },
 
-  // 图片上传配置
+  // 上传配置
   upload: {
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxImageCount: 9 // 最多上传9张图片
+    // 图片上传配置
+    image: {
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      maxCount: 9 // 最多上传9张图片
+    },
+    // 视频上传配置
+    video: {
+      maxFileSize: 100 * 1024 * 1024, // 100MB
+      allowedTypes: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm'],
+      maxCount: 1 // 最多上传1个视频
+    }
   }
 }
+
 
 // 说明：
 // - 当 VITE_USE_REAL_API=false 时，所有请求将使用相对路径 "/api"，
@@ -37,3 +47,4 @@ export const apiConfig = {
 // - 当 VITE_USE_REAL_API=true 时，使用 VITE_API_BASE_URL（若未配置则回退到 "/api"）。
 
 export default apiConfig
+

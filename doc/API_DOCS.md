@@ -2,10 +2,10 @@
 
 ## 项目信息
 - **项目名称**: 小石榴图文社区
-- **版本**: v1.1.5
+- **版本**: v1.2.0
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-13
+- **更新时间**: 2025-09-19
 
 ## 通用说明
 
@@ -1065,21 +1065,46 @@ Authorization: Bearer <your_jwt_token>
 | title | string | 否* | 笔记标题（发布时必填，草稿时可选） |
 | content | string | 否* | 笔记内容（发布时必填，草稿时可选） |
 | category_id | int | 否 | 分类ID |
-| images | array | 否 | 图片URL数组 |
+| type | int | 否 | 笔记类型：1-图文笔记（默认），2-视频笔记 |
+| images | array | 否 | 图片URL数组（图文笔记使用） |
+| video | object | 否 | 视频信息对象（视频笔记使用） |
 | tags | array | 否 | 标签名称数组（字符串数组） |
 | is_draft | boolean | 否 | 是否为草稿，默认false |
 
-**请求示例**:
+**video对象结构**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| url | string | 是 | 视频文件URL |
+| coverUrl | string | 否 | 视频封面图片URL |
+
+**请求示例（图文笔记）**:
 ```json
 {
   "title": "分享一个美好的下午",
   "content": "今天天气很好，在公园里散步...",
   "category_id": 5,
+  "type": 1,
   "images": [
     "https://example.com/image1.jpg",
     "https://example.com/image2.jpg"
   ],
   "tags": ["生活", "摄影", "分享"],
+  "is_draft": false
+}
+```
+
+**请求示例（视频笔记）**:
+```json
+{
+  "title": "美丽的风景视频",
+  "content": "记录下这美好的一刻...",
+  "category_id": 5,
+  "type": 2,
+  "video": {
+    "url": "https://video.example.com/video.mp4",
+    "coverUrl": "https://img.example.com/video_cover.jpg"
+  },
+  "tags": ["生活", "视频", "分享"],
   "is_draft": false
 }
 ```
@@ -1181,9 +1206,16 @@ Authorization: Bearer <your_jwt_token>
 | title | string | 否 | 笔记标题（发布时必填，草稿时可选） |
 | content | string | 否 | 笔记内容（发布时必填，草稿时可选） |
 | category_id | int | 否 | 分类ID（发布时必填，草稿时可选） |
-| images | array | 否 | 图片URL数组 |
+| images | array | 否 | 图片URL数组（图文笔记使用） |
+| video | object | 否 | 视频信息对象（视频笔记使用） |
 | tags | array | 否 | 标签名称数组（字符串数组） |
 | is_draft | int | 否 | 是否为草稿，1=草稿，0=发布（默认0） |
+
+**video对象结构**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| url | string | 是 | 视频文件URL |
+| coverUrl | string | 否 | 视频封面图片URL |
 
 **请求示例**:
 ```json
@@ -1867,6 +1899,38 @@ Authorization: Bearer <your_jwt_token>
   ]
 }
 ```
+
+### 3. 单视频上传
+**接口地址**: `POST /api/upload/video`
+**需要认证**: 是
+
+**请求参数**:
+- 使用 `multipart/form-data` 格式
+- 文件字段名: `file`
+- 支持格式: mp4, avi, mov, wmv, flv, webm
+- 文件大小限制: 100MB
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "上传成功",
+  "data": {
+    "originalname": "video.mp4",
+    "size": 10240000,
+    "url": "https://video.example.com/1640995200000_video.mp4",
+    "filePath": "/uploads/videos/1640995200000_video.mp4",
+    "coverUrl": "https://img.example.com/1640995200000_video_thumbnail.jpg"
+  }
+}
+```
+
+**说明**:
+- `url`: 视频文件的访问URL
+- `filePath`: 视频文件在服务器上的存储路径
+- `coverUrl`: 视频封面图片URL（如果FFmpeg可用则自动生成，否则为null）
+- 视频封面图片会自动从视频第一帧提取，尺寸为640x360
+- 如果系统未安装FFmpeg，视频仍可正常上传，但不会生成封面图片
 
 
 
