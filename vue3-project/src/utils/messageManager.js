@@ -46,6 +46,10 @@ class MessageManager {
     return this.show(message, 'info', duration)
   }
 
+  warning(message, duration) {
+    return this.show(message, 'warning', duration)
+  }
+
   // 清除所有提示
   clear() {
     this.toasts.forEach(app => {

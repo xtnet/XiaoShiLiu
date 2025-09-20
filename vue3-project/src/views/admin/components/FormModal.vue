@@ -133,7 +133,7 @@
             <div v-else-if="field.type === 'video-upload'" class="video-upload-field">
               <!-- 视频上传组件 -->
               <VideoUpload :ref="el => setVideoUploadRef(field.key, el)" :model-value="formData[field.key]"
-                @update:model-value="handleVideoUploadChange" @error="handleVideoUploadError" />
+                @update:model-value="handleVideoUploadChange" @error="handleVideoUploadError" @change="handleVideoChange" />
             </div>
 
           </div>
@@ -651,16 +651,31 @@ const handleVideoUploadChange = (value) => {
   emit('update:formData', newData)
 }
 
-// 处理视频更换
-const handleVideoChange = (fieldKey) => {
-  // 清空当前视频数据，触发显示VideoUpload组件
-  const newData = { ...props.formData }
-  newData[fieldKey] = null
-  emit('update:formData', newData)
+// 处理视频变更
+const handleVideoChange = (changeInfo) => {
+  if (typeof changeInfo === 'string') {
+    // 兼容原有的fieldKey参数调用
+    const fieldKey = changeInfo
+    // 清空当前视频数据，触发显示VideoUpload组件
+    const newData = { ...props.formData }
+    newData[fieldKey] = null
+    emit('update:formData', newData)
 
-  // 重置视频状态
-  hasNewVideo.value = false
-  videoUploadCompleted.value = false
+    // 重置视频状态
+    hasNewVideo.value = false
+    videoUploadCompleted.value = false
+  } else if (changeInfo && changeInfo.hasChanges) {
+    // 处理VideoUpload组件的change事件
+    if (changeInfo.type === 'video') {
+      // 视频文件变更
+      hasNewVideo.value = true
+      videoUploadCompleted.value = false
+    } else if (changeInfo.type === 'cover') {
+      // 仅封面变更，不设置hasNewVideo为true
+      // 这样在handleSubmit中会走到封面上传的逻辑
+      videoUploadCompleted.value = false
+    }
+  }
 }
 
 // 处理从URL组件删除图片的请求
@@ -672,9 +687,28 @@ const getButtonText = () => {
   if (props.loading || isSubmitting.value) {
     return '提交中...'
   }
-  if ((hasNewImages.value && !uploadCompleted.value) || (hasNewVideo.value && !videoUploadCompleted.value)) {
+  
+  // 检查是否有新图片需要上传
+  if (hasNewImages.value && !uploadCompleted.value) {
     return '上传'
   }
+  
+  // 检查是否有新视频需要上传
+  if (hasNewVideo.value && !videoUploadCompleted.value) {
+    return '上传'
+  }
+  
+  // 检查是否只有自定义封面需要上传
+  const videoUploadRef = videoUploadRefs.value['video_upload']
+  const hasCustomCoverOnly = videoUploadRef && 
+    videoUploadRef.customCoverFile && 
+    !hasNewVideo.value && 
+    !videoUploadCompleted.value
+    
+  if (hasCustomCoverOnly) {
+    return '上传'
+  }
+  
   return props.confirmText
 }
 
@@ -740,6 +774,18 @@ const handleSubmit = async () => {
     return
   }
 
+  // 检查是否只有封面需要上传（没有新视频但有自定义封面）
+  const videoUploadRef = videoUploadRefs.value['video_upload']
+  const hasCustomCoverOnly = videoUploadRef && 
+    videoUploadRef.customCoverFile && 
+    !hasNewVideo.value && 
+    !videoUploadCompleted.value
+
+  if (hasCustomCoverOnly) {
+    await handleCoverOnlyUpload()
+    return
+  }
+
   // 如果有新视频需要上传，先上传视频
   if (hasNewVideo.value && !videoUploadCompleted.value) {
     await handleVideoUpload()
@@ -748,6 +794,62 @@ const handleSubmit = async () => {
 
   // 如果没有新图片/视频或已上传完成，直接提交表单
   await handleFormSubmit()
+}
+
+// 处理仅封面上传的情况
+const handleCoverOnlyUpload = async () => {
+  if (isUploadingVideo.value) {
+    return
+  }
+
+  isUploadingVideo.value = true
+  isSubmitting.value = true
+
+  try {
+    // 获取视频组件引用
+    const videoUploadRef = videoUploadRefs.value['video_upload']
+    if (!videoUploadRef) {
+      messageManager.error('视频组件未找到')
+      return
+    }
+
+    // 检查是否有自定义封面需要上传
+    const customCoverFile = videoUploadRef.customCoverFile
+    if (!customCoverFile) {
+      messageManager.warning('没有需要上传的封面')
+      return
+    }
+
+    messageManager.info('正在上传封面...')
+
+    // 上传封面到图床
+    const coverUrl = await videoUploadRef.uploadCustomCover()
+    
+    if (coverUrl) {
+      // 更新表单数据中的封面URL
+      const processedData = { ...props.formData }
+      processedData['cover_url'] = coverUrl
+
+      emit('update:formData', processedData)
+
+      // 标记上传完成
+      hasNewVideo.value = false
+      videoUploadCompleted.value = true
+
+      messageManager.success('封面上传成功')
+
+      // 自动提交表单
+      await handleFormSubmit()
+    } else {
+      messageManager.error('封面上传失败，请重试')
+    }
+  } catch (error) {
+    console.error('封面上传失败:', error)
+    messageManager.error(`封面上传失败: ${error.message}`)
+  } finally {
+    isUploadingVideo.value = false
+    isSubmitting.value = false
+  }
 }
 
 // 处理视频上传
@@ -779,13 +881,13 @@ const handleVideoUpload = async () => {
       if (uploadResult && uploadResult.success) {
         // 上传成功后，设置video对象用于后端处理（包含旧文件清理）
         const processedData = { ...props.formData }
-        
+
         // 设置video对象，后端会根据此对象自动清理旧文件
         processedData['video'] = {
           url: uploadResult.data.url,
           coverUrl: uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl || null
         }
-        
+
         // 同时设置分离的字段用于兼容
         processedData['video_url'] = uploadResult.data.url
         processedData['cover_url'] = uploadResult.data.coverUrl || uploadResult.data.thumbnailUrl || ''
@@ -922,7 +1024,7 @@ const handleFormSubmit = async () => {
     if (processedData.video_upload) {
       delete processedData.video_upload
     }
-    
+
     // 如果有视频URL，始终构建video对象发送给后端（用于文件清理和更新）
     if (processedData.video_url) {
       processedData.video = {
@@ -1692,4 +1794,5 @@ defineExpose({
 .video-upload-field {
   width: 100%;
 }
+
 </style>

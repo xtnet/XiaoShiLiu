@@ -1,6 +1,6 @@
 <template>
   <div class="video-upload">
-    <div class="upload-area" @click="!isUploading && triggerFileInput()"
+    <div class="upload-area" @click="!isUploading && !videoData && triggerFileInput()"
       :class="{ 'drag-over': isDragOver, 'uploading': isUploading, 'has-video': videoData }"
       @dragover.prevent="!isUploading && (isDragOver = true)" @dragleave.prevent="isDragOver = false"
       @drop.prevent="!isUploading && handleFileDrop($event)">
@@ -8,14 +8,23 @@
       <input ref="fileInput" type="file" accept="video/*" @change="handleFileSelect" style="display: none"
         :disabled="isUploading" />
 
+      <!-- 隐藏的封面图片文件输入框 -->
+      <input ref="coverInput" type="file" accept="image/*" @change="handleCoverSelect" style="display: none" />
+
       <!-- 视频上传成功状态 -->
-      <div v-if="videoData && !isUploading" class="video-success">
+      <div v-if="videoData && !isUploading" class="video-success" @click="triggerFileInput()">
         <!-- 缩略图 -->
-        <div class="video-thumbnail">
-          <img v-if="videoData.thumbnailDataUrl || videoData.coverUrl"
-            :src="videoData.thumbnailDataUrl || videoData.coverUrl" alt="视频缩略图" class="thumbnail-image" />
+        <div class="video-thumbnail" @click.stop="triggerCoverInput($event)" :class="{ 'custom-cover': customCover }">
+          <img v-if="customCover || videoData.thumbnailDataUrl || videoData.coverUrl"
+            :src="customCover || videoData.thumbnailDataUrl || videoData.coverUrl" alt="视频缩略图"
+            class="thumbnail-image" />
           <div v-else class="thumbnail-placeholder">
             <SvgIcon name="publish" width="24" height="24" />
+          </div>
+          <!-- 自定义封面提示 -->
+          <div class="cover-overlay">
+            <SvgIcon name="edit" width="16" height="16" />
+            <span>自定义封面</span>
           </div>
         </div>
 
@@ -25,6 +34,10 @@
               <SvgIcon name="tick" width="14" height="14" />
             </div>
             上传成功
+          </div>
+          <div v-if="customCover" class="cover-status">
+            <SvgIcon name="image" width="12" height="12" />
+            已设置自定义封面
           </div>
         </div>
       </div>
@@ -55,6 +68,7 @@
       <p>• 支持 MP4、MOV、AVI 格式</p>
       <p>• 文件大小不超过100MB</p>
       <p>• 建议视频时长不超过5分钟</p>
+      <p v-if="videoData && !isUploading">• 点击缩略图可自定义封面</p>
     </div>
 
     <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="handleToastClose" />
@@ -66,6 +80,7 @@ import { ref, watch } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 import MessageToast from './MessageToast.vue'
 import { videoApi } from '@/api/video.js'
+import { uploadImage } from '@/api/upload.js'
 import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail.js'
 
 const props = defineProps({
@@ -79,11 +94,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'error'])
+const emit = defineEmits(['update:modelValue', 'error', 'change'])
 
 // 响应式数据
 const fileInput = ref(null)
+const coverInput = ref(null)
 const videoData = ref(null)
+const customCover = ref(null) // 自定义封面图片URL
+const customCoverFile = ref(null) // 自定义封面图片文件
 const isUploading = ref(false)
 const uploadProgress = ref(0)
 const isDragOver = ref(false)
@@ -97,6 +115,8 @@ watch(() => props.modelValue, (newValue) => {
   if (!newValue && videoData.value) {
     // 外部清空了值，重置组件
     videoData.value = null
+    customCover.value = null
+    customCoverFile.value = null
     error.value = ''
   } else if (newValue && !videoData.value) {
     // 外部设置了值，但组件没有数据，可能是从外部加载的视频
@@ -130,11 +150,32 @@ const triggerFileInput = () => {
   }
 }
 
+// 触发封面图片选择
+const triggerCoverInput = (event) => {
+  // 阻止事件冒泡和默认行为
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  if (coverInput.value) {
+    coverInput.value.click()
+  }
+}
+
 // 处理文件选择
 const handleFileSelect = (event) => {
   const files = event.target.files
   if (files && files.length > 0) {
     handleFile(files[0])
+  }
+}
+
+// 处理封面图片选择
+const handleCoverSelect = async (event) => {
+  const files = event.target.files
+  if (files && files.length > 0) {
+    await handleCoverFile(files[0])
   }
 }
 
@@ -162,6 +203,22 @@ const validateVideoFile = (file) => {
   return { valid: true }
 }
 
+// 验证封面图片文件
+const validateCoverFile = (file) => {
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    return { valid: false, message: '请选择图片文件' }
+  }
+
+  // 验证文件大小 (5MB)
+  const maxCoverSize = 5 * 1024 * 1024
+  if (file.size > maxCoverSize) {
+    return { valid: false, message: `封面图片大小不能超过${formatFileSize(maxCoverSize)}` }
+  }
+
+  return { valid: true }
+}
+
 // 处理文件
 const handleFile = async (file) => {
   if (!file) return
@@ -177,6 +234,10 @@ const handleFile = async (file) => {
   // 创建预览
   const preview = URL.createObjectURL(file)
 
+  // 保存当前的自定义封面状态
+  const currentCustomCover = customCover.value
+  const currentCustomCoverFile = customCoverFile.value
+
   videoData.value = {
     file: file,
     preview: preview,
@@ -188,14 +249,49 @@ const handleFile = async (file) => {
     thumbnailDataUrl: null // 缩略图预览URL
   }
 
-  // 清空错误
+  // 清空错误，但保持自定义封面
   error.value = ''
+  // 如果之前有自定义封面，保持不变
+  if (!currentCustomCover) {
+    customCover.value = null
+    customCoverFile.value = null
+  }
 
   // 传递文件名作为modelValue（字符串类型）
   emit('update:modelValue', file.name)
 
+  // 触发change事件，通知父组件有变更
+  emit('change', { type: 'video', hasChanges: true })
+
   // 生成缩略图
   await generateThumbnail(file)
+}
+
+// 处理封面图片文件
+const handleCoverFile = async (file) => {
+  if (!file) return
+
+  // 验证封面图片文件
+  const validation = validateCoverFile(file)
+  if (!validation.valid) {
+    error.value = validation.message
+    showMessage(validation.message, 'error')
+    return
+  }
+
+  try {
+    // 创建预览URL
+    const previewUrl = URL.createObjectURL(file)
+    customCover.value = previewUrl
+    customCoverFile.value = file
+
+    // 触发change事件，通知父组件有变更
+    emit('change', { type: 'cover', hasChanges: true })
+  } catch (err) {
+    console.error('处理封面图片失败:', err)
+    error.value = '处理封面图片失败'
+    showMessage('处理封面图片失败', 'error')
+  }
 }
 
 // 生成视频缩略图
@@ -225,6 +321,24 @@ const generateThumbnail = async (file) => {
   }
 }
 
+// 上传自定义封面图片
+const uploadCustomCover = async () => {
+  if (!customCoverFile.value) return null
+
+  try {
+    const result = await uploadImage(customCoverFile.value)
+    if (result.success) {
+      return result.data.url
+    } else {
+      console.error('封面图片上传失败:', result.message)
+      return null
+    }
+  } catch (error) {
+    console.error('封面图片上传异常:', error)
+    return null
+  }
+}
+
 // 开始上传过程
 const startUpload = async () => {
   if (!videoData.value || !videoData.value.file) {
@@ -235,13 +349,23 @@ const startUpload = async () => {
   uploadProgress.value = 0
 
   try {
-    // 传递缩略图文件（如果有的话）
+    // 确定要传递的缩略图文件
+    let thumbnailToUpload = null
+
+    // 优先使用自定义封面
+    if (customCoverFile.value) {
+      thumbnailToUpload = customCoverFile.value
+    } else if (videoData.value.thumbnail) {
+      thumbnailToUpload = videoData.value.thumbnail
+    }
+
+    // 上传视频和缩略图
     const result = await videoApi.uploadVideo(
       videoData.value.file,
       (progress) => {
         uploadProgress.value = progress
       },
-      videoData.value.thumbnail // 传递缩略图
+      thumbnailToUpload // 传递缩略图文件
     )
 
     if (result.success) {
@@ -250,6 +374,12 @@ const startUpload = async () => {
         videoData.value.uploaded = true
         videoData.value.url = result.data.url
         videoData.value.coverUrl = result.data.coverUrl
+
+        // 如果使用了自定义封面，更新显示
+        if (customCoverFile.value && result.data.coverUrl) {
+          customCover.value = result.data.coverUrl
+        }
+
         emit('update:modelValue', videoData.value.url)
         showMessage('视频上传成功', 'success')
         return result // 返回上传结果
@@ -276,13 +406,22 @@ const removeVideo = () => {
   if (videoData.value && videoData.value.preview) {
     URL.revokeObjectURL(videoData.value.preview)
   }
+  if (customCover.value && customCover.value.startsWith('blob:')) {
+    URL.revokeObjectURL(customCover.value)
+  }
+
   videoData.value = null
+  customCover.value = null
+  customCoverFile.value = null
   error.value = ''
   uploadProgress.value = 0
   emit('update:modelValue', '')
 
   if (fileInput.value) {
     fileInput.value.value = ''
+  }
+  if (coverInput.value) {
+    coverInput.value.value = ''
   }
 }
 
@@ -309,7 +448,11 @@ const handleToastClose = () => {
 
 // 获取视频数据
 const getVideoData = () => {
-  return videoData.value
+  return {
+    ...videoData.value,
+    customCover: customCover.value,
+    customCoverFile: customCoverFile.value
+  }
 }
 
 // 重置组件
@@ -322,7 +465,9 @@ defineExpose({
   getVideoData,
   reset,
   removeVideo,
-  startUpload
+  startUpload,
+  customCoverFile,
+  uploadCustomCover
 })
 </script>
 
@@ -398,6 +543,41 @@ defineExpose({
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.video-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.video-thumbnail:hover .cover-overlay {
+  opacity: 1;
+}
+
+
+.cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: white;
+  font-size: 10px;
+  gap: 2px;
+}
+
+.cover-overlay span {
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .thumbnail-image {
@@ -441,6 +621,14 @@ defineExpose({
   align-items: center;
 }
 
+.cover-status {
+  font-size: 10px;
+  color: var(--primary-color);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 .upload-placeholder {
   display: flex;

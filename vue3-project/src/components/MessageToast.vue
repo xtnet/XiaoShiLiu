@@ -21,7 +21,7 @@ const props = defineProps({
   type: {
     type: String,
     default: 'success',
-    validator: (value) => ['success', 'error', 'info'].includes(value)
+    validator: (value) => ['success', 'error', 'info', 'warning'].includes(value)
   },
   duration: {
     type: Number,
