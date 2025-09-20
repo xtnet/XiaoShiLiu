@@ -40,6 +40,11 @@ const updateSlider = () => {
         const tabRect = tabItems.value[activeIndex].getBoundingClientRect()
         const containerRect = containerRef.value.getBoundingClientRect()
 
+        if (containerRect.width === 0 || tabRect.width === 0) {
+            setTimeout(updateSlider, 50)
+            return
+        }
+
         // 计算滑块相对于容器的位置
         sliderLeft.value = tabRect.left - containerRect.left + containerRef.value.scrollLeft
         sliderWidth.value = tabRect.width
@@ -81,10 +86,12 @@ function onMouseMove(e) {
 
 // 监听activeTab prop变化
 watch(() => props.activeTab, (newVal) => {
-    // 移除条件判断，允许空字符串也能更新activeId
     activeId.value = newVal
     updateSlider()
 })
+
+// 监听容器可见性变化
+let visibilityObserver = null
 
 // 组件挂载和卸载
 onMounted(() => {
@@ -95,6 +102,16 @@ onMounted(() => {
     // 监听容器滚动事件，实时更新滑块位置
     if (containerRef.value) {
         containerRef.value.addEventListener('scroll', updateSlider)
+        visibilityObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // 容器变为可见时，更新滑块位置
+                    nextTick(updateSlider)
+                }
+            })
+        })
+        
+        visibilityObserver.observe(containerRef.value)
     }
 })
 
@@ -102,6 +119,9 @@ onUnmounted(() => {
     window.removeEventListener('resize', updateSlider)
     if (containerRef.value) {
         containerRef.value.removeEventListener('scroll', updateSlider)
+    }
+    if (visibilityObserver) {
+        visibilityObserver.disconnect()
     }
 })
 </script>
