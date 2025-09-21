@@ -4,8 +4,10 @@
     <div class="detail-card" @click="handleDetailCardClick"
         :style="pageMode ? {} : { width: cardWidth + 'px', ...(isClosing ? {} : animationStyle) }"
         :class="{ 
-          'scale-in': isAnimating && !pageMode, 
-          'scale-out': isClosing && !pageMode,
+          'scale-in': isAnimating && !pageMode && !isMobile, 
+          'scale-out': isClosing && !pageMode && !isMobile,
+          'slide-in': isAnimating && !pageMode && isMobile,
+          'slide-out': isClosing && !pageMode && isMobile,
           'page-mode': pageMode 
         }"
         @animationend="handleAnimationEnd">
@@ -562,6 +564,9 @@ const likeButtonRef = ref(null)
 const isAnimating = ref(true)
 const showContent = ref(false) // 新增：控制内容显示
 const isClosing = ref(false) // 新增：控制关闭动画状态
+
+// 移动端检测
+const isMobile = computed(() => windowWidth.value <= 768)
 
 // 动画完成后再显示复杂内容
 const handleAnimationEnd = (event) => {
@@ -2553,6 +2558,22 @@ function handleAvatarError(event) {
   will-change: transform, opacity;
 }
 
+/* 移动端水平滑入动画 */
+@media (max-width: 768px) {
+  .detail-card.slide-in {
+    animation: slideInFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+  }
+}
+
+/* 移动端水平滑出动画 */
+@media (max-width: 768px) {
+  .detail-card.slide-out {
+    animation: slideOutToRight 0.25s ease-out forwards;
+    will-change: transform;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -2584,6 +2605,28 @@ function handleAvatarError(event) {
   100% {
     transform: scale(0);
     opacity: 0;
+  }
+}
+
+/* 移动端滑入动画关键帧 */
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 移动端滑出动画关键帧 */
+@keyframes slideOutToRight {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
   }
 }
 
