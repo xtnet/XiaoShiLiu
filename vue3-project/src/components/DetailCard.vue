@@ -2,8 +2,13 @@
   <div :class="[pageMode ? 'detail-card-page' : 'detail-card-overlay', { 'animating': isAnimating && !pageMode }]"
     v-click-outside.mousedown="!pageMode ? closeModal : undefined" v-escape-key="!pageMode ? closeModal : undefined">
     <div class="detail-card" @click="handleDetailCardClick"
-      :style="pageMode ? {} : { width: cardWidth + 'px', ...animationStyle }"
-      :class="{ 'scale-in': isAnimating && !pageMode, 'page-mode': pageMode }">
+        :style="pageMode ? {} : { width: cardWidth + 'px', ...(isClosing ? {} : animationStyle) }"
+        :class="{ 
+          'scale-in': isAnimating && !pageMode, 
+          'scale-out': isClosing && !pageMode,
+          'page-mode': pageMode 
+        }"
+        @animationend="handleAnimationEnd">
       <button v-if="!pageMode" class="close-btn" @click="closeModal" @mouseenter="showTooltip = true"
         @mouseleave="showTooltip = false">
         <SvgIcon name="close" />
@@ -18,7 +23,7 @@
           <!-- 视频播放器（桌面端） -->
           <div v-if="props.item.type === 2" class="video-container">
             <video 
-              v-if="props.item.video_url"
+              v-if="props.item.video_url && showContent"
               ref="videoPlayer"
               :src="props.item.video_url" 
               :poster="props.item.images && props.item.images[0]"
@@ -32,18 +37,20 @@
             <div v-else class="video-placeholder">
               <div class="placeholder-content">
                 <SvgIcon name="video" width="48" height="48" />
-                <p>视频加载中...</p>
+                <p>{{ showContent ? '视频加载中...' : '加载中...' }}</p>
               </div>
             </div>
           </div>
           <!-- 图片轮播（图文笔记） -->
           <div v-else class="image-container">
             <div class="image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }">
-              <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="props.item.title || '图片'"
+              <img v-for="(image, index) in imageList" :key="index" 
+                :src="showContent ? image : (index === 0 ? props.item.image : '')" 
+                :alt="props.item.title || '图片'"
                 @load="handleImageLoad($event, index)" :style="{ objectFit: 'contain' }"
                 class="slider-image image-zoomable" @click="openImageViewer" />
             </div>
-            <div v-if="hasMultipleImages" class="image-controls" :class="{ 'visible': showImageControls }">
+            <div v-if="hasMultipleImages && showContent" class="image-controls" :class="{ 'visible': showImageControls }">
               <div class="nav-btn-container prev-btn-container" @click.stop>
                 <button class="nav-btn prev-btn" @click="prevImage" :disabled="currentImageIndex === 0"
                   v-show="currentImageIndex > 0">
@@ -109,7 +116,9 @@
             <div v-else-if="imageList && imageList.length > 0" class="mobile-image-container">
               <div class="mobile-image-slider" :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
                 @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
-                <img v-for="(image, index) in imageList" :key="index" :src="image" :alt="`图片 ${index + 1}`"
+                <img v-for="(image, index) in imageList" :key="index" 
+                  :src="showContent ? image : (index === 0 ? props.item.image : '')" 
+                  :alt="`图片 ${index + 1}`"
                   class="mobile-slider-image" @click="openImageViewer" @load="handleImageLoad($event, index)" />
               </div>
 
@@ -151,7 +160,7 @@
             <div class="divider"></div>
 
             <div class="comments-section">
-              <div class="comments-header" @click="toggleSortMenu">
+              <div v-if="showContent" class="comments-header" @click="toggleSortMenu">
                 <span class="comments-title">共 {{ commentCount }} 条评论</span>
                 <SvgIcon name="down" width="16" height="16" class="sort-icon" />
                 <div v-if="showSortMenu" class="sort-menu" @click.stop>
@@ -168,12 +177,12 @@
                 </div>
               </div>
 
-              <div v-if="loadingComments" class="comments-loading">
+              <div v-if="loadingComments && showContent" class="comments-loading">
                 <div class="loading-spinner"></div>
                 <span>加载评论中...</span>
               </div>
 
-              <div v-else class="comments-list">
+              <div v-else-if="showContent" class="comments-list">
                 <div v-if="enhancedComments.length === 0 && commentCount === 0 && !hasMoreCommentsToShow"
                   class="no-comments">
                   <span>暂无评论，快来抢沙发吧~</span>
@@ -551,6 +560,34 @@ const mentionUsers = ref([])
 const focusedInput = ref(null)
 const likeButtonRef = ref(null)
 const isAnimating = ref(true)
+const showContent = ref(false) // 新增：控制内容显示
+const isClosing = ref(false) // 新增：控制关闭动画状态
+
+// 动画完成后再显示复杂内容
+const handleAnimationEnd = (event) => {
+  // 只处理detail-card元素的动画结束事件，避免子元素动画干扰
+  if (event.target.classList.contains('detail-card')) {
+    if (isClosing.value) {
+      // 关闭动画结束，立即触发关闭
+      unlock()
+      emit('close')
+    } else {
+      // 打开动画结束
+      isAnimating.value = false
+      showContent.value = true
+    }
+  }
+}
+
+// 组件挂载时延迟显示内容
+onMounted(() => {
+  // 动画期间不显示复杂内容，减少渲染压力
+  setTimeout(() => {
+    if (!showContent.value) {
+      showContent.value = true
+    }
+  }, 400) // 与动画时长一致
+})
 
 const showToast = ref(false)
 const toastMessage = ref('')
@@ -1030,8 +1067,12 @@ const handleDeleteReply = async (reply, commentId) => {
 }
 
 const closeModal = () => {
-  unlock()
-  emit('close')
+  if (isClosing.value) return // 防止重复触发
+  
+  isClosing.value = true
+  showContent.value = false // 立即隐藏内容
+  
+  // 不再使用setTimeout，改为依赖动画结束事件触发关闭
 }
 
 
@@ -2498,10 +2539,18 @@ function handleAvatarError(event) {
 }
 
 
-/* 缩放弹出动画 */
+/* 缩放弹出动画 - 优化版 */
 .detail-card.scale-in {
-  animation: scaleInFromPoint 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: scaleInFromPoint 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+/* 缩放关闭动画 */
+.detail-card.scale-out {
+  animation: scaleOutToPoint 0.2s ease-out forwards;
+  transform-origin: center center;
+  will-change: transform, opacity;
 }
 
 @keyframes fadeIn {
@@ -2523,6 +2572,18 @@ function handleAvatarError(event) {
   100% {
     transform: translate(0, 0) scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes scaleOutToPoint {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0);
+    opacity: 0;
   }
 }
 

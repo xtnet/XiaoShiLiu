@@ -19,12 +19,9 @@ function handleReload() {
 }
 
 function handleToggleImgOnly(imgOnlyState) {
-    console.log('FloatingBtn toggle-img-only event received:', imgOnlyState)
     isImgOnly.value = imgOnlyState
-    console.log('isImgOnly updated to:', isImgOnly.value)
     // 切换状态时刷新内容
     refreshKey.value++
-    console.log('refreshKey updated to:', refreshKey.value)
 }
 
 function handleFloatingBtnReload() {
