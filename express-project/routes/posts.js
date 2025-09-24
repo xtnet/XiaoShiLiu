@@ -817,31 +817,59 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     // 根据笔记类型处理媒体文件
     if (postType === 2) {
-      // 视频笔记：获取原有视频记录用于清理文件
-      const [oldVideoRows] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId.toString()]);
+      // 视频笔记：检查是否有视频相关更新
+      const hasVideoUpdate = video !== undefined || video_url !== undefined || cover_url !== undefined;
       
-      // 删除原有视频记录
-      await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [postId.toString()]);
-
-      // 清理废弃的视频文件
-      if (oldVideoRows.length > 0) {
-        const oldVideoUrls = oldVideoRows.map(row => row.video_url).filter(url => url);
-        const oldCoverUrls = oldVideoRows.map(row => row.cover_url).filter(url => url);
+      if (hasVideoUpdate) {
+        // 获取原有视频记录
+        const [oldVideoRows] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [postId.toString()]);
+        const oldVideoData = oldVideoRows.length > 0 ? oldVideoRows[0] : null;
         
-        // 异步清理文件，不阻塞响应
-        batchCleanupFiles(oldVideoUrls, oldCoverUrls).catch(error => {
-          console.error('清理废弃视频文件失败:', error);
-        });
-      }
-
-      if (video && video.url) {
-        // 视频笔记使用video字段传递视频信息
-        const videoUrl = video.url;
-        const coverUrl = video.coverUrl || null;
-        await pool.execute(
-          'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
-          [postId.toString(), videoUrl, coverUrl]
-        );
+        let newVideoUrl = null;
+        let newCoverUrl = null;
+        let shouldCleanupVideo = false;
+        
+        if (video && video.url) {
+          // 有完整的video对象，说明是新上传的视频
+          newVideoUrl = video.url;
+          newCoverUrl = video.coverUrl || null;
+          shouldCleanupVideo = oldVideoData && oldVideoData.video_url !== newVideoUrl;
+        } else if (video_url !== undefined) {
+          // 有分离的video_url字段
+          newVideoUrl = video_url;
+          newCoverUrl = cover_url !== undefined ? cover_url : (oldVideoData ? oldVideoData.cover_url : null);
+          shouldCleanupVideo = oldVideoData && oldVideoData.video_url !== newVideoUrl;
+        } else if (cover_url !== undefined && oldVideoData) {
+          // 仅更新封面，保持原视频URL不变
+          newVideoUrl = oldVideoData.video_url;
+          newCoverUrl = cover_url;
+          shouldCleanupVideo = false; // 仅更新封面，不清理视频文件
+        }
+        
+        // 更新数据库记录
+        if (newVideoUrl) {
+          // 删除原有记录
+          await pool.execute('DELETE FROM post_videos WHERE post_id = ?', [postId.toString()]);
+          
+          // 插入新记录
+          await pool.execute(
+            'INSERT INTO post_videos (post_id, video_url, cover_url) VALUES (?, ?, ?)',
+            [postId.toString(), newVideoUrl, newCoverUrl]
+          );
+          
+          // 只有在视频URL发生变化时才清理旧视频文件
+          if (shouldCleanupVideo && oldVideoData) {
+            const oldVideoUrls = [oldVideoData.video_url].filter(url => url);
+            const oldCoverUrls = [oldVideoData.cover_url].filter(url => url && url !== newCoverUrl);
+            
+            if (oldVideoUrls.length > 0 || oldCoverUrls.length > 0) {
+              // 异步清理文件，不阻塞响应
+              batchCleanupFiles(oldVideoUrls, oldCoverUrls).catch(error => {
+                console.error('清理废弃视频文件失败:', error);
+              });
+            }
+          }
+        }
       }
     } else {
       // 图文笔记：删除原有图片并插入新的

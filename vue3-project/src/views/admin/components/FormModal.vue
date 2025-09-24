@@ -826,7 +826,7 @@ const handleCoverOnlyUpload = async () => {
     const coverUrl = await videoUploadRef.uploadCustomCover()
     
     if (coverUrl) {
-      // 更新表单数据中的封面URL
+      // 更新表单数据中的封面URL，但不构造video对象
       const processedData = { ...props.formData }
       processedData['cover_url'] = coverUrl
 
@@ -1025,11 +1025,20 @@ const handleFormSubmit = async () => {
       delete processedData.video_upload
     }
 
-    // 如果有视频URL，始终构建video对象发送给后端（用于文件清理和更新）
+    // 如果有视频URL，根据情况构建video对象发送给后端
     if (processedData.video_url) {
-      processedData.video = {
-        url: processedData.video_url,
-        coverUrl: processedData.cover_url || null
+      // 检查是否有新的视频文件上传
+      const hasNewVideoFile = hasNewVideo.value && videoUploadCompleted.value;
+      
+      if (hasNewVideoFile) {
+        // 有新视频文件上传，构造完整的video对象用于文件清理
+        processedData.video = {
+          url: processedData.video_url,
+          coverUrl: processedData.cover_url || null
+        }
+      } else {
+        // 仅更新封面或其他字段，不构造video对象，避免误删视频文件
+        processedData.video = null
       }
     } else {
       // 如果没有视频URL，确保video字段为null

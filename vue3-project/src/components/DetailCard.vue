@@ -24,24 +24,28 @@
           @mouseleave="showImageControls = false">
           <!-- 视频播放器（桌面端） -->
           <div v-if="props.item.type === 2" class="video-container">
+            <div v-if="!isVideoLoaded" class="video-placeholder">
+              <img 
+                v-if="props.item.cover_url || (props.item.images && props.item.images[0])" 
+                :src="props.item.cover_url || props.item.images[0]" 
+                :alt="props.item.title || '视频封面'"
+                class="video-cover-placeholder"
+              />
+            </div>
             <video 
-              v-if="props.item.video_url && showContent"
+              v-show="isVideoLoaded"
               ref="videoPlayer"
               :src="props.item.video_url" 
-              :poster="props.item.images && props.item.images[0]"
+              :poster="props.item.cover_url || (props.item.images && props.item.images[0])"
               controls 
               preload="metadata"
+              webkit-playsinline="true"
+              playsinline="true"
               class="video-player"
               @loadedmetadata="handleVideoLoad"
             >
               您的浏览器不支持视频播放
             </video>
-            <div v-else class="video-placeholder">
-              <div class="placeholder-content">
-                <SvgIcon name="video" width="48" height="48" />
-                <p>{{ showContent ? '视频加载中...' : '加载中...' }}</p>
-              </div>
-            </div>
           </div>
           <!-- 图片轮播（图文笔记） -->
           <div v-else class="image-container">
@@ -95,24 +99,32 @@
           <div class="scrollable-content" ref="scrollableContent">
             <!-- 视频播放器（移动端） -->
             <div v-if="props.item.type === 2" class="mobile-video-container">
+              <div v-if="!isVideoLoaded" class="video-placeholder">
+                <img 
+                  v-if="props.item.cover_url || (props.item.images && props.item.images[0])" 
+                  :src="props.item.cover_url || props.item.images[0]" 
+                  :alt="props.item.title || '视频封面'"
+                  class="video-cover-placeholder"
+                />
+                <div v-else class="placeholder-content">
+                  <SvgIcon name="video" width="48" height="48" />
+                  <p>视频加载中...</p>
+                </div>
+              </div>
               <video 
-                v-if="props.item.video_url"
+                v-show="isVideoLoaded"
                 ref="mobileVideoPlayer"
                 :src="props.item.video_url" 
-                :poster="props.item.images && props.item.images[0]"
+                :poster="props.item.cover_url || (props.item.images && props.item.images[0])"
                 controls 
                 preload="metadata"
+                webkit-playsinline="true"
+                playsinline="true"
                 class="mobile-video-player"
                 @loadedmetadata="handleVideoLoad"
               >
                 您的浏览器不支持视频播放
               </video>
-              <div v-else class="video-placeholder">
-                <div class="placeholder-content">
-                  <SvgIcon name="video" width="48" height="48" />
-                  <p>视频加载中...</p>
-                </div>
-              </div>
             </div>
             <!-- 图片轮播（图文笔记） -->
             <div v-else-if="imageList && imageList.length > 0" class="mobile-image-container">
@@ -495,6 +507,14 @@ const handleVideoLoad = (event) => {
 
     imageSectionWidth.value = optimalWidth
   }
+
+  // 视频加载完成，隐藏封面并开始播放
+  isVideoLoaded.value = true
+  
+  // 延迟一点时间确保视频完全准备好
+  setTimeout(() => {
+    autoPlayVideo()
+  }, 100)
 }
 
 // 自动播放视频
@@ -564,6 +584,7 @@ const likeButtonRef = ref(null)
 const isAnimating = ref(true)
 const showContent = ref(false) // 新增：控制内容显示
 const isClosing = ref(false) // 新增：控制关闭动画状态
+const isVideoLoaded = ref(false) // 视频加载状态
 
 // 移动端检测
 const isMobile = computed(() => windowWidth.value <= 768)
@@ -2735,6 +2756,13 @@ function handleAvatarError(event) {
   justify-content: center;
   background: var(--bg-color-secondary);
   color: var(--text-color-secondary);
+}
+
+.video-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--bg-color-secondary);
 }
 
 .placeholder-content {
