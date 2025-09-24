@@ -5,7 +5,7 @@
 - **版本**: v1.2.0
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-19
+- **更新时间**: 2025-09-24
 
 ## 通用说明
 
@@ -2156,9 +2156,9 @@ Authorization: Bearer <your_jwt_token>
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| keyword | string | 否 | 搜索关键词 |
-| tag | string | 否 | 标签搜索 |
-| type | string | 否 | 搜索类型：all（默认）、posts、users |
+| keyword | string | 否 | 搜索关键词（支持搜索小石榴号、昵称、标题、正文内容、标签名称） |
+| tag | string | 否 | 标签搜索（精确匹配标签名称） |
+| type | string | 否 | 搜索类型：all（默认，所有类型）、posts（图文笔记）、videos（视频笔记）、users（用户） |
 | page | int | 否 | 页码，默认1 |
 | limit | int | 否 | 每页数量，默认20 |
 

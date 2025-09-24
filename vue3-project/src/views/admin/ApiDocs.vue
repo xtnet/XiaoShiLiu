@@ -5,7 +5,7 @@
       <div class="docs-info">
         <span class="version">版本: v1.2.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-19</span>
+        <span class="update-time">更新时间: 2025-09-24</span>
       </div>
     </div>
 
@@ -947,12 +947,12 @@ const apiGroups = ref([
         method: 'GET',
         path: '/api/search',
         title: '通用搜索',
-        description: '搜索笔记和用户，支持标签筛选',
+        description: '搜索笔记和用户，支持关键词和标签筛选，支持按类型过滤',
         expanded: false,
         params: [
-          { name: 'keyword', type: 'string', required: false, description: '搜索关键词' },
-          { name: 'tag', type: 'string', required: false, description: '标签筛选' },
-          { name: 'type', type: 'string', required: false, description: '搜索类型（all, posts, users）' },
+          { name: 'keyword', type: 'string', required: false, description: '搜索关键词（支持搜索小石榴号、昵称、标题、正文内容、标签名称）' },
+          { name: 'tag', type: 'string', required: false, description: '标签搜索（精确匹配标签名称）' },
+          { name: 'type', type: 'string', required: false, description: '搜索类型：all（默认，所有类型）、posts（图文笔记）、videos（视频笔记）、users（用户）' },
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
         ],

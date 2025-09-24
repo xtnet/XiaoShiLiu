@@ -56,7 +56,7 @@ const tagTabs = computed(() => {
 
 // 是否显示标签选项卡
 const shouldShowTags = computed(() => {
-  return tagTabs.value.length > 1 && (props.activeTab === 'all' || props.activeTab === 'posts')
+  return tagTabs.value.length > 1 && (props.activeTab === 'all' || props.activeTab === 'posts' || props.activeTab === 'videos')
 })
 
 function handleTagChange(item) {
@@ -172,7 +172,6 @@ onUnmounted(() => {
   .fixed-tag-container {
     left: calc(50% + 114px);
     width: calc(100% - 228px);
-    max-width: calc(1200px - 228px);
   }
 }
 </style>

@@ -24,6 +24,7 @@ const activeTab = ref('all')
 const searchTabs = [
     { id: 'all', label: '全部' },
     { id: 'posts', label: '图文' },
+    { id: 'videos', label: '视频' },
     { id: 'users', label: '用户' }
 ]
 
@@ -35,6 +36,8 @@ const loading = ref(false)
 
 const cachedAllPosts = ref([])
 const cachedKeyword = ref('')
+const cachedPostsData = ref([])  // 缓存图文数据
+const cachedVideosData = ref([]) // 缓存视频数据
 
 const isTagLoading = ref(false)
 let eventListenerKey = null
@@ -45,11 +48,29 @@ async function searchContent(type = 'all', page = 1, limit = 20) {
         return
     }
 
-    if (keyword.value.trim() && keyword.value === cachedKeyword.value && cachedAllPosts.value.length > 0 && (type === 'all' || type === 'posts')) {
-        if (!selectedTag.value.trim()) {
+    // 检查缓存数据
+    if (keyword.value.trim() && keyword.value === cachedKeyword.value && !selectedTag.value.trim()) {
+        if (type === 'all' && cachedAllPosts.value.length > 0) {
             postResults.value = cachedAllPosts.value
             return
-        } else {
+        } else if (type === 'posts' && cachedPostsData.value.length > 0) {
+            postResults.value = cachedPostsData.value
+            return
+        } else if (type === 'videos' && cachedVideosData.value.length > 0) {
+            postResults.value = cachedVideosData.value
+            return
+        }
+    }
+
+    // 处理标签过滤的缓存情况
+    if (selectedTag.value.trim() && keyword.value === cachedKeyword.value) {
+        if (type === 'all' && cachedAllPosts.value.length > 0) {
+            filterPostsByTag()
+            return
+        } else if (type === 'posts' && cachedPostsData.value.length > 0) {
+            filterPostsByTag()
+            return
+        } else if (type === 'videos' && cachedVideosData.value.length > 0) {
             filterPostsByTag()
             return
         }
@@ -95,16 +116,25 @@ async function searchContent(type = 'all', page = 1, limit = 20) {
                 handleUserResults(response.data.users)
             }
 
-            if (type === 'posts' || (type === 'all' && response.data.posts)) {
-                handlePostResults(response.data.posts)
+            if (type === 'posts' || type === 'videos' || (type === 'all' && response.data.data)) {
+                // 对于all类型，数据直接在response.data中；对于posts/videos类型，数据在response.data.posts中
+                const postsData = type === 'all' ? response.data : response.data.posts
+                handlePostResults(postsData)
 
-                if (keyword.value.trim() && !selectedTag.value.trim() && response.data.posts && response.data.posts.data) {
-                    cachedAllPosts.value = response.data.posts.data
+                if (keyword.value.trim() && !selectedTag.value.trim() && postsData && postsData.data && postsData.data.length > 0) {
+                    // 根据类型分别缓存数据（只有当有数据时才缓存）
+                    if (type === 'all') {
+                        cachedAllPosts.value = postsData.data
+                    } else if (type === 'posts') {
+                        cachedPostsData.value = postsData.data
+                    } else if (type === 'videos') {
+                        cachedVideosData.value = postsData.data
+                    }
                     cachedKeyword.value = keyword.value
                 }
             }
 
-            if (selectedTag.value && keyword.value === cachedKeyword.value && cachedAllPosts.value.length > 0 && (type === 'all' || type === 'posts')) {
+            if (selectedTag.value && keyword.value === cachedKeyword.value && cachedAllPosts.value.length > 0 && (type === 'all' || type === 'posts' || type === 'videos')) {
                 filterPostsByTag()
             }
         } else {
@@ -113,6 +143,11 @@ async function searchContent(type = 'all', page = 1, limit = 20) {
             userResults.value = []
             postResults.value = []
             tagStats.value = []
+            // 清空缓存，避免显示旧数据
+            cachedAllPosts.value = []
+            cachedPostsData.value = []
+            cachedVideosData.value = []
+            cachedKeyword.value = ''
         }
     } catch (error) {
         console.error('搜索失败:', error)
@@ -120,18 +155,50 @@ async function searchContent(type = 'all', page = 1, limit = 20) {
         userResults.value = []
         postResults.value = []
         tagStats.value = []
+        // 清空缓存，避免显示旧数据
+        cachedAllPosts.value = []
+        cachedPostsData.value = []
+        cachedVideosData.value = []
+        cachedKeyword.value = ''
     } finally {
         loading.value = false
     }
 }
 
 function filterPostsByTag() {
-    if (!selectedTag.value || !cachedAllPosts.value.length) {
-        postResults.value = cachedAllPosts.value
+    if (!selectedTag.value) {
+        // 如果没有选择标签，根据当前tab显示对应的全部数据
+        if (activeTab.value === 'all') {
+            postResults.value = cachedAllPosts.value
+        } else if (activeTab.value === 'posts') {
+            postResults.value = cachedPostsData.value
+        } else if (activeTab.value === 'videos') {
+            postResults.value = cachedVideosData.value
+        }
         return
     }
 
-    const filteredPosts = cachedAllPosts.value.filter(post => {
+    // 根据当前活跃的标签页选择对应的缓存数据进行过滤
+    let sourceData = []
+    if (activeTab.value === 'all') {
+        sourceData = cachedAllPosts.value
+    } else if (activeTab.value === 'posts') {
+        // 如果没有图文缓存数据，从全部数据中过滤出图文类型
+        if (cachedPostsData.value.length > 0) {
+            sourceData = cachedPostsData.value
+        } else {
+            sourceData = cachedAllPosts.value.filter(post => post.type === 1)
+        }
+    } else if (activeTab.value === 'videos') {
+        // 如果没有视频缓存数据，从全部数据中过滤出视频类型
+        if (cachedVideosData.value.length > 0) {
+            sourceData = cachedVideosData.value
+        } else {
+            sourceData = cachedAllPosts.value.filter(post => post.type === 2)
+        }
+    }
+
+    const filteredPosts = sourceData.filter(post => {
         return post.tags && post.tags.some(tag => tag.name === selectedTag.value)
     })
 
@@ -163,10 +230,18 @@ function handleUserResults(usersData) {
 }
 
 function handlePostResults(postsData) {
-    if (postsData && postsData.data) {
+    if (postsData && postsData.data && postsData.data.length > 0) {
         postResults.value = postsData.data
     } else {
         postResults.value = []
+        // 如果搜索结果为空，清空对应的缓存
+        if (activeTab.value === 'all') {
+            cachedAllPosts.value = []
+        } else if (activeTab.value === 'posts') {
+            cachedPostsData.value = []
+        } else if (activeTab.value === 'videos') {
+            cachedVideosData.value = []
+        }
     }
 }
 
@@ -176,16 +251,40 @@ function handleTabChange(item) {
 
     if (item.id === 'users') {
         searchContent(activeTab.value)
+    } else if (item.id === 'videos') {
+        // 视频tab：检查是否有视频缓存数据
+        if (cachedVideosData.value.length > 0 && cachedKeyword.value === keyword.value) {
+            if (selectedTag.value && selectedTag.value.trim()) {
+                filterPostsByTag()
+            } else {
+                postResults.value = [...cachedVideosData.value]
+            }
+        } else {
+            // 没有视频缓存或关键词不匹配，重新搜索
+            searchContent('videos')
+        }
+    } else if (item.id === 'posts') {
+        // 图文tab：检查是否有图文缓存数据
+        if (cachedPostsData.value.length > 0 && cachedKeyword.value === keyword.value) {
+            if (selectedTag.value && selectedTag.value.trim()) {
+                filterPostsByTag()
+            } else {
+                postResults.value = [...cachedPostsData.value]
+            }
+        } else {
+            // 没有图文缓存或关键词不匹配，重新搜索
+            searchContent('posts')
+        }
     } else {
+        // 全部tab
         if (cachedAllPosts.value.length > 0 && cachedKeyword.value === keyword.value) {
-            console.log('使用缓存数据')
             if (selectedTag.value && selectedTag.value.trim()) {
                 filterPostsByTag()
             } else {
                 postResults.value = [...cachedAllPosts.value] // 使用数组复制触发变化检测
             }
         } else {
-            // 暂时统一使用 'all' 类型，让"全部"和"图文"使用完全相同的逻辑
+            // 全部tab使用all类型
             searchContent('all')
         }
     }
@@ -244,29 +343,37 @@ function handleUserUnfollow(user) {
 
 
 
-watch(() => route.query, (newQuery) => {
+watch(() => route.query, (newQuery, oldQuery) => {
     const newKeyword = newQuery.keyword || ''
     const newTag = newQuery.tag || ''
 
     const keywordChanged = newKeyword !== keyword.value
+    const tagChanged = newTag !== selectedTag.value
 
-    if (newKeyword !== keyword.value || newTag !== selectedTag.value) {
+    // 只有当关键词或标签真正发生变化时才触发搜索
+    if ((keywordChanged || tagChanged) && oldQuery) {
         keyword.value = newKeyword
         selectedTag.value = newTag
 
         if (keywordChanged) {
             cachedAllPosts.value = []
+            cachedPostsData.value = []
+            cachedVideosData.value = []
             cachedKeyword.value = ''
         }
         navigationStore.scrollToTop('instant')
         searchContent(activeTab.value)
+    } else if (!oldQuery) {
+        // 初始化时只更新值，不触发搜索
+        keyword.value = newKeyword
+        selectedTag.value = newTag
     }
 }, { immediate: true })
 
 watch(() => route.params.tab, (newTab) => {
-    if (newTab && ['all', 'posts', 'users'].includes(newTab)) {
+    if (newTab && ['all', 'posts', 'videos', 'users'].includes(newTab)) {
+        // 只更新activeTab，不触发搜索，避免与handleTabChange重复
         activeTab.value = newTab
-        searchContent(activeTab.value)
     }
 }, { immediate: true })
 
@@ -311,7 +418,7 @@ onUnmounted(() => {
 
 
             <div v-else>
-                <WaterfallFlow :searchKeyword="keyword" :searchTag="selectedTag" :preloadedPosts="postResults" />
+                <WaterfallFlow :searchKeyword="keyword" :searchTag="selectedTag" :preloadedPosts="postResults" :type="activeTab" />
             </div>
         </div>
         <SearchFloatingBtn @reload="handleFloatingBtnReloadRequest" />

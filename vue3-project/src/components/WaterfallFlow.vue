@@ -515,11 +515,7 @@ watch(() => props.searchTag, async () => {
 
 // 监听预加载笔记数据变化
 watch(() => props.preloadedPosts, async (newPosts, oldPosts) => {
-    if ((!newPosts || newPosts.length === 0) &&
-        oldPosts && oldPosts.length > 0 &&
-        contentList.value.length > 0) {
-        return
-    }
+    // 如果新数据和旧数据都存在且长度相同且内容相同，则跳过更新
     if (newPosts && oldPosts && newPosts.length === oldPosts.length && newPosts.length > 0) {
         const isSameData = newPosts.every((post, index) =>
             oldPosts[index] && post.id === oldPosts[index].id

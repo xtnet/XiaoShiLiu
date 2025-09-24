@@ -148,7 +148,7 @@ export async function getPostList(params = {}) {
     } else if ((searchKeyword && searchKeyword.trim()) || (searchTag && searchTag.trim())) {
       // 如果有搜索关键词或标签，使用新的统一搜索API
       const searchParams = new URLSearchParams({
-        type: 'posts',
+        type: type || 'posts',
         page: page.toString(),
         limit: limit.toString()
       })

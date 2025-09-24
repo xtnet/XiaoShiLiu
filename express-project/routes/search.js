@@ -9,7 +9,7 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const keyword = req.query.keyword || '';
     const tag = req.query.tag || '';
-    const type = req.query.type || 'all'; // all, posts, users
+    const type = req.query.type || 'all'; // all, posts, videos, users
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
@@ -38,8 +38,8 @@ router.get('/', optionalAuth, async (req, res) => {
 
     let result = {};
 
-    // all和posts都返回笔记内容（all=视频+图文，但目前只有图文，所以和posts一样）
-    if (type === 'all' || type === 'posts') {
+    // all、posts、videos都返回笔记内容，但根据type过滤不同类型
+    if (type === 'all' || type === 'posts' || type === 'videos') {
       // 构建搜索条件
       let whereConditions = [];
       let queryParams = [];
@@ -66,6 +66,16 @@ router.get('/', optionalAuth, async (req, res) => {
       // 添加is_draft条件，确保只搜索已发布的笔记
       whereConditions.push('p.is_draft = 0');
 
+      // 根据type添加内容类型过滤
+      if (type === 'posts') {
+        // 图文tab：只显示图片笔记（type=1），过滤掉视频
+        whereConditions.push('p.type = 1');
+      } else if (type === 'videos') {
+        // 视频tab：只显示视频笔记（type=2）
+        whereConditions.push('p.type = 2');
+      }
+      // all类型不添加type过滤，显示所有类型
+
       // 构建WHERE子句
       let whereClause = '';
       if (whereConditions.length > 0) {
@@ -88,9 +98,21 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取每个笔记的图片、标签和用户点赞收藏状态
       for (let post of postRows) {
-        // 获取笔记图片
-        const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id.toString()]);
-        post.images = images.map(img => img.image_url);
+        // 根据笔记类型获取图片或视频封面
+        if (post.type === 2) {
+          // 视频笔记：获取视频封面
+          const [videos] = await pool.execute('SELECT video_url, cover_url FROM post_videos WHERE post_id = ?', [post.id.toString()]);
+          post.images = videos.length > 0 && videos[0].cover_url ? [videos[0].cover_url] : [];
+          post.video_url = videos.length > 0 ? videos[0].video_url : null;
+          // 为瀑布流设置image字段
+          post.image = videos.length > 0 && videos[0].cover_url ? videos[0].cover_url : null;
+        } else {
+          // 图文笔记：获取笔记图片
+          const [images] = await pool.execute('SELECT image_url FROM post_images WHERE post_id = ?', [post.id.toString()]);
+          post.images = images.map(img => img.image_url);
+          // 为瀑布流设置image字段（取第一张图片）
+          post.image = images.length > 0 ? images[0].image_url : null;
+        }
 
         // 获取笔记标签
         const [tags] = await pool.execute(
@@ -154,7 +176,7 @@ router.get('/', optionalAuth, async (req, res) => {
         }));
       }
 
-      // all模式和posts模式都只返回笔记数据
+      // all模式直接返回数据，posts模式和videos模式返回posts结构
       if (type === 'all') {
         result = {
           data: postRows,
@@ -166,7 +188,7 @@ router.get('/', optionalAuth, async (req, res) => {
             pages: Math.ceil(postCountResult[0].total / limit)
           }
         };
-      } else {
+      } else if (type === 'posts' || type === 'videos') {
         result.posts = {
           data: postRows,
           tagStats: tagStats,
@@ -256,7 +278,7 @@ router.get('/', optionalAuth, async (req, res) => {
       data: {
         keyword,
         tag,
-        type,
+        type: type, // 确保返回正确的type值
         ...result
       }
     });
