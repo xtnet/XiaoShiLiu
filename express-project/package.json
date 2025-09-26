@@ -7,11 +7,8 @@
     "scripts": {
         "start": "node app.js",
         "dev": "nodemon app.js",
-        "generate-data": "node generate-data.js",
-        "deploy": "node scripts/deploy.js",
-        "init-db": "node scripts/init-database.js",
-        "analyze-db": "node scripts/analyze-database.js",
-        "setup": "npm install && npm run deploy"
+        "generate-data": "node scripts/generate-data.js",
+        "init-db": "node scripts/init-database.js"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.888.0",

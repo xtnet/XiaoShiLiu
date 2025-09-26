@@ -12,7 +12,6 @@ import path from 'path'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 
 // https://vite.dev/config/
@@ -38,7 +37,7 @@ export default defineConfig({
     ],  */
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3001',//后端接口地址
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       },
