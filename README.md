@@ -194,34 +194,60 @@ DB_PORT=3306
 # JWT配置
 JWT_SECRET=xiaoshiliu_secret_key_2025
 JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# API配置
+API_BASE_URL=http://localhost:3001
 
 # 上传配置
 UPLOAD_MAX_SIZE=50mb
-# 图片上传策略 (local: 本地存储, imagehost: 第三方图床)
-UPLOAD_STRATEGY=imagehost
+# 图片上传策略 (local: 本地存储, imagehost: 第三方图床, r2: Cloudflare R2)
+IMAGE_UPLOAD_STRATEGY=imagehost
+# 视频上传策略 (local: 本地存储, r2: Cloudflare R2)
+VIDEO_UPLOAD_STRATEGY=local
 
 # 本地存储配置
 LOCAL_UPLOAD_DIR=uploads
 LOCAL_BASE_URL=http://localhost:3001
+# 视频存储目录
+VIDEO_UPLOAD_DIR=uploads/videos
+# 视频封面存储目录
+VIDEO_COVER_DIR=uploads/covers
 
-# 第三方图床配置
+# 第三方图床配置（当IMAGE_UPLOAD_STRATEGY=imagehost时使用）
 IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
 IMAGEHOST_TIMEOUT=60000
+
+# Cloudflare R2 配置（当IMAGE_UPLOAD_STRATEGY=r2或VIDEO_UPLOAD_STRATEGY=r2时使用）
+R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your_bucket_name_here
+R2_ACCOUNT_ID=your_account_id_here
+R2_REGION=auto
+# 可选：如果有自定义域名，可以设置 R2_PUBLIC_URL
+# R2_PUBLIC_URL=https://your-custom-domain.com
+
+# CORS配置
+CORS_ORIGIN=http://localhost:5173
 ```
 
 ### 前端配置 (vue3-project/.env)
 
 ```env
-# API基础URL配置
+# API基础URL
 VITE_API_BASE_URL=http://localhost:3001/api
 
-# 应用配置
+# 是否使用真实API
 VITE_USE_REAL_API=true
+
+# 应用标题
 VITE_APP_TITLE=小石榴图文社区
 ```
 
 > 💡 **配置说明**：
-> - 后端支持本地存储和第三方图床两种上传策略
+> - 后端支持本地存储、第三方图床和 Cloudflare R2 三种上传策略
+> - 图片和视频可以分别配置不同的上传策略
 > - 前端使用 Vite 环境变量，变量名需以 `VITE_` 开头
 > - 详细配置说明请参考 [部署指南](./doc/DEPLOYMENT.md)
 
