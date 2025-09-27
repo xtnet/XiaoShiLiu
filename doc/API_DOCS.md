@@ -5,7 +5,7 @@
 - **版本**: v1.2.0
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
-- **更新时间**: 2025-09-24
+- **更新时间**: 2024-09-28
 
 ## 通用说明
 
@@ -3108,10 +3108,6 @@ async function example() {
 
 #### 12.6 修改管理员密码
 **接口地址**: `PUT /api/auth/admin/admins/:id/password`
-**需要认证**: 是（JWT）
-
-#### 12.7 修改管理员状态
-**接口地址**: `PUT /api/auth/admin/admins/:id/status`
 **需要认证**: 是（JWT）
 
 ### 13. 监控管理

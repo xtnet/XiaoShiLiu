@@ -5,7 +5,7 @@
       <div class="docs-info">
         <span class="version">版本: v1.2.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2025-09-24</span>
+        <span class="update-time">更新时间: 2024-09-28</span>
       </div>
     </div>
 
@@ -2070,18 +2070,6 @@ const apiGroups = ref([
         params: [
           { name: 'id', type: 'string', required: true, description: '管理员用户名' },
           { name: 'password', type: 'string', required: true, description: '新密码' }
-        ]
-      },
-      {
-        method: 'PUT',
-        path: '/api/auth/admin/admins/:id/status',
-        title: '修改管理员状态',
-        description: '修改指定管理员的状态（启用/禁用）',
-        auth: true,
-        expanded: false,
-        params: [
-          { name: 'id', type: 'string', required: true, description: '管理员用户名' },
-          { name: 'status', type: 'int', required: true, description: '状态（0=禁用，1=启用）' }
         ]
       }
     ]
