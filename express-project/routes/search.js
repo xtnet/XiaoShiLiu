@@ -98,6 +98,10 @@ router.get('/', optionalAuth, async (req, res) => {
 
       // 获取每个笔记的图片、标签和用户点赞收藏状态
       for (let post of postRows) {
+        // 修复头像字段映射问题
+        post.avatar = post.user_avatar;
+        post.author = post.nickname;
+        
         // 根据笔记类型获取图片或视频封面
         if (post.type === 2) {
           // 视频笔记：获取视频封面
