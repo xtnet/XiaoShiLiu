@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "preview": "npm run build && vite preview --host"
+    "preview": "vite build && vite preview --host"
   },
   "dependencies": {
     "@vueuse/core": "^13.5.0",
