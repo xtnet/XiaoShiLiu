@@ -320,7 +320,7 @@ async function loadFollowsData(isLoadMore = false) {
       // 根据关注状态生成动态文本
       let actionText = item.title || 'Ta关注了你' // 使用后端生成的title
       if (followStatus.followed) {
-        actionText = 'Ta关注了你，你们已经互相关注了'
+        actionText = '你们已经互相关注了'
       }
 
       return {
