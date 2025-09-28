@@ -20,7 +20,11 @@ router.get('/comments', authenticateToken, async (req, res) => {
              u.user_id as from_user_id,
              u.verified as from_verified,
              p.title as post_title,
-             (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image,
+             p.type as post_type,
+             CASE 
+               WHEN p.type = 2 THEN (SELECT pv.cover_url FROM post_videos pv WHERE pv.post_id = p.id ORDER BY pv.id LIMIT 1)
+               ELSE (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1)
+             END as post_image,
              c.content as comment_content,
              c.created_at as comment_created_at,
              c.like_count as comment_like_count,
@@ -87,7 +91,11 @@ router.get('/likes', authenticateToken, async (req, res) => {
              u.user_id as from_user_id,
              u.verified as from_verified,
              p.title as post_title,
-             (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image,
+             p.type as post_type,
+             CASE 
+               WHEN p.type = 2 THEN (SELECT pv.cover_url FROM post_videos pv WHERE pv.post_id = p.id ORDER BY pv.id LIMIT 1)
+               ELSE (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1)
+             END as post_image,
              CASE 
                WHEN n.type = 1 THEN 1
                WHEN n.type = 2 THEN 2
@@ -197,7 +205,11 @@ router.get('/collections', authenticateToken, async (req, res) => {
              u.user_id as from_user_id,
              u.verified as from_verified,
              p.title as post_title,
-             (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1) as post_image
+             p.type as post_type,
+             CASE 
+               WHEN p.type = 2 THEN (SELECT pv.cover_url FROM post_videos pv WHERE pv.post_id = p.id ORDER BY pv.id LIMIT 1)
+               ELSE (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1)
+             END as post_image
       FROM notifications n
       LEFT JOIN users u ON n.sender_id = u.id
       LEFT JOIN posts p ON n.target_id = p.id
