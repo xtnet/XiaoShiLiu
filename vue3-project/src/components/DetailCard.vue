@@ -2459,13 +2459,23 @@ const touchEndX = ref(0)
 const touchEndY = ref(0)
 const minSwipeDistance = 50
 const SWIPE_THRESHOLD = 10 // 滑动判定阈值
+const isTouching = ref(false) // 添加触摸状态标记
 
 const handleTouchStart = (e) => {
+  // 确保只处理单指触摸
+  if (e.touches.length !== 1) return
+  
+  isTouching.value = true
   touchStartX.value = e.touches[0].clientX
   touchStartY.value = e.touches[0].clientY
+  touchEndX.value = touchStartX.value
+  touchEndY.value = touchStartY.value
 }
 
 const handleTouchMove = (e) => {
+  // 如果不在触摸状态或多指触摸，直接返回
+  if (!isTouching.value || e.touches.length !== 1) return
+  
   const touchMoveX = e.touches[0].clientX
   const touchMoveY = e.touches[0].clientY
 
@@ -2475,17 +2485,32 @@ const handleTouchMove = (e) => {
   // 仅当"水平滑动幅度 > 垂直滑动幅度 + 阈值"时，阻止默认行为（避免影响页面垂直滚动）
   if (deltaX > deltaY && deltaX > SWIPE_THRESHOLD) {
     e.preventDefault()
+    e.stopPropagation()
   }
+  
+  // 实时更新结束坐标
+  touchEndX.value = touchMoveX
+  touchEndY.value = touchMoveY
 }
 
 const handleTouchEnd = (e) => {
-  touchEndX.value = e.changedTouches[0].clientX
-  touchEndY.value = e.changedTouches[0].clientY
+  // 如果不在触摸状态，直接返回
+  if (!isTouching.value) return
+  
+  // 使用changedTouches获取最终坐标
+  if (e.changedTouches.length > 0) {
+    touchEndX.value = e.changedTouches[0].clientX
+    touchEndY.value = e.changedTouches[0].clientY
+  }
 
   const deltaX = touchEndX.value - touchStartX.value
   const deltaY = touchEndY.value - touchStartY.value
 
+  // 检查是否为有效的水平滑动
   if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+    e.preventDefault()
+    e.stopPropagation()
+    
     if (deltaX > 0) {
       prevImage()
     } else {
@@ -2493,9 +2518,18 @@ const handleTouchEnd = (e) => {
     }
   }
 
-  // 重置记录
-  touchStartX.value = 0
-  touchStartY.value = 0
+  // 重置触摸状态，但不立即重置坐标
+  isTouching.value = false
+  
+  // 延迟重置坐标，给浏览器更多时间处理事件
+  setTimeout(() => {
+    if (!isTouching.value) {
+      touchStartX.value = 0
+      touchStartY.value = 0
+      touchEndX.value = 0
+      touchEndY.value = 0
+    }
+  }, 100)
 }
 
 
