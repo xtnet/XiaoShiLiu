@@ -1020,29 +1020,34 @@ const handleFormSubmit = async () => {
       }
     })
 
-    // 视频数据处理：移除临时的video_upload对象，但保留video对象用于后端清理旧文件
-    if (processedData.video_upload) {
-      delete processedData.video_upload
-    }
+    // 视频数据处理：只对包含视频相关字段的表单进行处理
+    const hasVideoFields = processedData.hasOwnProperty('video_url') || processedData.hasOwnProperty('video_upload')
+    
+    if (hasVideoFields) {
+      // 移除临时的video_upload对象，但保留video对象用于后端清理旧文件
+      if (processedData.video_upload) {
+        delete processedData.video_upload
+      }
 
-    // 如果有视频URL，根据情况构建video对象发送给后端
-    if (processedData.video_url) {
-      // 检查是否有新的视频文件上传
-      const hasNewVideoFile = hasNewVideo.value && videoUploadCompleted.value;
-      
-      if (hasNewVideoFile) {
-        // 有新视频文件上传，构造完整的video对象用于文件清理
-        processedData.video = {
-          url: processedData.video_url,
-          coverUrl: processedData.cover_url || null
+      // 如果有视频URL，根据情况构建video对象发送给后端
+      if (processedData.video_url) {
+        // 检查是否有新的视频文件上传
+        const hasNewVideoFile = hasNewVideo.value && videoUploadCompleted.value;
+        
+        if (hasNewVideoFile) {
+          // 有新视频文件上传，构造完整的video对象用于文件清理
+          processedData.video = {
+            url: processedData.video_url,
+            coverUrl: processedData.cover_url || null
+          }
+        } else {
+          // 仅更新封面或其他字段，不构造video对象，避免误删视频文件
+          processedData.video = null
         }
       } else {
-        // 仅更新封面或其他字段，不构造video对象，避免误删视频文件
+        // 如果没有视频URL，确保video字段为null
         processedData.video = null
       }
-    } else {
-      // 如果没有视频URL，确保video字段为null
-      processedData.video = null
     }
 
     emit('submit', processedData)
