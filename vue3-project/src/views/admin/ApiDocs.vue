@@ -1149,7 +1149,34 @@ const apiGroups = ref([
         params: [
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
-        ]
+        ],
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "notifications": [
+      {
+        "id": 1,
+        "type": 4,
+        "sender_id": 2,
+        "from_nickname": "用户2",
+        "from_avatar": "https://example.com/avatar2.jpg",
+        "from_verified": 0,
+        "post_title": "笔记标题",
+        "post_author_id": "author_001",
+        "comment_content": "评论内容",
+        "is_read": 0,
+        "created_at": "2025-08-30T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 10,
+      "pages": 1
+    }
+  }
+}`
       },
       {
         method: 'GET',
@@ -1161,7 +1188,34 @@ const apiGroups = ref([
         params: [
           { name: 'page', type: 'int', required: false, description: '页码，默认1' },
           { name: 'limit', type: 'int', required: false, description: '每页数量，默认20' }
-        ]
+        ],
+        example: `{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "notifications": [
+      {
+        "id": 2,
+        "type": 1,
+        "sender_id": 3,
+        "from_nickname": "用户3",
+        "from_avatar": "https://example.com/avatar3.jpg",
+        "from_verified": 0,
+        "post_title": "笔记标题",
+        "post_author_id": "author_001",
+        "target_type": 1,
+        "is_read": 0,
+        "created_at": "2025-08-30T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 5,
+      "pages": 1
+    }
+  }
+}`
       },
       {
         method: 'GET',

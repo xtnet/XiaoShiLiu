@@ -1588,6 +1588,7 @@ Authorization: Bearer <your_jwt_token>
         "sender_verified": 0,
         "post_id": 1,
         "post_title": "笔记标题",
+        "post_author_id": "author_001",
         "comment_content": "评论内容",
         "is_read": 0,
         "created_at": "2025-08-30T00:00:00.000Z"
@@ -1630,6 +1631,7 @@ Authorization: Bearer <your_jwt_token>
         "target_type": "post",
         "post_id": 1,
         "post_title": "笔记标题",
+        "post_author_id": "author_001",
         "is_read": 0,
         "created_at": "2025-08-30T00:00:00.000Z"
       }

@@ -21,6 +21,7 @@ router.get('/comments', authenticateToken, async (req, res) => {
              u.verified as from_verified,
              p.title as post_title,
              p.type as post_type,
+             p.user_id as post_author_id,
              CASE 
                WHEN p.type = 2 THEN (SELECT pv.cover_url FROM post_videos pv WHERE pv.post_id = p.id ORDER BY pv.id LIMIT 1)
                ELSE (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1)
@@ -92,6 +93,7 @@ router.get('/likes', authenticateToken, async (req, res) => {
              u.verified as from_verified,
              p.title as post_title,
              p.type as post_type,
+             p.user_id as post_author_id,
              CASE 
                WHEN p.type = 2 THEN (SELECT pv.cover_url FROM post_videos pv WHERE pv.post_id = p.id ORDER BY pv.id LIMIT 1)
                ELSE (SELECT pi.image_url FROM post_images pi WHERE pi.post_id = p.id ORDER BY pi.id LIMIT 1)

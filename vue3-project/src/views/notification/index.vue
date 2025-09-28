@@ -149,6 +149,7 @@ async function loadCommentsData(isLoadMore = false) {
         commentId: item.comment_id, // 评论ID，用于回复和点赞
         isLiked: item.comment_is_liked === 1, // 评论点赞状态
         likeCount: item.comment_like_count || 0, // 评论点赞数
+        postAuthorId: item.post_author_id, // 笔记作者ID
         isRead,
         isFollowing: false,
         isReplyComment, // 是否为回复评论
@@ -219,6 +220,7 @@ async function loadLikesData(isLoadMore = false) {
       target_id: item.target_id, // 添加笔记ID
       target_type: item.target_type, // 目标类型：1-笔记，2-评论
       commentId: item.comment_id, // 评论ID（当target_type为2时）
+      postAuthorId: item.post_author_id, // 笔记作者ID
       isRead: item.is_read === 1,
       isFollowing: false // 需要额外查询关注状态
     }))
@@ -274,15 +276,35 @@ async function loadFollowsData(isLoadMore = false) {
           const batch = userIds.slice(i, i + batchSize)
           const promises = batch.map(async userId => {
             try {
-              const followStatus = await userApi.getFollowStatus(userId)
-              return { userId, isFollowing: followStatus.data?.followed || followStatus.data?.isFollowing || false }
+              const followResponse = await followStore.fetchFollowStatus(userId)
+              if (followResponse.success) {
+                return { 
+                  userId, 
+                  followed: followResponse.data.followed,
+                  isMutual: followResponse.data.isMutual,
+                  buttonType: followResponse.data.buttonType
+                }
+              } else {
+                // 如果获取失败，尝试从store中获取
+                const storeState = followStore.getUserFollowState(userId)
+                if (storeState.hasState) {
+                  return {
+                    userId,
+                    followed: storeState.followed,
+                    isMutual: storeState.isMutual,
+                    buttonType: storeState.buttonType
+                  }
+                } else {
+                  return { userId, followed: false, isMutual: false, buttonType: 'follow' }
+                }
+              }
             } catch (error) {
-              return { userId, isFollowing: false }
+              return { userId, followed: false, isMutual: false, buttonType: 'follow' }
             }
           })
           const results = await Promise.all(promises)
-          results.forEach(({ userId, isFollowing }) => {
-            followStatusMap.set(userId, isFollowing)
+          results.forEach(({ userId, followed, isMutual, buttonType }) => {
+            followStatusMap.set(userId, { followed, isMutual, buttonType })
           })
         }
       } catch (error) {
@@ -293,11 +315,11 @@ async function loadFollowsData(isLoadMore = false) {
     // 转换后端数据格式为前端期望的格式
     const transformedData = (response.data?.notifications || []).map(item => {
       const userIdForQuery = item.from_user_id
-      const isFollowing = followStatusMap.get(userIdForQuery) || false
+      const followStatus = followStatusMap.get(userIdForQuery) || { followed: false, isMutual: false, buttonType: 'follow' }
 
       // 根据关注状态生成动态文本
       let actionText = item.title || 'Ta关注了你' // 使用后端生成的title
-      if (isFollowing) {
+      if (followStatus.followed) {
         actionText = 'Ta关注了你，你们已经互相关注了'
       }
 
@@ -314,8 +336,20 @@ async function loadFollowsData(isLoadMore = false) {
         followCount: item.follow_count || 0,
         fansCount: item.fans_count || 0,
         isRead: item.is_read === 1,
-        isFollowing: isFollowing
+        isFollowing: followStatus.followed,
+        isMutual: followStatus.isMutual,
+        buttonType: followStatus.buttonType
       }
+    })
+
+    // 初始化关注状态到store
+    transformedData.forEach(item => {
+      followStore.initUserFollowState(
+        item.from_user_id,
+        item.isFollowing,
+        item.isMutual,
+        item.buttonType
+      )
     })
 
     if (isLoadMore) {
@@ -966,6 +1000,18 @@ const getCommentLikeStatus = (commentId) => {
   return commentLikeStore.getCommentLikeState(commentId).liked
 }
 
+// 判断通知发起者是否为对应笔记的作者
+const isPostAuthor = (item) => {
+  if (!item || !userStore.userInfo) {
+    return false
+  }
+  if (item.postAuthorId && item.autoId) {
+    return item.postAuthorId === item.autoId
+  }
+
+  return false
+}
+
 // 处理评论点赞
 const handleCommentLike = async (item, willBeLiked) => {
   if (!isLoggedIn.value) {
@@ -1220,6 +1266,9 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
                         @click="onUserClick(item.id, $event)">{{ item.username }}</a>
                       <VerifiedBadge :verified="item.verified || 0" />
+                      <div v-if="isPostAuthor(item)" class="author-badge author-badge--notification">
+                        作者
+                      </div>
                     </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
@@ -1308,6 +1357,9 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                       <a class="username clickable-name" v-user-hover="getUserHoverConfig(item.id)"
                         @click="onUserClick(item.id, $event)">{{ item.username }}</a>
                       <VerifiedBadge :verified="item.verified || 0" />
+                      <div v-if="isPostAuthor(item)" class="author-badge author-badge--notification">
+                        作者
+                      </div>
                     </div>
                     <div class="interaction-hint">
                       <span class="action">{{ item.action }}</span>
@@ -1499,12 +1551,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   font-weight: 500;
 }
 
-@media (min-width: 901px) {
-  .loading-container {
-    left: calc(50% + 114px);
-    width: 100%;
-  }
-}
+
 
 .loading-text {
   color: var(--text-color-secondary);
@@ -1743,6 +1790,24 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* 作者标识样式 */
+.author-badge {
+  display: inline-flex;
+  background-color: var(--bg-color-primary);
+  color: var(--text-color-tertiary);
+  font-weight: 600;
+  border-radius: 999px;
+  border:1px solid var(--border-color-primary);
+  font-size: 9px;
+  opacity: 0.9;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.author-badge--notification {
+  padding: 2px 4px;
 }
 
 .username {
@@ -2055,11 +2120,25 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   max-height: 90vh;
 }
 
+/* 桌面端样式 */
 @media (min-width: 901px) {
+  .loading-container {
+    left: calc(50% + 114px);
+    width: 100%;
+  }
+
   .notification-main {
     max-width: 700px;
     margin: 0 auto;
     padding: 0;
+  }
+}
+
+/* 移动端样式 */
+@media (max-width: 900px) {
+  .interaction-hint .action,
+  .interaction-hint .time {
+    font-size: 12px;
   }
 }
 </style>
