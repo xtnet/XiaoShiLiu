@@ -41,6 +41,7 @@
               preload="metadata"
               webkit-playsinline="true"
               playsinline="true"
+              loop
               class="video-player"
               @loadedmetadata="handleVideoLoad"
             >
@@ -4041,8 +4042,7 @@ function handleAvatarError(event) {
     z-index: 1000;
     height: calc(72px + constant(safe-area-inset-top));
     height: calc(72px + env(safe-area-inset-top));
-    padding: 12px 16px;
-    padding-left: 60px;
+    padding: 12px 16px 0px 60px;
     padding-top: constant(safe-area-inset-top);
     /* iOS 旧版 */
     padding-top: env(safe-area-inset-top);
@@ -4099,6 +4099,7 @@ function handleAvatarError(event) {
   /* 移动端视频容器样式 */
   .mobile-video-container {
     display: flex;
+    height: 50%;
     width: 100%;
     min-height: 200px;
     margin-bottom: 16px;
