@@ -286,7 +286,7 @@ npm run preview
 
 ## Star历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ZTMYO/XiaoShiLiu&type=Date)](https://api.star-history.com/svg?repos=ZTMYO/XiaoShiLiu&type=Date&theme=dark)
+[![Star History Chart](https://api.star-history.com/svg?repos=ZTMYO/XiaoShiLiu&type=Date&theme=dark)](https://github.com/ZTMYO/XiaoShiLiu)
 
 ---
 
