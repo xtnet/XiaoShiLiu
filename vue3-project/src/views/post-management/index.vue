@@ -42,78 +42,13 @@
       </div>
 
       <div v-else class="posts-list">
-        <div v-for="post in posts" :key="post.id" class="post-item">
-
-          <div class="post-thumbnail">
-            <img
-              v-if="post.type === 2 && post.images && post.images.length > 0"
-              :src="post.images[0]"
-              :alt="post.title" @error="handleImageError" />
-            <img
-              v-else-if="post.type !== 2 && ((post.originalData?.images && post.originalData.images.length > 0) || (post.images && post.images.length > 0))"
-              :src="(post.originalData?.images && post.originalData.images[0]) || (post.images && post.images[0]) || post.image"
-              :alt="post.title" @error="handleImageError" />
-            <div v-else-if="post.type === 2" class="video-thumbnail">
-              <span>视频</span>
-            </div>
-            <div v-else class="no-image">
-              <SvgIcon name="image" width="24" height="24" />
-            </div>
-          </div>
-
-
-          <div class="post-info">
-            <h3 class="post-title">{{ post.title }}</h3>
-            <p
-              class="post-content"
-              style="
-                display: -webkit-box;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 2;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              "
-            >
-              {{ truncateContent(post.content) }}
-            </p>
-            <div class="post-meta">
-              <div class="date-row">
-                <span class="date">{{ formatDate(post.originalData?.createdAt || post.created_at) }}</span>
-              </div>
-              <div class="meta-row">
-                <span class="category">{{ getCategoryName(post.category) }}</span>
-                <span class="stats">
-                  <SvgIcon name="view" width="14" height="14" />
-                  {{ post.view_count }}
-                </span>
-                <span class="stats">
-                  <SvgIcon name="like" width="14" height="14" />
-                  {{ post.like_count }}
-                </span>
-                <span class="stats">
-                  <SvgIcon name="collect" width="14" height="14" />
-                  {{ post.collect_count }}
-                </span>
-                <span class="stats">
-                  <SvgIcon name="chat" width="14" height="14" />
-                  {{ post.comment_count }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-
-          <div class="post-actions">
-            <button class="action-btn edit-btn" @click="editPost(post)">
-              <SvgIcon name="edit" width="16" height="16" />
-              编辑
-            </button>
-            <button class="action-btn delete-btn" @click="confirmDelete(post)">
-              <SvgIcon name="delete" width="16" height="16" />
-              删除
-            </button>
-          </div>
-        </div>
+        <PostItem 
+          v-for="post in posts" 
+          :key="post.id" 
+          :post="post"
+          @edit="editPost"
+          @delete="confirmDelete"
+        />
       </div>
     </div>
 
@@ -151,6 +86,7 @@ import { getUserPosts, deletePost, updatePost } from '@/api/posts'
 import { getCategories } from '@/api/categories'
 import SvgIcon from '@/components/SvgIcon.vue'
 import DropdownSelect from '@/components/DropdownSelect.vue'
+import PostItem from '@/components/PostItem.vue'
 import EditPostModal from './components/EditPostModal.vue'
 import ConfirmModal from '@/components/ConfirmDialog.vue'
 import MessageToast from '@/components/MessageToast.vue'
@@ -189,37 +125,6 @@ const categoryOptions = computed(() => {
 })
 
 
-
-// 获取分类名称
-const getCategoryName = (category) => {
-  return category || ''
-}
-
-// 截断内容
-const truncateContent = (content) => {
-  if (!content) return ''
-  return content.length > 100 ? content.substring(0, 100) + '...' : content
-}
-
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) {
-    return '未知时间'
-  }
-
-  const date = new Date(dateString)
-
-  // 检查日期是否有效
-  if (isNaN(date.getTime())) {
-    return '无效日期'
-  }
-
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
 
 // 显示消息
 const showMessage = (message, type = 'success') => {
@@ -335,14 +240,6 @@ const handlePostUpdate = () => {
   showEditModal.value = false
   loadPosts() // 重新加载列表
   showMessage('更新成功', 'success')
-}
-
-// 处理图片加载错误
-const handleImageError = (event) => {
-  const img = event.target
-  // 直接替换为未加载图片
-  img.src = '/src/assets/imgs/未加载.png'
-  img.style.display = 'block'
 }
 
 // 加载分类数据
@@ -562,156 +459,6 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.post-item {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--bg-color-primary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color-primary);
-  transition: all 0.2s ease;
-}
-
-.post-item:hover {
-  border-color: var(--primary-color);
-}
-
-.post-thumbnail {
-  width: 80px;
-  height: 80px;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.post-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.no-image {
-  width: 100%;
-  height: 100%;
-  background: var(--bg-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color-secondary);
-}
-
-.video-thumbnail {
-  width: 100%;
-  height: 100%;
-  background: var(--bg-color-secondary);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color-secondary);
-  gap: 0.25rem;
-}
-
-.video-thumbnail span {
-  font-size: 0.75rem;
-}
-
-.post-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.post-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-color-primary);
-  line-height: 1.4;
-}
-
-.post-content {
-  font-size: 0.9rem;
-  color: var(--text-color-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.post-meta {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 1rem;
-}
-
-.date-row {
-  margin-left: auto;
-}
-
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: nowrap;
-}
-
-.category {
-  background: var(--primary-color);
-  color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-}
-
-.stats {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 12px;
-}
-
-.date {
-  font-size: 0.8rem;
-}
-
-.post-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-}
-
-.edit-btn {
-  background: var(--primary-color);
-  color: white;
-}
-
-.edit-btn:hover {
-  opacity: 0.8;
-}
-
-.delete-btn {
-  background: var(--primary-color);
-  color: white;
-}
-
-.delete-btn:hover {
-  background: var(--primary-color-dark);
-}
-
 .pagination {
   display: flex;
   align-items: center;
@@ -752,11 +499,11 @@ onMounted(() => {
     max-width: 100%;
     margin: 72px 0;
   }
-  
+
   .page-header {
     padding: 0.75rem 1rem;
   }
-  
+
   .filter-section {
     flex-direction: column;
     align-items: stretch;
@@ -772,77 +519,9 @@ onMounted(() => {
     justify-content: flex-start;
     gap: 0.75rem;
   }
-  
+
   .posts-section {
     padding: 0.75rem 1rem;
-  }
-  
-  .post-item {
-    padding: 0.75rem;
-    flex-direction: column;
-    position: relative;
-  }
-  
-  .post-actions {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .action-btn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
-  }
-  
-  .post-item > .post-thumbnail {
-    order: 1;
-    width: 60px;
-    height: 60px;
-    margin-bottom: 0.75rem;
-    align-self: flex-start;
-  }
-  
-  .post-item > .post-info {
-    order: 2;
-    margin-left: 75px;
-    margin-top: -75px;
-    padding-right: 6rem;
-  }
-  
-  .post-info > .post-title {
-    font-size: 0.9rem;
-    line-height: 1.3;
-    margin-bottom: 0.25rem;
-  }
-  
-  .post-info > .post-content {
-    font-size: 0.8rem;
-    line-height: 1.4;
-    margin-bottom: 0.75rem;
-  }
-  
-  .post-info > .post-meta {
-    margin-left: -75px;
-    margin-top: 0.5rem;
-  }
-  
-  .post-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .date-row {
-    margin-left: 0;
-    order: 2;
-  }
-  
-  .meta-row {
-    order: 1;
-    flex-wrap: wrap;
-    gap: 0.5rem;
   }
 }
 </style>
