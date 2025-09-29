@@ -63,7 +63,18 @@
 
           <div class="post-info">
             <h3 class="post-title">{{ draft.title }}</h3>
-            <p class="post-content">{{ truncateContent(draft.content) }}</p>
+            <p
+              class="post-content"
+              style="
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              "
+            >
+              {{ truncateContent(post.content) }}
+            </p>
             <div class="post-meta">
               <div class="date-row">
                 <span class="date">{{ formatDate(draft.originalData?.createdAt || draft.created_at) }}</span>
