@@ -673,14 +673,28 @@ const resetForm = () => {
 const loadDraftData = async (draftId) => {
   try {
     const response = await getPostDetail(draftId)
-
     if (response && response.originalData) {
+      const fullData = response
       const draft = response.originalData
-
       // 初始化表单数据
       form.title = response.title || ''
       form.content = draft.content || ''
       form.images = draft.images || []
+      
+      // 设置视频数据 - 从fullData中获取视频信息
+      if (fullData.video_url) {
+        // 构造完整的视频对象，包含VideoUpload组件需要的所有字段
+        form.video = {
+          url: fullData.video_url,
+          coverUrl: fullData.cover_url,
+          uploaded: true,
+          name: '已上传的视频',
+          size: 0,
+          preview: fullData.video_url  // 添加preview字段，VideoUpload组件需要这个字段来显示video-success状态
+        }
+      } else {
+        form.video = draft.video || null
+      }
 
       // 处理标签数据：确保转换为字符串数组
       if (draft.tags && Array.isArray(draft.tags)) {
@@ -704,13 +718,23 @@ const loadDraftData = async (draftId) => {
         form.category_id = null
       }
 
+      // 根据草稿数据类型设置uploadType
+      if (fullData.type === 2 || (form.video && form.video.url)) {
+        uploadType.value = 'video'
+      } else if (form.images.length > 0 || fullData.type === 1) {
+        // type: 1 表示图文类型，或者有图片数据
+        uploadType.value = 'image'
+      }
+      
+
       // 设置编辑模式
       currentDraftId.value = draftId
       isEditMode.value = true
 
+      // 等待DOM更新
+      await nextTick()
       // 初始化图片组件
-      if (form.images.length > 0 && multiImageUploadRef.value) {
-        await nextTick()
+      if (uploadType.value === 'image' && form.images.length > 0 && multiImageUploadRef.value) {
         // 将图片数据转换为URL字符串数组
         const imageUrls = form.images.map(img => {
           if (typeof img === 'string') {
@@ -723,6 +747,15 @@ const loadDraftData = async (draftId) => {
           return null
         }).filter(url => url)
         multiImageUploadRef.value.syncWithUrls(imageUrls)
+      }
+
+      // 初始化视频组件
+      if (uploadType.value === 'video' && form.video) {
+        await nextTick()
+        const videoData = form.video
+        form.video = null // 先清空
+        await nextTick()
+        form.video = videoData // 再设置，确保触发watch
       }
 
       showMessage('草稿加载成功', 'success')
