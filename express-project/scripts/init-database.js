@@ -411,6 +411,33 @@ class DatabaseInitializer {
     console.log('✓ audit 表创建成功');
   }
 
+  async insertDefaultAdmin() {
+    const connection = await mysql.createConnection({
+      ...this.dbConfig,
+      database: config.database.database
+    });
+
+    try {
+      console.log('插入默认管理员账户...');
+      
+      // 默认管理员账户信息
+      // 用户名: admin
+      // 密码: 123456 (SHA-256加密后的值)
+      const adminSql = `
+        INSERT INTO \`admin\` (\`username\`, \`password\`) VALUES 
+        ('admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
+        ON DUPLICATE KEY UPDATE \`username\` = VALUES(\`username\`)
+      `;
+      
+      await connection.execute(adminSql);
+    } catch (error) {
+      console.error('插入默认管理员账户失败:', error.message);
+      throw error;
+    } finally {
+      await connection.end();
+    }
+  }
+
   async run() {
     try {
       console.log('=== 小石榴图文社区数据库初始化 ===\n');
@@ -420,6 +447,9 @@ class DatabaseInitializer {
 
       // 创建表结构
       await this.initializeTables();
+
+      // 插入默认管理员账户
+      await this.insertDefaultAdmin();
 
       console.log('\n=== 数据库初始化完成 ===');
       console.log('数据库名称:', config.database.database);
