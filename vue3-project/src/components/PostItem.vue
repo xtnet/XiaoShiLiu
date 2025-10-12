@@ -2,7 +2,7 @@
   <div class="post-item">
     <!-- 上半部分：缩略图、标题内容、操作按钮 -->
     <div class="post-upper">
-      <div class="post-thumbnail">
+      <div class="post-thumbnail" @click="goToPostDetail">
         <img v-if="post.type === 2 && post.images && post.images.length > 0" :src="post.images[0]"
           :alt="post.title" @error="handleImageError" />
         <img
@@ -17,7 +17,7 @@
         </div>
       </div>
 
-      <div class="post-text-content">
+      <div class="post-text-content" @click="goToPostDetail">
         <h3 class="post-title">{{ post.title }}</h3>
         <p class="post-content">
           {{ truncateContent(post.content) }}
@@ -66,7 +66,10 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue'
+import { useRouter } from 'vue-router'
 import SvgIcon from './SvgIcon.vue'
+
+const router = useRouter()
 
 // Props定义
 const props = defineProps({
@@ -127,6 +130,11 @@ const handleEdit = () => {
 // 处理删除事件
 const handleDelete = () => {
   emit('delete', props.post)
+}
+
+// 跳转到笔记详情页
+const goToPostDetail = () => {
+  router.push(`/post?id=${props.post.id}`)
 }
 </script>
 
