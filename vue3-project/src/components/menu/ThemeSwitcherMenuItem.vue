@@ -93,6 +93,7 @@ const indicatorPosition = computed(() => {
   position: relative;
   width: 28px;
   height: 28px;
+  padding: 0; /* 解决ios深色模式按钮小的问题 */
   border: none;
   background: transparent;
   border-radius: 14px;
