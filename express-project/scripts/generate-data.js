@@ -9,6 +9,7 @@ const dbConfig = {
   host: config.database.host,
   user: config.database.user,
   password: config.database.password,
+  port: config.database.port,
   database: config.database.database,
   charset: config.database.charset
 };
