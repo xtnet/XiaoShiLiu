@@ -66,10 +66,7 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue'
-import { useRouter } from 'vue-router'
 import SvgIcon from './SvgIcon.vue'
-
-const router = useRouter()
 
 // Props定义
 const props = defineProps({
@@ -81,7 +78,7 @@ const props = defineProps({
 })
 
 // 事件定义
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'view'])
 
 // 获取分类名称
 const getCategoryName = (category) => {
@@ -132,9 +129,9 @@ const handleDelete = () => {
   emit('delete', props.post)
 }
 
-// 跳转到笔记详情页
-const goToPostDetail = () => {
-  router.push(`/post?id=${props.post.id}`)
+// 查看笔记详情 - 触发view事件而不是跳转
+const goToPostDetail = (event) => {
+  emit('view', props.post, event)
 }
 </script>
 
@@ -171,6 +168,7 @@ const goToPostDetail = () => {
   gap: 0.5rem;
   min-width: 0;
   margin-right: 1rem;
+  cursor: pointer;
 }
 
 .post-actions {
@@ -196,6 +194,7 @@ const goToPostDetail = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  cursor: pointer;
 }
 
 .no-image {

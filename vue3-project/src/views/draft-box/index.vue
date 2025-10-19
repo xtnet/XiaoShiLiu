@@ -47,7 +47,8 @@
           :key="draft.id" 
           :post="draft" 
           @edit="editDraft" 
-          @delete="confirmDelete" 
+          @delete="confirmDelete"
+          @view="handleViewDraft"
         />
       </div>
 
@@ -70,6 +71,14 @@
       cancel-text="取消" @confirm="handleDelete" @cancel="showDeleteModal = false"
       @update:visible="showDeleteModal = $event" />
 
+    <!-- DetailCard 详情卡片 -->
+    <DetailCard
+      v-if="showDetailCard"
+      :item="selectedDetailDraft"
+      :click-position="clickPosition"
+      @close="closeDetailCard"
+    />
+
     <MessageToast v-if="showToast" :message="toastMessage" :type="toastType" @close="handleToastClose" />
   </div>
 </template>
@@ -86,6 +95,7 @@ import DropdownSelect from '@/components/DropdownSelect.vue'
 import MessageToast from '@/components/MessageToast.vue'
 import ConfirmModal from '@/components/ConfirmDialog.vue'
 import PostItem from '@/components/PostItem.vue'
+import DetailCard from '@/components/DetailCard.vue'
 
 
 const router = useRouter()
@@ -104,6 +114,11 @@ const categories = ref([])
 // 弹窗状态
 const showDeleteModal = ref(false)
 const selectedDraft = ref(null)
+
+// DetailCard 相关状态
+const showDetailCard = ref(false)
+const selectedDetailDraft = ref(null)
+const clickPosition = ref({ x: 0, y: 0 })
 
 // 消息提示
 const showToast = ref(false)
@@ -236,6 +251,54 @@ const handleDelete = async () => {
   } catch (error) {
     console.error('删除失败:', error)
     showMessage('删除失败，请重试', 'error')
+  }
+}
+
+// 查看草稿详情 - 显示DetailCard
+const handleViewDraft = (draft, event) => {
+  // 记录点击位置
+  clickPosition.value = {
+    x: event.clientX,
+    y: event.clientY
+  }
+  // 设置选中的草稿并显示详情卡片
+  selectedDetailDraft.value = JSON.parse(JSON.stringify(draft))
+  showDetailCard.value = true
+
+  // 修改页面标题
+  const originalTitle = document.title
+  document.title = draft.title || '草稿详情'
+
+  // 使用History API添加历史记录并更新URL
+  const newUrl = `/post?id=${draft.id}`
+  window.history.pushState(
+    {
+      previousUrl: window.location.pathname + window.location.search,
+      showDetailCard: true,
+      postId: draft.id,
+      originalTitle: originalTitle
+    },
+    draft.title || '草稿详情',
+    newUrl
+  )
+}
+
+// 关闭详情卡片
+const closeDetailCard = () => {
+  showDetailCard.value = false
+  selectedDetailDraft.value = null
+
+  // 恢复原始页面标题
+  if (window.history.state && window.history.state.originalTitle) {
+    document.title = window.history.state.originalTitle
+  }
+
+  // 恢复原URL状态
+  if (window.history.state && window.history.state.previousUrl) {
+    window.history.replaceState(window.history.state, '', window.history.state.previousUrl)
+  } else {
+    // 如果没有前一个URL，回到当前页面的原始状态
+    window.history.back()
   }
 }
 
