@@ -172,7 +172,7 @@
 | yarn | >= 1.22.0 |
 | 瀏覽器 | 支援ES6+ |
 
-> 提示：上述為傳統本地開發的最低版本要求。若使用 Docker 部署，預設鏡像版本如下：MySQL 8.0、Node 18-alpine（前後端建構/執行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。詳見[部署指南文件](DEPLOYMENT_zh-Hant.md)。
+> 提示：上述為傳統本地開發的最低版本要求。若使用 Docker 部署，預設鏡像版本如下：MySQL 5.7、Node 18-alpine（前後端建構/執行）、Nginx alpine；Docker >= 20、Docker Compose >= 2。詳見[部署指南文件](DEPLOYMENT_zh-Hant.md)。
 
 ## 環境配置
 

@@ -171,7 +171,7 @@
 | yarn | >= 1.22.0 |
 | Browser | ES6+ supported |
 
-> Note: The above are the minimum version requirements for traditional local development. For Docker deployment, the default image versions are as follows: MySQL 8.0, Node 18-alpine (frontend/backend build/run), Nginx alpine; Docker >= 20, Docker Compose >= 2. See [Deployment Guide](DEPLOYMENT_En.md) for details.
+> Note: The above are the minimum version requirements for traditional local development. For Docker deployment, the default image versions are as follows: MySQL 5.7, Node 18-alpine (frontend/backend build/run), Nginx alpine; Docker >= 20, Docker Compose >= 2. See [Deployment Guide](DEPLOYMENT_En.md) for details.
 
 ## Environment Configuration
 

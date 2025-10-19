@@ -7,7 +7,11 @@
 ## 系统要求
 
 - **Docker 部署**：Docker 20.10+ 和 Docker Compose 2.0+
-- **传统部署**：Node.js 18+、MySQL 8.0+、npm 或 yarn
+- **传统部署**：Node.js 18+、MySQL 5.7+、npm 或 yarn
+
+> 💡 **宝塔面板部署**：如果您使用宝塔面板，可以参考这个详细的图文教程：[使用宝塔搭建小石榴图文社区完整教程](https://www.sakuraidc.cc/forum-post/3116.html)
+
+---
 
 ## 🐋 Docker 一键部署（推荐）
 
@@ -119,7 +123,7 @@ docker-compose up -d --build
 
 确保已安装：
 - Node.js 18+
-- MySQL 8.0+
+- MySQL 5.7+
 - Git
 
 ### 2. 克隆项目
@@ -315,6 +319,73 @@ XiaoShiLiu/
 4. 生成 API 令牌（权限：R2:Edit）
 5. 获取账户 ID
 6. 配置环境变量
+
+### 反向代理配置
+
+**重要提示**：如果您使用了 Nginx、Apache 等反向代理服务器，需要修改以下配置：
+
+#### 后端配置 (express-project/.env)
+
+```env
+# 将 API_BASE_URL 改为您的域名和端口
+API_BASE_URL=https://yourdomain.com:端口号
+# 或者如果使用默认端口（80/443）
+API_BASE_URL=https://yourdomain.com
+
+# CORS配置也需要修改为前端访问地址
+CORS_ORIGIN=https://yourdomain.com
+```
+
+#### 前端配置 (vue3-project/.env)
+
+```env
+# 将 API 基础 URL 改为您的域名和后端端口
+VITE_API_BASE_URL=https://yourdomain.com:端口号/api
+# 或者如果使用默认端口（80/443）
+VITE_API_BASE_URL=https://yourdomain.com/api
+```
+
+#### 配置示例
+
+假设您的域名是 `example.com`，后端通过反向代理映射到 3001 端口：
+
+**后端 .env：**
+```env
+API_BASE_URL=https://example.com
+CORS_ORIGIN=https://example.com
+```
+
+**前端 .env：**
+```env
+VITE_API_BASE_URL=https://example.com/api
+```
+
+**Nginx 配置示例：**
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    # 前端静态资源
+    location / {
+        root /path/to/vue3-project/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API 代理
+    location /api {
+        proxy_pass http://localhost:3001/api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
 
 ## 🚨 故障排除
 

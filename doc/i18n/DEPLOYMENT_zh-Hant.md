@@ -9,6 +9,8 @@
 1. **Docker 一鍵部署**（推薦）- 簡單快捷，適合生產環境
 2. **傳統部署** - 手動配置，適合開發環境
 
+> 💡 **寶塔面板部署**：如果您使用寶塔面板，可以參考這個詳細的圖文教程：[使用寶塔搭建小石榴圖文社區完整教程](https://www.sakuraidc.cc/forum-post/3116.html)
+
 ---
 
 ## 🐳 Docker 一鍵部署（推薦）
@@ -24,7 +26,7 @@
 
 | 部件 | 圖像/來源 | 版本/標籤 | 說明 |
 |------|-----------|-------------|-------------|
-| 數據庫 | mysql | 8.0 | 使用官方圖像 `mysql:8.0`，默認配置為 utf8mb4 |
+| 數據庫 | mysql | 5.7 | 使用官方圖像 `mysql:5.7`，默認配置為 utf8mb4 |
 | 後端運行時 | node | 18-alpine | `express-project/Dockerfile` 使用 `node:18-alpine` |
 | 前端編譯 | node | 18-alpine | `vue3-project/Dockerfile` 在編譯階段使用此圖像 |
 | 前端運行時 | nginx | alpine | 使用 `nginx:alpine` 提供靜態文件 |
@@ -356,7 +358,74 @@ docker-compose exec backend ls -la /app/uploads
 
 > **注意**：要使用 Cloudflare R2 儲存，您需要先在 Cloudflare 控制台中創建 R2 桶和獲取相對應的存取金鑰。
 
-#### 6. 清理與重置
+#### 6. 反向代理配置
+
+**重要提示**：如果您使用了 Nginx、Apache 等反向代理服務器，需要修改以下配置：
+
+**後端配置 (express-project/.env)**
+
+```env
+# 將 API_BASE_URL 改為您的域名和端口
+API_BASE_URL=https://yourdomain.com:端口號
+# 或者如果使用默認端口（80/443）
+API_BASE_URL=https://yourdomain.com
+
+# CORS配置也需要修改為前端訪問地址
+CORS_ORIGIN=https://yourdomain.com
+```
+
+**前端配置 (vue3-project/.env)**
+
+```env
+# 將 API 基礎 URL 改為您的域名和後端端口
+VITE_API_BASE_URL=https://yourdomain.com:端口號/api
+# 或者如果使用默認端口（80/443）
+VITE_API_BASE_URL=https://yourdomain.com/api
+```
+
+**配置示例**
+
+假設您的域名是 `example.com`，後端通過反向代理映射到 3001 端口：
+
+**後端 .env：**
+```env
+API_BASE_URL=https://example.com
+CORS_ORIGIN=https://example.com
+```
+
+**前端 .env：**
+```env
+VITE_API_BASE_URL=https://example.com/api
+```
+
+**Nginx 配置示例：**
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    # 前端靜態資源
+    location / {
+        root /path/to/vue3-project/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 後端 API 代理
+    location /api {
+        proxy_pass http://localhost:3001/api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### 7. 清理與重置
 
 如果您遇到問題並需要從頭開始：
 

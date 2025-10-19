@@ -9,6 +9,8 @@ The project supports two deployment methods:
 1. **Docker One-Click Deployment** (recommended) - Simple and quick, suitable for production environments
 2. **Traditional Deployment** - Manual configuration, suitable for development environments
 
+> 💡 **BT-Panel Deployment**: If you are using BT-Panel (宝塔面板), you can refer to this detailed tutorial with screenshots: [Complete Tutorial for Deploying XiaoShiLiu with BT-Panel](https://www.sakuraidc.cc/forum-post/3116.html)
+
 ---
 
 ## 🐳 Docker One-Click Deployment (Recommended)
@@ -24,7 +26,7 @@ The project supports two deployment methods:
 
 | Component | Image/Source | Version/Tag | Description |
 |-----------|--------------|-------------|-------------|
-| Database | mysql | 8.0 | Uses the official image `mysql:8.0` with utf8mb4 default configuration |
+| Database | mysql | 5.7 | Uses the official image `mysql:5.7` with utf8mb4 default configuration |
 | Backend Runtime | node | 18-alpine | `express-project/Dockerfile` uses `node:18-alpine` |
 | Frontend Build | node | 18-alpine | `vue3-project/Dockerfile` uses this for the build phase |
 | Frontend Runtime | nginx | alpine | Uses `nginx:alpine` to provide static files |
@@ -355,7 +357,74 @@ environment:
 
 > **Note**: To use Cloudflare R2 storage, you need to first create an R2 bucket and obtain the corresponding access key in the Cloudflare console.
 
-#### 6. Cleanup and Reset
+#### 6. Reverse Proxy Configuration
+
+**Important Note**: If you are using a reverse proxy server such as Nginx or Apache, you need to modify the following configurations:
+
+**Backend Configuration (express-project/.env)**
+
+```env
+# Change API_BASE_URL to your domain and port
+API_BASE_URL=https://yourdomain.com:port
+# Or if using default ports (80/443)
+API_BASE_URL=https://yourdomain.com
+
+# CORS configuration also needs to be changed to the frontend access address
+CORS_ORIGIN=https://yourdomain.com
+```
+
+**Frontend Configuration (vue3-project/.env)**
+
+```env
+# Change API base URL to your domain and backend port
+VITE_API_BASE_URL=https://yourdomain.com:port/api
+# Or if using default ports (80/443)
+VITE_API_BASE_URL=https://yourdomain.com/api
+```
+
+**Configuration Example**
+
+Assuming your domain is `example.com` and the backend is mapped to port 3001 through a reverse proxy:
+
+**Backend .env:**
+```env
+API_BASE_URL=https://example.com
+CORS_ORIGIN=https://example.com
+```
+
+**Frontend .env:**
+```env
+VITE_API_BASE_URL=https://example.com/api
+```
+
+**Nginx Configuration Example:**
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    # Frontend static resources
+    location / {
+        root /path/to/vue3-project/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api {
+        proxy_pass http://localhost:3001/api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### 7. Cleanup and Reset
 
 If you encounter problems and need to start over:
 
