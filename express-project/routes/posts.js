@@ -895,12 +895,37 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     }
 
+    // 获取原有标签列表（在删除前）
+    const [oldTagsResult] = await pool.execute(
+      'SELECT t.id, t.name FROM tags t JOIN post_tags pt ON t.id = pt.tag_id WHERE pt.post_id = ?',
+      [postId.toString()]
+    );
+    const oldTags = oldTagsResult.map(tag => tag.name);
+    const oldTagIds = new Map(oldTagsResult.map(tag => [tag.name, tag.id]));
+
+    // 新标签列表
+    const newTags = tags || [];
+
+    // 找出需要删除的标签（在旧标签中但不在新标签中）
+    const tagsToRemove = oldTags.filter(tagName => !newTags.includes(tagName));
+    
+    // 找出需要新增的标签（在新标签中但不在旧标签中）
+    const tagsToAdd = newTags.filter(tagName => !oldTags.includes(tagName));
+
     // 删除原有标签关联
     await pool.execute('DELETE FROM post_tags WHERE post_id = ?', [postId.toString()]);
 
+    // 减少已删除标签的使用次数
+    for (const tagName of tagsToRemove) {
+      const tagId = oldTagIds.get(tagName);
+      if (tagId) {
+        await pool.execute('UPDATE tags SET use_count = GREATEST(use_count - 1, 0) WHERE id = ?', [tagId]);
+      }
+    }
+
     // 处理新标签
-    if (tags && tags.length > 0) {
-      for (const tagName of tags) {
+    if (newTags.length > 0) {
+      for (const tagName of newTags) {
         // 检查标签是否存在，不存在则创建
         let [tagRows] = await pool.execute('SELECT id FROM tags WHERE name = ?', [tagName]);
         let tagId;
@@ -915,8 +940,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
         // 关联笔记和标签
         await pool.execute('INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)', [postId, tagId]);
 
-        // 更新标签使用次数
-        await pool.execute('UPDATE tags SET use_count = use_count + 1 WHERE id = ?', [tagId]);
+        // 只对新增的标签增加使用次数（不在旧标签列表中的）
+        if (tagsToAdd.includes(tagName)) {
+          await pool.execute('UPDATE tags SET use_count = use_count + 1 WHERE id = ?', [tagId]);
+        }
       }
     }
 

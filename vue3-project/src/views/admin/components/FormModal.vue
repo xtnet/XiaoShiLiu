@@ -1674,23 +1674,7 @@ defineExpose({
   gap: 8px;
 }
 
-.emoji-btn,
-.mention-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
 
-.emoji-btn:hover,
-.mention-btn:hover {
-  background-color: var(--bg-color-secondary);
-}
 
 .emoji-icon,
 .mention-icon {
@@ -1710,20 +1694,44 @@ defineExpose({
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--overlay-bg);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  animation: fadeIn 0.2s ease;
 }
 
 .emoji-panel {
   background: var(--bg-color-primary);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: scaleIn 0.2s ease;
   max-width: 90vw;
   max-height: 90vh;
-  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* 头像上传样式 */

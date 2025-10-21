@@ -2104,20 +2104,44 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--overlay-bg);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
 }
 
 .emoji-panel-container {
   background-color: var(--bg-color-primary);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  animation: scaleIn 0.2s ease;
   max-width: 90vw;
   max-height: 90vh;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* 桌面端样式 */
