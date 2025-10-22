@@ -155,7 +155,7 @@ const handleToastClose = () => {
 
 // 返回上一页
 const handleBack = () => {
-  router.back()
+  router.push('/publish')
 }
 
 // 跳转到发布页面
