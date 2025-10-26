@@ -19,6 +19,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import defaultPlaceholder from '@/assets/imgs/未加载.png'
 
 const props = defineProps({
   content: {
@@ -125,9 +126,7 @@ const getGridClass = () => {
 
 // 图片加载失败处理
 const handleImageError = (event) => {
-  import('@/assets/imgs/未加载.png').then(module => {
-    event.target.src = module.default
-  })
+  event.target.src = defaultPlaceholder
 }
 </script>
 

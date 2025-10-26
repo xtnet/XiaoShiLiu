@@ -48,16 +48,16 @@ async function searchContent(type = 'all', page = 1, limit = 20) {
         return
     }
 
-    // 检查缓存数据
+    // 检查缓存数据（使用数组解构强制触发响应式更新）
     if (keyword.value.trim() && keyword.value === cachedKeyword.value && !selectedTag.value.trim()) {
         if (type === 'all' && cachedAllPosts.value.length > 0) {
-            postResults.value = cachedAllPosts.value
+            postResults.value = [...cachedAllPosts.value]
             return
         } else if (type === 'posts' && cachedPostsData.value.length > 0) {
-            postResults.value = cachedPostsData.value
+            postResults.value = [...cachedPostsData.value]
             return
         } else if (type === 'videos' && cachedVideosData.value.length > 0) {
-            postResults.value = cachedVideosData.value
+            postResults.value = [...cachedVideosData.value]
             return
         }
     }
@@ -231,7 +231,8 @@ function handleUserResults(usersData) {
 
 function handlePostResults(postsData) {
     if (postsData && postsData.data && postsData.data.length > 0) {
-        postResults.value = postsData.data
+        // 使用数组解构强制触发响应式更新
+        postResults.value = [...postsData.data]
     } else {
         postResults.value = []
         // 如果搜索结果为空，清空对应的缓存
@@ -343,6 +344,9 @@ function handleUserUnfollow(user) {
 
 
 
+// 添加标志位避免重复搜索
+const isInitialLoad = ref(true)
+
 watch(() => route.query, (newQuery, oldQuery) => {
     const newKeyword = newQuery.keyword || ''
     const newTag = newQuery.tag || ''
@@ -350,8 +354,15 @@ watch(() => route.query, (newQuery, oldQuery) => {
     const keywordChanged = newKeyword !== keyword.value
     const tagChanged = newTag !== selectedTag.value
 
+    // 初始化时只更新值，不触发搜索（由onMounted统一处理）
+    if (isInitialLoad.value) {
+        keyword.value = newKeyword
+        selectedTag.value = newTag
+        return
+    }
+
     // 只有当关键词或标签真正发生变化时才触发搜索
-    if ((keywordChanged || tagChanged) && oldQuery) {
+    if (keywordChanged || tagChanged) {
         keyword.value = newKeyword
         selectedTag.value = newTag
 
@@ -363,10 +374,6 @@ watch(() => route.query, (newQuery, oldQuery) => {
         }
         navigationStore.scrollToTop('instant')
         searchContent(activeTab.value)
-    } else if (!oldQuery) {
-        // 初始化时只更新值，不触发搜索
-        keyword.value = newKeyword
-        selectedTag.value = newTag
     }
 }, { immediate: true })
 
@@ -385,6 +392,9 @@ onMounted(() => {
     if (keyword.value || selectedTag.value) {
         searchContent(activeTab.value)
     }
+
+    // 标记初始化完成，允许watch触发搜索
+    isInitialLoad.value = false
 
     eventListenerKey = eventStore.addEventListener('floating-btn-reload-request', handleFloatingBtnReload)
 })

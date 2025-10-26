@@ -203,9 +203,7 @@ const getFollowStatus = async () => {
 
 // 处理头像加载失败
 function handleAvatarError(event) {
-  import('@/assets/imgs/avatar.png').then(module => {
-    event.target.src = module.default
-  })
+  event.target.src = defaultAvatar
 }
 
 // 点击头像预览

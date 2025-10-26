@@ -58,9 +58,7 @@ const handleLoginClick = () => {
 }
 
 function handleAvatarError(event) {
-  import('@/assets/imgs/avatar.png').then(module => {
-    event.target.src = module.default
-  })
+  event.target.src = defaultAvatar
 }
 
 // 初始化用户信息
