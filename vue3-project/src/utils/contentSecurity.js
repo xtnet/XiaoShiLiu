@@ -4,41 +4,62 @@
  */
 
 /**
- * 内容安全过滤函数
- * 保留mention链接和<br>标签，移除其他危险标签
+ * 内容安全过滤函数 - 用于渲染阶段
+ * 保留mention链接，将其他所有HTML标签转义为纯文本，同时保持换行
  * @param {string} content - 需要过滤的内容
  * @returns {string} - 过滤后的安全内容
  */
 export const sanitizeContent = (content) => {
   if (!content) return ''
 
-  // 保留mention链接和<br>标签，但移除其他危险标签
-  // 先保存mention链接
+  // 1. 提取并保护mention链接
+  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*data-user-id="[^"]*"[^>]*>@[^<]*<\/a>/g
   const mentionLinks = []
-  let processedContent = content.replace(/<a[^>]*class="mention-link"[^>]*>.*?<\/a>/g, (match) => {
-    const placeholder = `__MENTION_${mentionLinks.length}__`
+  let processedContent = content.replace(mentionLinkRegex, (match) => {
+    const placeholder = `__MENTION_LINK_${mentionLinks.length}__`
     mentionLinks.push(match)
     return placeholder
   })
 
-  // 将其他换行元素转换为<br>标签
-  processedContent = processedContent.replace(/<\/div><div[^>]*>/gi, '<br>')
-  processedContent = processedContent.replace(/<\/p><p[^>]*>/gi, '<br>')
-  processedContent = processedContent.replace(/<div[^>]*>/gi, '')
-  processedContent = processedContent.replace(/<\/div>/gi, '')
-  processedContent = processedContent.replace(/<p[^>]*>/gi, '')
-  processedContent = processedContent.replace(/<\/p>/gi, '')
-
-  // 移除其他HTML标签，但保留<br>标签
-  processedContent = processedContent.replace(/<(?!br\s*\/?)[^>]*>/gi, '').replace(/&nbsp;/g, ' ')
-
-  // 恢复mention链接
-  mentionLinks.forEach((link, index) => {
-    processedContent = processedContent.replace(`__MENTION_${index}__`, link)
+  // 2. 保护换行符
+  const lineBreaks = []
+  processedContent = processedContent.replace(/\n/g, () => {
+    const placeholder = `__LINE_BREAK_${lineBreaks.length}__`
+    lineBreaks.push('<br>')
+    return placeholder
   })
 
-  // 清理多余的<br>标签
-  processedContent = processedContent.replace(/(<br\s*\/?\s*){2,}/gi, '<br>')
+  // 3. 将<br>标签也保护起来
+  const brTags = []
+  processedContent = processedContent.replace(/<br\s*\/?>/gi, () => {
+    const placeholder = `__BR_TAG_${brTags.length}__`
+    brTags.push('<br>')
+    return placeholder
+  })
+
+  // 4. 将所有剩余的HTML标签转义为纯文本（使用DOM的textContent特性）
+  const escapeHtml = (text) => {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+  }
+  processedContent = escapeHtml(processedContent)
+
+  // 5. 恢复被保护的内容
+  // 先恢复<br>标签
+  brTags.forEach((tag, index) => {
+    processedContent = processedContent.replace(`__BR_TAG_${index}__`, tag)
+  })
+
+  // 恢复换行符
+  lineBreaks.forEach((tag, index) => {
+    processedContent = processedContent.replace(`__LINE_BREAK_${index}__`, tag)
+  })
+
+  // 最后恢复mention链接
+  mentionLinks.forEach((link, index) => {
+    processedContent = processedContent.replace(`__MENTION_LINK_${index}__`, link)
+  })
 
   return processedContent.trim()
 }

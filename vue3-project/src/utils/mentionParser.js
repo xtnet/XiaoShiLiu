@@ -16,6 +16,19 @@ function escapeHtml(text) {
 }
 
 /**
+ * 转义 mention 链接中的用户昵称，防止 XSS 攻击
+ * @param {string} nickname - 用户昵称
+ * @returns {string} - 转义后的昵称
+ */
+function escapeMentionNickname(nickname) {
+  if (!nickname) return ''
+  // 使用 textContent 来转义 HTML 特殊字符
+  const div = document.createElement('div')
+  div.textContent = nickname
+  return div.innerHTML
+}
+
+/**
  * 解析文本中的mention标记，转换为HTML超链接
  * @param {string} text - 包含mention标记的文本
  * @returns {string} - 转换后的HTML字符串
@@ -56,8 +69,11 @@ export function parseMentions(text) {
   const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
 
   let result = escapedText.replace(mentionRegex, (match, nickname, userId) => {
+    // 转义昵称和用户ID，防止XSS攻击
+    const escapedNickname = escapeMentionNickname(nickname)
+    const escapedUserId = escapeHtml(userId)
     // 生成用户主页链接，使用小石榴号作为路由参数
-    return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${nickname}</a>`
+    return `<a href="/user/${escapedUserId}" class="mention-link" data-user-id="${escapedUserId}" contenteditable="false">@${escapedNickname}</a>`
   })
 
   // 恢复换行符为div标签
