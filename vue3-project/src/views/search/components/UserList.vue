@@ -50,6 +50,8 @@ function handleUserClick(user) {
 <style scoped>
 .user-list {
     width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 
 .empty-state {
@@ -61,5 +63,11 @@ function handleUserClick(user) {
 .empty-state p {
     margin: 0;
     font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .user-list {
+        padding: 0 8px;
+    }
 }
 </style>

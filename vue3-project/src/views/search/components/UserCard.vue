@@ -34,6 +34,7 @@ import FollowButton from '@/components/FollowButton.vue'
 import BaseSkeleton from '@/components/skeleton/BaseSkeleton.vue'
 import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import { userApi } from '@/api/index.js'
+import defaultAvatar from '@/assets/imgs/avatar.png'
 
 const props = defineProps({
     user: {
@@ -83,9 +84,7 @@ const isCurrentUser = computed(() => {
 })
 // 处理头像加载失败
 function handleAvatarError(event) {
-    import('@/assets/imgs/avatar.png').then(module => {
-        event.target.src = module.default
-    })
+    event.target.src = defaultAvatar
 }
 function formatNumber(num) {
     // 处理null、undefined或非数字值
@@ -240,7 +239,8 @@ const userHoverConfig = computed(() => ({
     border: 1px solid var(--border-color-primary);
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    margin-top: 2px;
     position: relative;
 }
 

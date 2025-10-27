@@ -62,9 +62,7 @@ const previewAvatar = () => {
 
 // 处理头像加载失败
 function handleAvatarError(event) {
-  import('@/assets/imgs/avatar.png').then(module => {
-    event.target.src = module.default
-  })
+  event.target.src = defaultAvatar
 }
 
 // 处理资料保存成功

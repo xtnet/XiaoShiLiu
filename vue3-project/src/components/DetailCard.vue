@@ -85,7 +85,8 @@
             <div class="author-info">
               <div class="author-avatar-container">
                 <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
-                  @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" />
+                  @click="onUserClick(authorData.id)" v-user-hover="getAuthorUserHoverConfig()" 
+                  @error="handleAvatarError" />
                 <VerifiedBadge :verified="authorData.verified" size="medium" class="author-verified-badge" />
               </div>
               <div class="author-name-container">

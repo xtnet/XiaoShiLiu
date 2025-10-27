@@ -2,6 +2,8 @@ import { useIntersectionObserver } from '@vueuse/core'
 import { vUserHover } from './userHover'
 import { vClickOutside } from './clickOutside'
 import vEscapeKey from './escapeKey'
+import defaultAvatar from '@/assets/imgs/avatar.png'
+import defaultPlaceholder from '@/assets/imgs/未加载.png'
 
 // 图片加载队列管理
 class ImageLoadQueue {
@@ -120,8 +122,8 @@ class StuckItemManager {
     img.onerror = () => {
       // 根据图片类型选择不同的占位图
       const isAvatar = el.classList.contains('lazy-avatar')
-      const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-      el.src = new URL(placeholderImg, import.meta.url).href
+      const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+      el.src = placeholderImg
       el.alt = '图片加载失败'
       el.dispatchEvent(new Event('load'))
       this.removeItem(el)
@@ -132,8 +134,8 @@ class StuckItemManager {
       if (!el.src || el.src === 'data:' || el.src.includes('blob:')) {
         // 根据图片类型选择不同的占位图
         const isAvatar = el.classList.contains('lazy-avatar')
-        const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-        el.src = new URL(placeholderImg, import.meta.url).href
+        const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+        el.src = placeholderImg
         el.alt = '图片加载超时'
         el.dispatchEvent(new Event('load'))
         this.removeItem(el)
@@ -155,8 +157,8 @@ const loadImageImmediately = (el, src) => {
     img.onerror = null
     // 根据图片类型选择不同的占位图
     const isAvatar = el.classList.contains('lazy-avatar')
-    const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-    el.src = new URL(placeholderImg, import.meta.url).href
+    const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+    el.src = placeholderImg
     el.alt = '图片加载超时'
     el.style.opacity = '1'
     el.style.visibility = 'visible'
@@ -178,8 +180,8 @@ const loadImageImmediately = (el, src) => {
     clearTimeout(timeout)
     // 根据图片类型选择不同的占位图
     const isAvatar = el.classList.contains('lazy-avatar')
-    const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-    el.src = new URL(placeholderImg, import.meta.url).href
+    const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+    el.src = placeholderImg
     el.alt = '图片加载失败'
     el.style.opacity = '1'
     el.style.visibility = 'visible'
@@ -249,8 +251,8 @@ export const lazyPlugin = {
                     clearTimeout(loadTimeout)
                     // 根据图片类型选择不同的占位图
                     const isAvatar = el.classList.contains('lazy-avatar')
-                    const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-                    el.src = new URL(placeholderImg, import.meta.url).href
+                    const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+                    el.src = placeholderImg
                     el.alt = '图片加载失败'
                     el.style.opacity = '1'
                     el.style.visibility = 'visible'
@@ -264,8 +266,8 @@ export const lazyPlugin = {
               }).catch(() => {
                 // 队列加载失败，显示默认图片
                 const isAvatar = el.classList.contains('lazy-avatar')
-                const placeholderImg = isAvatar ? '@/assets/imgs/avatar.png' : '@/assets/imgs/未加载.png'
-                el.src = new URL(placeholderImg, import.meta.url).href
+                const placeholderImg = isAvatar ? defaultAvatar : defaultPlaceholder
+                el.src = placeholderImg
                 el.alt = '图片加载失败'
                 el.style.opacity = '1'
                 el.style.visibility = 'visible'
