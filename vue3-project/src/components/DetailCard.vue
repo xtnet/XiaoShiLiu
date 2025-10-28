@@ -80,8 +80,8 @@
           </div>
         </div>
 
-        <div class="content-section" :style="windowWidth > 768 ? { width: contentSectionWidth + 'px' } : {}">
-          <div class="author-wrapper">
+        <div class="content-section" ref="contentSection" :style="windowWidth > 768 ? { width: contentSectionWidth + 'px' } : {}">
+          <div class="author-wrapper" ref="authorWrapper">
             <div class="author-info">
               <div class="author-avatar-container">
                 <img :src="authorData.avatar" :alt="authorData.name" class="author-avatar "
@@ -566,6 +566,8 @@ const showTooltip = ref(false)
 const imageSectionWidth = ref(400)
 const isInputFocused = ref(false)
 const scrollableContent = ref(null)
+const contentSection = ref(null)
+const authorWrapper = ref(null)
 let lastScrollTop = 0
 
 const currentImageIndex = ref(0)
@@ -680,6 +682,13 @@ const handleAnimationEnd = (event) => {
       // 打开动画结束
       isAnimating.value = false
       showContent.value = true
+      
+      // 模态框模式下，动画结束后调整padding（确保DOM完全渲染）
+      if (!props.pageMode) {
+        nextTick(() => {
+          adjustMobilePadding()
+        })
+      }
     }
   }
 }
@@ -690,6 +699,12 @@ onMounted(() => {
   setTimeout(() => {
     if (!showContent.value) {
       showContent.value = true
+      // pageMode 下，确保内容显示后立即调整padding
+      if (props.pageMode) {
+        nextTick(() => {
+          adjustMobilePadding()
+        })
+      }
     }
   }, 400) // 与动画时长一致
 })
@@ -920,8 +935,10 @@ const loadMoreComments = async () => {
   }
 
   // 加载前：保存当前滚动位置
-  if (scrollableContent.value) {
-    lastScrollTop = scrollableContent.value.scrollTop
+  // 移动端滚动容器是 contentSection，桌面端是 scrollableContent
+  const scrollContainer = (window.innerWidth <= 768 && contentSection.value) ? contentSection.value : scrollableContent.value
+  if (scrollContainer) {
+    lastScrollTop = scrollContainer.scrollTop
   }
 
   try {
@@ -939,8 +956,9 @@ const loadMoreComments = async () => {
 
     // 加载后：DOM 更新完成后，恢复滚动位置
     nextTick(() => {
-      if (scrollableContent.value) {
-        scrollableContent.value.scrollTop = lastScrollTop
+      const scrollContainer = (window.innerWidth <= 768 && contentSection.value) ? contentSection.value : scrollableContent.value
+      if (scrollContainer) {
+        scrollContainer.scrollTop = lastScrollTop
       }
     })
   } catch (error) {
@@ -2430,8 +2448,14 @@ const fetchPostDetail = async () => {
 
 const windowWidth = ref(window.innerWidth)
 
+// 移动端使用 sticky 定位，无需动态调整 padding
+const adjustMobilePadding = () => {
+  return
+}
+
 const handleResize = () => {
   windowWidth.value = window.innerWidth
+  adjustMobilePadding()
 }
 
 // 键盘快捷键处理
@@ -2486,9 +2510,28 @@ onMounted(async () => {
   lock()
 
   window.addEventListener('resize', handleResize)
-  // 添加键盘事件监听
   document.addEventListener('keydown', handleKeydown)
-  // DetailCard内部点击事件已通过@click="handleDetailCardClick"处理
+
+  if (window.innerWidth <= 768) {
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjustMobilePadding)
+      window.visualViewport.addEventListener('scroll', adjustMobilePadding)
+    }
+    
+    if (contentSection.value) {
+      const handleScroll = () => {
+        adjustMobilePadding()
+      }
+      contentSection.value.addEventListener('scroll', handleScroll, { passive: true })
+      
+      const cleanupScroll = () => {
+        if (contentSection.value) {
+          contentSection.value.removeEventListener('scroll', handleScroll)
+        }
+      }
+      onUnmounted(cleanupScroll)
+    }
+  }
 
   setTimeout(() => {
     isAnimating.value = false
@@ -2525,13 +2568,16 @@ onMounted(async () => {
     })
   }
 
+  adjustMobilePadding()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  // 移除键盘事件监听器
   document.removeEventListener('keydown', handleKeydown)
-  // DetailCard内部点击事件通过模板处理，无需手动移除
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', adjustMobilePadding)
+    window.visualViewport.removeEventListener('scroll', adjustMobilePadding)
+  }
 })
 
 watch(isInputFocused, async (newValue) => {
@@ -2554,6 +2600,14 @@ watch(currentImageIndex, (newIndex) => {
     if (nextIndex < imageList.value.length && imageList.value[nextIndex]) {
       preloadImage(imageList.value[nextIndex])
     }
+  }
+})
+
+watch(showContent, (newValue) => {
+  if (newValue) {
+    setTimeout(() => {
+      adjustMobilePadding()
+    }, 100)
   }
 })
 
@@ -4080,23 +4134,37 @@ function handleAvatarError(event) {
   .detail-card-overlay {
     padding: 0;
     background: var(--bg-color-primary);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    /* 适配移动端浏览器UI */
+    top: 0;
+    top: constant(safe-area-inset-top);
+    top: env(safe-area-inset-top);
+    height: 100vh;
+    height: calc(100vh - constant(safe-area-inset-top));
+    height: calc(100vh - env(safe-area-inset-top));
+    height: 100dvh;
   }
 
-  .detail-card {
+  .detail-card:not(.page-mode) {
     width: 100vw;
-    height: 100vh;
+    height: 100%;
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 100%;
     border-radius: 0;
     flex-direction: column;
     position: relative;
     overflow-x: hidden;
     flex: 1;
+    box-sizing: border-box;
   }
 
   .close-btn {
     position: fixed;
-    top: 16px;
+    top: calc(16px + constant(safe-area-inset-top));
+    top: calc(16px + env(safe-area-inset-top));
     left: 16px;
     z-index: 1001;
     background: transparent;
@@ -4130,54 +4198,36 @@ function handleAvatarError(event) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    background: var(--bg-color-primary);
-    max-width: 100vw;
-    box-sizing: border-box;
-  }
-
-  /* 作者信息作为固定的页面header */
-  .author-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    height: calc(72px + constant(safe-area-inset-top));
-    height: calc(72px + env(safe-area-inset-top));
-    padding: 12px 16px 0px 60px;
-    padding-top: constant(safe-area-inset-top);
-    /* iOS 旧版 */
-    padding-top: env(safe-area-inset-top);
-    /* 现代浏览器 */
-    background: var(--bg-color-primary);
-    border-bottom: 1px solid var(--border-color-primary);
-  }
-
-  /* 针对IOS设备的Safari浏览器模态模式有空白问题修复 */
-  @supports (-webkit-overflow-scrolling: touch) {
-    .detail-card:not(.page-mode) .scrollable-content {
-      padding-top: calc(115px + env(safe-area-inset-top));
-    }
-    .detail-card.page-mode .scrollable-content {
-      padding-bottom: calc(150px + env(safe-area-inset-bottom));
-    }
-  }
-
-  /* 可滚动内容区域包含图片和文本 */
-  .scrollable-content {
-    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    /* padding-top: calc(100px + constant(safe-area-inset-top)); constant说是弃用了留下一个env就好了吧ovo */
-    padding-top: calc(72px + env(safe-area-inset-top));
-    /* padding-bottom: calc(110px + constant(safe-area-inset-bottom)); ⬆⬆⬆ */
-    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+    background: var(--bg-color-primary);
     max-width: 100vw;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    touch-action: auto;
     overscroll-behavior: contain;
+  }
+
+  .author-wrapper {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    min-height: 72px;
+    padding: 12px 16px 0px 60px !important;
+    background: var(--bg-color-primary) !important;
+    border-bottom: 1px solid var(--border-color-primary) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    flex-shrink: 0;
+  }
+
+  .scrollable-content {
+    flex: 1;
+    padding-top: 0;
+    padding-bottom: 110px;
+    padding-bottom: calc(110px + constant(safe-area-inset-bottom));
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 
   /* 在可滚动内容的开头添加图片 */
@@ -4369,6 +4419,8 @@ function handleAvatarError(event) {
     border-top: 1px solid var(--border-color-primary);
     z-index: 1000;
     padding: 12px 16px;
+    /* 三层fallback确保跨平台兼容 */
+    padding-bottom: 12px;
     padding-bottom: calc(12px + constant(safe-area-inset-bottom));
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
   }
