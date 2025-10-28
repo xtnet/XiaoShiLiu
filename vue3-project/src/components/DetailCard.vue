@@ -453,7 +453,6 @@ import { commentApi, userApi, postApi, imageUploadApi } from '@/api/index.js'
 import { getPostDetail } from '@/api/posts.js'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { formatTime } from '@/utils/timeFormat'
-import { sanitizeContent } from '@/utils/contentSecurity'
 import defaultAvatar from '@/assets/imgs/avatar.png'
 
 const router = useRouter()
@@ -2184,33 +2183,28 @@ const handleSendComment = async () => {
     return
   }
 
-  // 对内容进行安全过滤
+  // 检查是否有内容或图片（使用与按钮相同的验证逻辑）
   const rawContent = commentInput.value || ''
-  const sanitizedContent = sanitizeContent(rawContent)
-
-  // 检查是否有内容或图片
-  if (!sanitizedContent.trim() && uploadedImages.value.length === 0) {
+  // 移除所有HTML标签和&nbsp;后检查是否为空
+  const textContent = rawContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+  if (!textContent && uploadedImages.value.length === 0) {
     showMessage('请输入评论内容或上传图片', 'error')
     return
   }
 
-  // 构建包含图片的评论内容
-  let contentToSend = sanitizedContent
-  if (uploadedImages.value.length > 0) {
-    const imageHtml = uploadedImages.value.map(img => `<img src="${img.url}" alt="评论图片" class="comment-image" />`).join('')
-    contentToSend = sanitizedContent.trim() ? `${sanitizedContent}${imageHtml}` : imageHtml
+  // 检查图片是否都已上传完成
+  if (uploadedImages.value.length > 0 && !allImagesUploaded.value) {
+    showMessage('图片上传中，请稍候', 'error')
+    return
   }
-
-
 
   // 立即反馈：折叠输入框
   isInputFocused.value = false
 
-  // 保存当前输入内容和回复状态，用于失败时恢复和骨架屏显示
+  // 保存原始输入和回复状态，用于失败时恢复
   const savedInput = commentInput.value
   const savedReplyingTo = replyingTo.value
   const savedUploadedImages = [...uploadedImages.value]
-
 
   // 清空输入状态
   commentInput.value = ''
@@ -2227,7 +2221,7 @@ const handleSendComment = async () => {
       .filter(img => img.uploaded && img.url)
       .map(img => img.url)
 
-    // 构建评论内容
+    // 构建评论内容 - 直接使用原始内容，服务端会进行过滤
     let finalContent = savedInput.trim()
     if (imageUrls.length > 0) {
       const imageHtml = imageUrls.map(url => `<img src="${url}" alt="评论图片" class="comment-image" />`).join('')

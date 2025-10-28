@@ -6,7 +6,6 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue'
-import { parseMentions } from '@/utils/mentionParser'
 import { sanitizeText } from '@/utils/contentSecurity'
 
 const props = defineProps({
@@ -56,9 +55,10 @@ const ensureMentionLinksNonEditable = () => {
 
 const updateHtmlContent = (content) => {
   if (!inputRef.value) return
-  const htmlContent = parseMentions(content || '')
-  if (inputRef.value.innerHTML !== htmlContent) {
-    inputRef.value.innerHTML = htmlContent
+  // 直接使用内容，不需要通过 parseMentions 转义
+  // 因为 content 已经是包含 mention 链接的 HTML 格式
+  if (inputRef.value.innerHTML !== content) {
+    inputRef.value.innerHTML = content || ''
     nextTick(ensureMentionLinksNonEditable)
   }
 }

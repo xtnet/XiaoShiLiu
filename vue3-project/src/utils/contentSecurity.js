@@ -3,22 +3,66 @@
  * 统一管理危险标签过滤，防止XSS攻击
  */
 
+const validateAndCleanMentionLink = (linkHtml) => {
+  // 创建临时元素来解析链接
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = linkHtml
+  const link = tempDiv.querySelector('a')
+  
+  if (!link) return null
+
+  // 提取关键属性
+  const href = link.getAttribute('href')
+  const userId = link.getAttribute('data-user-id')
+  const textContent = link.textContent
+
+  // 严格验证 href：必须是 /user/ 开头的相对路径
+  if (!href || !href.match(/^\/user\/[a-zA-Z0-9_-]+$/)) {
+    return null
+  }
+
+  // 验证 data-user-id：只允许字母、数字、下划线和连字符
+  if (!userId || !userId.match(/^[a-zA-Z0-9_-]+$/)) {
+    return null
+  }
+
+  // 验证文本内容：必须是 @ 开头
+  if (!textContent || !textContent.startsWith('@')) {
+    return null
+  }
+
+  // 转义昵称，防止XSS
+  const nickname = textContent.substring(1) // 去掉@
+  const div = document.createElement('div')
+  div.textContent = nickname
+  const escapedNickname = div.innerHTML
+
+  // 重新构建安全的 mention 链接，只包含必要的属性
+  return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${escapedNickname}</a>`
+}
+
 /**
  * 内容安全过滤函数 - 用于渲染阶段
- * 保留mention链接，将其他所有HTML标签转义为纯文本，同时保持换行
+ * 保留安全的mention链接，将其他所有HTML标签转义为纯文本，同时保持换行
  * @param {string} content - 需要过滤的内容
  * @returns {string} - 过滤后的安全内容
  */
 export const sanitizeContent = (content) => {
   if (!content) return ''
 
-  // 1. 提取并保护mention链接
-  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*data-user-id="[^"]*"[^>]*>@[^<]*<\/a>/g
+  // 1. 提取、验证并保护mention链接
+  const mentionLinkRegex = /<a[^>]*class="[^"]*mention-link[^"]*"[^>]*>@[^<]*<\/a>/g
   const mentionLinks = []
   let processedContent = content.replace(mentionLinkRegex, (match) => {
-    const placeholder = `__MENTION_LINK_${mentionLinks.length}__`
-    mentionLinks.push(match)
-    return placeholder
+    // 验证并清理 mention 链接
+    const cleanedLink = validateAndCleanMentionLink(match)
+    if (cleanedLink) {
+      const placeholder = `__MENTION_LINK_${mentionLinks.length}__`
+      mentionLinks.push(cleanedLink)
+      return placeholder
+    }
+    // 如果验证失败，保持原样让后续步骤转义
+    return match
   })
 
   // 2. 保护换行符
@@ -56,7 +100,7 @@ export const sanitizeContent = (content) => {
     processedContent = processedContent.replace(`__LINE_BREAK_${index}__`, tag)
   })
 
-  // 最后恢复mention链接
+  // 最后恢复安全的mention链接
   mentionLinks.forEach((link, index) => {
     processedContent = processedContent.replace(`__MENTION_LINK_${index}__`, link)
   })

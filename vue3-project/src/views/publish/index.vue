@@ -144,7 +144,6 @@ import { createPost, getPostDetail, updatePost, deletePost } from '@/api/posts'
 import { getCategories } from '@/api/categories'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { hasMentions, cleanMentions } from '@/utils/mentionParser'
-import { sanitizeContent } from '@/utils/contentSecurity'
 
 import MultiImageUpload from '@/components/MultiImageUpload.vue'
 import VideoUpload from '@/components/VideoUpload.vue'
@@ -599,12 +598,9 @@ const handlePublish = async () => {
       }
     }
 
-    // 对内容进行安全过滤
-    const sanitizedContent = sanitizeContent(form.content)
-
     const postData = {
       title: form.title.trim(),
-      content: sanitizedContent,
+      content: form.content,
       images: uploadType.value === 'image' ? mediaData : [],
       video: uploadType.value === 'video' ? mediaData : null,
       tags: form.tags,
@@ -847,13 +843,9 @@ const handleSaveDraft = async () => {
       }
     }
 
-    // 对内容进行安全过滤
-    const rawContent = form.content || ''
-    const sanitizedContent = sanitizeContent(rawContent)
-
     const draftData = {
       title: form.title.trim() || '',
-      content: sanitizedContent,
+      content: form.content || '',
       images: uploadType.value === 'image' ? mediaData : [],
       video: uploadType.value === 'video' ? mediaData : null,
       tags: form.tags || [],

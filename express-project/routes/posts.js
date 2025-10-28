@@ -6,6 +6,7 @@ const { optionalAuth, authenticateToken } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
 const { batchCleanupFiles } = require('../utils/fileCleanup');
+const { sanitizeContent } = require('../utils/contentSecurity');
 
 // 获取笔记列表
 router.get('/', optionalAuth, async (req, res) => {
@@ -411,6 +412,9 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题和内容不能为空' });
     }
 
+    // 对内容进行安全过滤，防止XSS攻击
+    const sanitizedContent = content ? sanitizeContent(content) : '';
+
     // 验证发布类型
     if (postType !== 1 && postType !== 2) {
       console.log('❌ 验证失败: 无效的发布类型');
@@ -421,7 +425,7 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log('📝 开始插入笔记到数据库...');
     const [result] = await pool.execute(
       'INSERT INTO posts (user_id, title, content, category_id, is_draft, type) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, title || '', content || '', category_id || null, is_draft ? 1 : 0, postType]
+      [userId, title || '', sanitizedContent, category_id || null, is_draft ? 1 : 0, postType]
     );
 
     const postId = result.insertId;
@@ -787,6 +791,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       console.log('验证失败 - 必填字段缺失:', { title, content, category_id, is_draft });
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '发布时标题、内容和分类不能为空' });
     }
+    const sanitizedContent = content ? sanitizeContent(content) : '';
 
     // 检查笔记是否存在且属于当前用户
     const [postRows] = await pool.execute(
@@ -812,7 +817,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // 更新笔记基本信息
     await pool.execute(
       'UPDATE posts SET title = ?, content = ?, category_id = ?, is_draft = ? WHERE id = ?',
-      [title || '', content || '', category_id || null, (is_draft ? 1 : 0).toString(), postId.toString()]
+      [title || '', sanitizedContent, category_id || null, (is_draft ? 1 : 0).toString(), postId.toString()]
     );
 
     // 根据笔记类型处理媒体文件

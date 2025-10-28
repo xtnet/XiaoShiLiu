@@ -5,6 +5,7 @@ const { pool } = require('../config/config');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const NotificationHelper = require('../utils/notificationHelper');
 const { extractMentionedUsers, hasMentions } = require('../utils/mentionParser');
+const { sanitizeContent } = require('../utils/contentSecurity');
 
 // 递归删除评论及其子评论，返回删除的评论总数
 async function deleteCommentRecursive(commentId) {
@@ -111,6 +112,14 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '笔记ID和评论内容不能为空' });
     }
 
+    // 对内容进行安全过滤，防止XSS攻击
+    const sanitizedContent = sanitizeContent(content);
+    
+    // 再次验证过滤后的内容不为空
+    if (!sanitizedContent.trim()) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '评论内容不能为空' });
+    }
+
     // 验证笔记是否存在
     const [postRows] = await pool.execute('SELECT id FROM posts WHERE id = ?', [post_id.toString()]);
     if (postRows.length === 0) {
@@ -128,7 +137,7 @@ router.post('/', authenticateToken, async (req, res) => {
     // 插入评论
     const [result] = await pool.execute(
       'INSERT INTO comments (post_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)',
-      [post_id.toString(), userId.toString(), content, parent_id ? parent_id.toString() : null]
+      [post_id.toString(), userId.toString(), sanitizedContent, parent_id ? parent_id.toString() : null]
     );
 
     const commentId = result.insertId;

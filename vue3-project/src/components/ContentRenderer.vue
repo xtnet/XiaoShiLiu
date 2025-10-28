@@ -20,7 +20,6 @@
 <script setup>
 import { computed } from 'vue'
 import defaultPlaceholder from '@/assets/imgs/未加载.png'
-import { sanitizeContent } from '@/utils/contentSecurity'
 
 const props = defineProps({
   content: {
@@ -93,9 +92,9 @@ const images = computed(() => parsedContent.value.images)
 
 // 解析文本中的mention标记
 const parsedText = computed(() => {
-  // 由于text现在已经包含HTML格式的mention链接，需要进行安全过滤后返回
-  // 保留 mention 链接和 <br> 标签，移除其他危险标签
-  return sanitizeContent(text.value)
+  // 由于text现在已经包含HTML格式的mention链接，直接返回
+  // 服务端已经进行了安全过滤，这里信任数据库的数据
+  return text.value
 })
 
 // 处理mention链接点击事件
