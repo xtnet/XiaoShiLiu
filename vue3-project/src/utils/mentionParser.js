@@ -16,16 +16,11 @@ function escapeHtml(text) {
 }
 
 /**
- * 转义 mention 链接中的用户昵称，防止 XSS 攻击
  * @param {string} nickname - 用户昵称
- * @returns {string} - 转义后的昵称
  */
 function escapeMentionNickname(nickname) {
   if (!nickname) return ''
-  // 使用 textContent 来转义 HTML 特殊字符
-  const div = document.createElement('div')
-  div.textContent = nickname
-  return div.innerHTML
+  return nickname
 }
 
 /**

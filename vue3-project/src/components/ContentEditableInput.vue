@@ -55,10 +55,10 @@ const ensureMentionLinksNonEditable = () => {
 
 const updateHtmlContent = (content) => {
   if (!inputRef.value) return
-  // 直接使用内容，不需要通过 parseMentions 转义
-  // 因为 content 已经是包含 mention 链接的 HTML 格式
-  if (inputRef.value.innerHTML !== content) {
-    inputRef.value.innerHTML = content || ''
+  // 将换行符转换为 HTML 格式（保持 mention 链接）
+  const htmlContent = convertTextToMentionLinks(content || '')
+  if (inputRef.value.innerHTML !== htmlContent) {
+    inputRef.value.innerHTML = htmlContent
     nextTick(ensureMentionLinksNonEditable)
   }
 }
@@ -103,8 +103,18 @@ const convertTextToMentionLinks = (text) => {
     text = text.replace(`__MENTION_LINK_${index}__`, link)
   })
 
-  // 处理换行符
-  return text.replace(/\n/g, '<br>')
+  // 处理换行符，转换为 div 结构（符合 contenteditable 默认行为）
+  const lines = text.split('\n')
+  if (lines.length === 1) {
+    return text
+  }
+  
+  // 第一行不包裹，后续行用 div 包裹
+  let result = lines[0]
+  for (let i = 1; i < lines.length; i++) {
+    result += `<div>${lines[i]}</div>`
+  }
+  return result
 }
 
 // 将HTML格式的mention链接转换为[@nickname:user_id]格式，保持换行
@@ -398,24 +408,167 @@ const handlePaste = (event) => {
     }
   }
 
-  // 处理文本粘贴
+  const selection = window.getSelection()
+  if (selection.rangeCount === 0) return
+
+  const range = selection.getRangeAt(0)
+  range.deleteContents()
+
+  // 优先处理HTML格式的粘贴（保留换行和mention链接）
+  const pastedHtml = clipboardData.getData('text/html')
+  if (pastedHtml) {
+    // 创建临时div解析HTML
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = pastedHtml
+    
+    // 提取文本行，保留mention链接
+    const lines = []
+    let currentLine = document.createDocumentFragment()
+    
+    // 递归处理节点，按行组织内容
+    const processNodeToLines = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent
+        if (text) {
+          // 检查文本中是否包含换行符
+          if (text.includes('\n')) {
+            // 按换行符拆分文本
+            const textLines = text.split('\n')
+            textLines.forEach((line, index) => {
+              // 去除每行两端的空白，但保留行内空白
+              const trimmedLine = line.trim()
+              if (trimmedLine || index < textLines.length - 1) {
+                if (index > 0) {
+                  // 不是第一行，先保存当前行
+                  lines.push(currentLine)
+                  currentLine = document.createDocumentFragment()
+                }
+                if (trimmedLine) {
+                  currentLine.appendChild(document.createTextNode(trimmedLine))
+                }
+              }
+            })
+          } else {
+            // 没有换行符，直接添加
+            const trimmedText = text.trim()
+            if (trimmedText) {
+              currentLine.appendChild(document.createTextNode(trimmedText))
+            }
+          }
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.tagName === 'BR') {
+          // BR 标签表示换行
+          lines.push(currentLine)
+          currentLine = document.createDocumentFragment()
+        } else if (node.tagName === 'DIV' || node.tagName === 'P') {
+          // DIV 和 P 标签表示新的一行
+          if (currentLine.childNodes.length > 0 || lines.length > 0) {
+            lines.push(currentLine)
+            currentLine = document.createDocumentFragment()
+          }
+          // 递归处理子节点
+          Array.from(node.childNodes).forEach(processNodeToLines)
+        } else if (node.classList && node.classList.contains('mention-link')) {
+          // 保留mention链接
+          const userId = node.getAttribute('data-user-id')
+          const nickname = node.textContent.substring(1) // 去掉@符号
+          if (userId && nickname) {
+            const mentionLink = createMentionLink(userId, nickname)
+            currentLine.appendChild(mentionLink)
+          }
+        } else {
+          // 其他标签递归处理子节点
+          Array.from(node.childNodes).forEach(processNodeToLines)
+        }
+      }
+    }
+    
+    Array.from(tempDiv.childNodes).forEach(processNodeToLines)
+    
+    // 添加最后一行（如果有内容）
+    if (currentLine.childNodes.length > 0) {
+      lines.push(currentLine)
+    }
+    
+    // 构建最终的 fragment，使用 div 标签来表示每一行（符合 contenteditable 默认行为）
+    const fragment = document.createDocumentFragment()
+    
+    if (lines.length === 0) return
+    
+    lines.forEach((lineFragment, index) => {
+      if (index === 0) {
+        // 第一行直接添加内容，不用 div 包裹
+        const clonedFragment = lineFragment.cloneNode(true)
+        fragment.appendChild(clonedFragment)
+      } else {
+        // 后续行使用 div 包裹（符合 contenteditable 的默认换行行为）
+        const lineDiv = document.createElement('div')
+        const clonedFragment = lineFragment.cloneNode(true)
+        
+        // 如果行是空的，添加一个 <br> 以保持空行
+        if (clonedFragment.childNodes.length === 0) {
+          lineDiv.appendChild(document.createElement('br'))
+        } else {
+          lineDiv.appendChild(clonedFragment)
+        }
+        
+        fragment.appendChild(lineDiv)
+      }
+    })
+    
+    // 插入处理后的内容
+    if (fragment.childNodes.length > 0) {
+      range.insertNode(fragment)
+      
+      // 将光标移到插入内容后面
+      range.collapse(false)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      
+      // 触发input事件
+      const inputEvent = new Event('input', { bubbles: true })
+      inputRef.value.dispatchEvent(inputEvent)
+    }
+    return
+  }
+
+  // 降级处理：处理纯文本粘贴
   const pastedText = clipboardData.getData('text/plain')
   if (!pastedText) return
 
-  const sanitizedText = sanitizeText(pastedText)
-  const selection = window.getSelection()
-  if (selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    range.deleteContents()
-    const textNode = document.createTextNode(sanitizedText)
-    range.insertNode(textNode)
-    range.setStartAfter(textNode)
-    range.setEndAfter(textNode)
-    selection.removeAllRanges()
-    selection.addRange(range)
-    const inputEvent = new Event('input', { bubbles: true })
-    inputRef.value.dispatchEvent(inputEvent)
-  }
+  // 将文本中的换行符转换为 div 标签（符合 contenteditable 默认行为）
+  const lines = pastedText.split('\n')
+  const fragment = document.createDocumentFragment()
+  
+  lines.forEach((line, index) => {
+    const sanitizedLine = sanitizeText(line)
+    
+    if (index === 0) {
+      // 第一行直接添加文本节点
+      if (sanitizedLine) {
+        fragment.appendChild(document.createTextNode(sanitizedLine))
+      }
+    } else {
+      // 后续行使用 div 包裹
+      const lineDiv = document.createElement('div')
+      if (sanitizedLine) {
+        lineDiv.textContent = sanitizedLine
+      } else {
+        // 空行添加 <br> 以保持高度
+        lineDiv.appendChild(document.createElement('br'))
+      }
+      fragment.appendChild(lineDiv)
+    }
+  })
+  
+  range.insertNode(fragment)
+  range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  
+  const inputEvent = new Event('input', { bubbles: true })
+  inputRef.value.dispatchEvent(inputEvent)
 }
 
 

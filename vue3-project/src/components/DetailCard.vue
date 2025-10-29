@@ -3981,6 +3981,7 @@ function handleAvatarError(event) {
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .send-btn:hover:not(:disabled) {
@@ -4008,6 +4009,7 @@ function handleAvatarError(event) {
   background-color: transparent;
   font-weight: bold;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .cancel-btn:hover {
@@ -4097,6 +4099,17 @@ function handleAvatarError(event) {
 /* 默认隐藏移动端视频容器 */
 .mobile-video-container {
   display: none;
+}
+
+/* 响应式设计 - 中等屏幕适配 (769px - 960px) */
+@media (max-width: 960px) and (min-width: 769px) {
+  .detail-card.page-mode {
+    max-width: calc(100vw - 40px);
+    width: calc(100vw - 40px);
+    height: calc(100vh - 140px);
+    max-height: calc(100vh - 140px);
+    margin: 0 auto;
+  }
 }
 
 /* 响应式设计 - 移动端适配 */
@@ -4562,5 +4575,20 @@ function handleAvatarError(event) {
   padding: 16px 0;
   color: var(--text-color-secondary);
   font-size: 14px;
+}
+
+/* 极小屏幕优化（宽度 < 360px） */
+@media (max-width: 360px) {
+  /* 减小按钮间距 */
+  .send-cancel-buttons {
+    gap: 8px;
+  }
+
+  /* 减小按钮内边距以适应小屏幕 */
+  .send-btn,
+  .cancel-btn {
+    padding: 8px 14px;
+    font-size: 15px;
+  }
 }
 </style>

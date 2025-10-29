@@ -43,11 +43,9 @@ const validateAndCleanMentionLink = (linkHtml) => {
     return null
   }
 
-  // 转义昵称
-  const escapedNickname = escapeHtml(nickname)
 
   // 重新构建安全的 mention 链接
-  return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${escapedNickname}</a>`
+  return `<a href="/user/${userId}" class="mention-link" data-user-id="${userId}" contenteditable="false">@${nickname}</a>`
 }
 
 /**
