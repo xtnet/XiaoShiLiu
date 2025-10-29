@@ -5,6 +5,12 @@ const useRealApi = String(import.meta.env.VITE_USE_REAL_API || '').toLowerCase()
 // 根据配置决定 baseURL（当不开启真实API时，强制走相对路径以便使用代理）
 const resolvedBaseURL = useRealApi ? (import.meta.env.VITE_API_BASE_URL || '/api') : '/api'
 
+// 从环境变量读取上传限制（提供默认值）
+const imageMaxSize = Number(import.meta.env.VITE_IMAGE_MAX_SIZE_MB || 5) * 1024 * 1024
+const imageMaxCount = Number(import.meta.env.VITE_IMAGE_MAX_COUNT || 9)
+const videoMaxSize = Number(import.meta.env.VITE_VIDEO_MAX_SIZE_MB || 100) * 1024 * 1024
+const videoMaxCount = Number(import.meta.env.VITE_VIDEO_MAX_COUNT || 1)
+
 export const apiConfig = {
   // 后端API基础URL - 使用环境变量或默认值
   baseURL: resolvedBaseURL,
@@ -27,15 +33,15 @@ export const apiConfig = {
   upload: {
     // 图片上传配置
     image: {
-      maxFileSize: 10 * 1024 * 1024, // 10MB
+      maxFileSize: imageMaxSize, // 单位MB
       allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
-      maxCount: 9 // 最多上传9张图片
+      maxCount: imageMaxCount // 最多上传数量
     },
     // 视频上传配置
     video: {
-      maxFileSize: 100 * 1024 * 1024, // 100MB
+      maxFileSize: videoMaxSize, // 单位MB
       allowedTypes: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm'],
-      maxCount: 1 // 最多上传1个视频
+      maxCount: videoMaxCount // 最多上传数量
     }
   }
 }

@@ -54,7 +54,7 @@
               v-if="uploadType === 'image'"
               ref="multiImageUploadRef" 
               v-model="form.images" 
-              :max-images="9" 
+              :max-images="imageMaxCount" 
               :allow-delete-last="true"
               @error="handleUploadError" 
             />
@@ -155,6 +155,7 @@ import EmojiPicker from '@/components/EmojiPicker.vue'
 import MentionModal from '@/components/mention/MentionModal.vue'
 import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import TextImageModal from '@/views/publish/components/TextImageModal.vue'
+import apiConfig from '@/config/api.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -169,6 +170,7 @@ const contentTextarea = ref(null)
 
 // 上传类型状态
 const uploadType = ref('image') // 'image' 或 'video'
+const imageMaxCount = apiConfig.upload?.image?.maxCount || 9
 
 const isPublishing = ref(false)
 const isSavingDraft = ref(false)
@@ -307,7 +309,7 @@ const goToDraftBox = () => {
 }
 
 const handleUploadError = (error) => {
-  showMessage(error, 'error')
+  // showMessage(error, 'error') // 多余的提示
 }
 
 // 切换上传类型
@@ -573,7 +575,7 @@ const handlePublish = async () => {
 
           } else {
             console.error('❌ 视频上传失败:', uploadResult)
-            showMessage('视频上传失败: ' + (uploadResult?.message || '未知错误'), 'error')
+            showMessage('视频上传失败: ' + (uploadResult?.message || '未知错误'), 'error') // 多余的提示 保留这个了
             return
           }
         } catch (error) {

@@ -154,6 +154,7 @@ import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import CropModal from './CropModal.vue'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
+import apiConfig from '@/config/api.js'
 
 const props = defineProps({
   visible: {
@@ -374,21 +375,14 @@ const handleDrop = (event) => {
 }
 
 const validateFile = (file) => {
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-  const maxSize = 5 * 1024 * 1024
+  const validation = imageUploadApi.validateImageFile(file, {
+    maxSize: apiConfig.upload?.image?.maxFileSize || 5 * 1024 * 1024,
+    allowedTypes: apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  })
 
-  if (!validTypes.includes(file.type)) {
-    const errorMsg = '不填有效的图片格式 (JPEG, PNG, GIF, WebP)'
+  if (!validation.valid) {
+    const errorMsg = validation.error || '图片文件不符合要求'
     avatarError.value = errorMsg
-    $message.error(errorMsg)
-    return false
-  }
-
-  if (file.size > maxSize) {
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
-    const errorMsg = `图片大小为 ${fileSizeMB}MB，超过 5MB 限制，不填更小的图片`
-
-    avatarError.value = '图片大小不能超过 5MB'
     $message.error(errorMsg)
     return false
   }

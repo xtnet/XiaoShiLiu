@@ -1,3 +1,5 @@
+import apiConfig from '@/config/api.js'
+
 // 压缩图片函数
 const compressImage = (file, maxSizeMB = 0.8, quality = 0.4) => {
   return new Promise((resolve) => {
@@ -48,7 +50,11 @@ export async function uploadImage(file, options = {}) {
   try {
     if (!file) throw new Error('请选择要上传的文件')
     if (file instanceof File && !file.type.startsWith('image/')) throw new Error('请选择图片文件')
-    if (file.size > 5 * 1024 * 1024) throw new Error('图片大小不能超过5MB')
+    const maxSize = apiConfig.upload?.image?.maxFileSize || 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      const maxMB = Math.round(maxSize / (1024 * 1024))
+      throw new Error(`图片大小不能超过${maxMB}MB`)
+    }
 
     // 压缩图片
     const compressedFile = await compressImage(file)

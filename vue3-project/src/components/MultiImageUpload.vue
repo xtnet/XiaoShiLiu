@@ -46,8 +46,8 @@
 
     <div class="upload-tips">
       <p>• 最多上传{{ maxImages }}张图片</p>
-      <p>• 支持 JPG、PNG 格式</p>
-      <p>• 单张图片不超过5MB</p>
+      <p>• 支持 {{ imageFormatsText }}</p>
+      <p>• 单张图片不超过{{ imageMaxMB }}MB</p>
       <p class="drag-tip">• <span class="desktop-tip">拖拽图片可调整顺序</span><span class="mobile-tip">长按图片可拖拽排序</span></p>
     </div>
 
@@ -66,6 +66,7 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import MessageToast from '@/components/MessageToast.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { imageUploadApi, uploadApi } from '@/api/index.js'
+import apiConfig from '@/config/api.js'
 
 const props = defineProps({
   modelValue: {
@@ -74,7 +75,7 @@ const props = defineProps({
   },
   maxImages: {
     type: Number,
-    default: 9
+    default: apiConfig.upload?.image?.maxCount || 9
   },
   allowDeleteLast: {
     type: Boolean,
@@ -83,6 +84,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'error'])
+
+// 动态提示相关（根据集中配置渲染）
+const imageMaxMB = Math.round((apiConfig.upload?.image?.maxFileSize || 10 * 1024 * 1024) / (1024 * 1024))
+const imageFormatsText = (() => {
+  const types = apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/webp']
+  const friendly = types.map(t => {
+    const part = t.split('/')[1] || t
+    return part.toUpperCase()
+  })
+  return friendly.join('、')
+})()
 
 const fileInput = ref(null)
 const imageList = ref([])
@@ -205,23 +217,12 @@ const addFiles = async (files) => {
     return
   }
 
-  // 验证所有文件
+  // 验证所有文件（统一读取集中配置）
   for (const file of fileArray) {
-    // 先检查文件大小
-    if (file.size > 5 * 1024 * 1024) {
-      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
-      const errorMsg = `图片大小为 ${fileSizeMB}MB，超过 5MB 限制，请选择更小的图片`
-
-      // 显示Toast提示
-      showMessage(errorMsg, 'error')
-
-      // 同时设置错误状态
-      error.value = errorMsg
-      emit('error', errorMsg)
-      return
-    }
-
-    const validation = imageUploadApi.validateImageFile(file)
+    const validation = imageUploadApi.validateImageFile(file, {
+      maxSize: apiConfig.upload?.image?.maxFileSize || 10 * 1024 * 1024,
+      allowedTypes: apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/webp']
+    })
     if (!validation.valid) {
       const errorMsg = `${file.name}: ${validation.error}`
       error.value = errorMsg
@@ -565,7 +566,7 @@ const uploadAllImages = async () => {
     }
   } catch (err) {
     console.error('批量上传异常:', err)
-    error.value = '上传失败: ' + (err.message || '未知错误')
+    error.value = err.message || '未知错误'
     throw err
   } finally {
     isUploading.value = false

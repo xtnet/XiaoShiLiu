@@ -8,16 +8,16 @@
 
       <div class="auth-content">
         <div class="auth-header">
-          <h2 class="auth-title">{{ isLoginMode ? '登录小石榴' : '注册小石榴' }}</h2>
-          <p class="auth-subtitle">{{ isLoginMode ? '欢迎回来！' : '加入我们，开始分享美好生活' }}</p>
+          <h2 class="auth-title">{{ isLoginMode ? '登录小木屋' : '注册小木屋' }}</h2>
+          <p class="auth-subtitle">{{ isLoginMode ? '𝘊𝘪𝘢𝘭𝘭𝘰～(∠・ω< )⌒☆' : '加入我们，开始分享美好生活' }}</p>
         </div>
 
         <form @submit.prevent="handleSubmit" class="auth-form">
           <div class="form-group">
-            <label for="user_id" class="form-label">小石榴号</label>
+            <label for="user_id" class="form-label">小木屋号</label>
             <input type="text" id="user_id" v-model="formData.user_id" class="form-input"
               :class="{ 'error': showErrors && errors.user_id }"
-              :placeholder="isLoginMode ? '请输入小石榴号' : '请输入小石榴号（3-15位字母数字下划线）'" maxlength="15"
+              :placeholder="isLoginMode ? '请输入小木屋号' : '请输入小木屋号（3-15位字母数字_）'" maxlength="15"
               @input="clearError('user_id')" />
             <span v-if="showErrors && errors.user_id" class="error-message">{{ errors.user_id }}</span>
           </div>
@@ -39,11 +39,11 @@
           </div>
 
           <div v-if="!isLoginMode" class="form-group">
-            <label for="confirmPassword" class="form-label">确认密码</label>
-            <input type="password" id="confirmPassword" v-model="formData.confirmPassword" class="form-input"
-              :class="{ 'error': showErrors && errors.confirmPassword }" placeholder="请再次输入密码" maxlength="20"
-              @input="clearError('confirmPassword')" />
-            <span v-if="showErrors && errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</span>
+            <label for="inviteCode" class="form-label">邀请码</label>
+            <input type="text" id="inviteCode" v-model="formData.inviteCode" class="form-input"
+              :class="{ 'error': showErrors && errors.inviteCode }" placeholder="使用邀请码（必须使用邀请码注册）" maxlength="8"
+              @input="clearError('inviteCode')" />
+            <span v-if="showErrors && errors.inviteCode" class="error-message">{{ errors.inviteCode }}</span>
           </div>
 
           <div v-if="submitError" class="submit-error">
@@ -113,16 +113,16 @@ const formData = reactive({
   user_id: '',
   nickname: '',
   password: '',
-  confirmPassword: '',
-  captchaText: ''
+  captchaText: '',
+  inviteCode: ''
 })
 
 const errors = reactive({
   user_id: '',
   nickname: '',
   password: '',
-  confirmPassword: '',
-  captchaText: ''
+  captchaText: '',
+  inviteCode: ''
 })
 
 const showToast = ref(false)
@@ -138,28 +138,50 @@ const isLoadingCaptcha = ref(false)
 
 const isFormValid = computed(() => {
   if (isLoginMode.value) {
-    return formData.user_id.trim() && formData.password.trim() && !errors.user_id && !errors.password
+    return !errors.user_id && !errors.password && !unifiedMessage.value
   } else {
-    return formData.user_id.trim() && formData.nickname.trim() && formData.password.trim() && formData.confirmPassword.trim() &&
-      !errors.user_id && !errors.nickname && !errors.password && !errors.confirmPassword
+    return !errors.user_id && !errors.nickname && !errors.password && !errors.inviteCode && !unifiedMessage.value
   }
 })
 
 const validateUserId = async () => {
-  errors.user_id = ''
+  // 清空提示
+  Object.keys(errors).forEach(key => {
+    errors[key] = ''
+  })
 
   if (!formData.user_id.trim()) {
-    errors.user_id = '请输入小石榴号'
+    errors.user_id = '请输入小木屋号'
     return
   }
 
   if (formData.user_id.length < 3 || formData.user_id.length > 15) {
-    errors.user_id = '小石榴号长度必须在3-15位之间'
+    errors.user_id = '小木屋号长度必须在3-15位之间'
     return
   }
 
   if (!/^[a-zA-Z0-9_]+$/.test(formData.user_id)) {
-    errors.user_id = '小石榴号只能包含字母、数字和下划线'
+    errors.user_id = '小木屋号只能包含字母、数字和下划线'
+    return
+  }
+
+  if (!formData.nickname.trim()) {
+    errors.nickname = '请输入昵称'
+    return
+  }
+
+  if (!formData.password.trim()) {
+    errors.password = '请输入密码'
+    return
+  }
+  
+  if (!isLoginMode.value && formData.password.length < 6) {
+    errors.password = '密码至少需要6位'
+    return
+  }
+
+  if (!formData.inviteCode.trim()) {
+    errors.inviteCode = '必须使用邀请码注册'
     return
   }
 
@@ -171,7 +193,7 @@ const validateUserId = async () => {
 
       if (result.code === 200) {
         if (!result.data.isUnique) {
-          errors.user_id = '小石榴号已存在'
+          unifiedMessage.value = '小木屋号已存在'
           return
         }
       } else {
@@ -184,34 +206,6 @@ const validateUserId = async () => {
   }
 
   errors.user_id = ''
-}
-
-const validateNickname = () => {
-  if (!formData.nickname.trim()) {
-    errors.nickname = '请输入昵称'
-  } else {
-    errors.nickname = ''
-  }
-}
-
-const validatePassword = () => {
-  if (!formData.password.trim()) {
-    errors.password = '请输入密码'
-  } else if (!isLoginMode.value && formData.password.length < 6) {
-    errors.password = '密码至少需要6位'
-  } else {
-    errors.password = ''
-  }
-}
-
-const validateConfirmPassword = () => {
-  if (!formData.confirmPassword.trim()) {
-    errors.confirmPassword = '请确认密码'
-  } else if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = '两次输入的密码不一致'
-  } else {
-    errors.confirmPassword = ''
-  }
 }
 
 const clearError = (field) => {
@@ -266,17 +260,18 @@ const validateCaptcha = () => {
   }
 }
 
+// 重置表单（已弃用）
 const resetForm = () => {
   formData.user_id = ''
   formData.nickname = ''
   formData.password = ''
-  formData.confirmPassword = ''
   formData.captchaText = ''
+  formData.inviteCode = ''
   errors.user_id = ''
   errors.nickname = ''
   errors.password = ''
-  errors.confirmPassword = ''
   errors.captchaText = ''
+  errors.inviteCode = ''
   submitError.value = ''
   showErrors.value = false
   captchaId.value = ''
@@ -320,12 +315,8 @@ const handleSubmit = async () => {
     const isUserIdEmpty = !formData.user_id.trim()
     const isPasswordEmpty = !formData.password.trim()
 
-    if (isUserIdEmpty && isPasswordEmpty) {
-      return
-    }
-
     if (isUserIdEmpty) {
-      unifiedMessage.value = '请输入小石榴号'
+      unifiedMessage.value = '请输入小木屋号'
       return
     }
 
@@ -339,9 +330,6 @@ const handleSubmit = async () => {
   } else {
     // 注册模式：先验证表单，通过后打开验证码模态框
     await validateUserId()
-    validatePassword()
-    validateNickname()
-    validateConfirmPassword()
 
     if (!isFormValid.value) {
       return
@@ -373,7 +361,8 @@ const performSubmit = async () => {
         captchaText: formData.captchaText,
         avatar: new URL('@/assets/imgs/avatar.png', import.meta.url).href,
         bio: '用户没有任何简介',
-        location: '未知'
+        location: '未知',
+        inviteCode: formData.inviteCode
       })
     }
 
@@ -397,7 +386,11 @@ const performSubmit = async () => {
         refreshCaptcha()
       } else if (result.message.includes('用户ID已存在')) {
         // 用户ID重复错误，设置到对应字段
-        errors.user_id = result.message
+        unifiedMessage.value = result.message
+        closeCaptchaModal()
+      } else if (result.message.includes('邀请码')) {
+        // 邀请码相关错误，设置到对应字段并关闭验证码窗口
+        unifiedMessage.value = result.message
         closeCaptchaModal()
       } else {
         unifiedMessage.value = result.message

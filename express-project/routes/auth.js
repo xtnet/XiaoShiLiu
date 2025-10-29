@@ -75,7 +75,7 @@ router.get('/check-user-id', async (req, res) => {
   try {
     const { user_id } = req.query; // 前端传过来的小石榴号
     if (!user_id) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入小石榴号' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入小木屋号' });
     }
     // 查数据库是否已有该ID
     const [existingUser] = await pool.execute(
@@ -86,7 +86,7 @@ router.get('/check-user-id', async (req, res) => {
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       data: { isUnique: existingUser.length === 0 },
-      message: existingUser.length > 0 ? '小石榴号已存在' : '小石榴号可用'
+      message: existingUser.length > 0 ? '小木屋号已存在' : '小木屋号可用'
     });
   } catch (error) {
     console.error('检查用户ID失败:', error);
@@ -97,7 +97,7 @@ router.get('/check-user-id', async (req, res) => {
 // 用户注册
 router.post('/register', async (req, res) => {
   try {
-    const { user_id, nickname, password, captchaId, captchaText } = req.body;
+    const { user_id, nickname, password, captchaId, captchaText, inviteCode } = req.body;
 
     if (!user_id || !nickname || !password || !captchaId || !captchaText) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
@@ -129,12 +129,26 @@ router.post('/register', async (req, res) => {
     // 验证码验证成功，删除已使用的验证码
     captchaStore.delete(captchaId);
 
+    // 验证邀请码
+    if (!inviteCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '必须使用邀请码注册' });
+    }
+
+    const [inviteRows] = await pool.execute(
+      'SELECT * FROM invite_codes WHERE code = ? AND is_active = 1',
+      [inviteCode]
+    );
+
+    if (inviteRows.length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邀请码无效或已被使用' });
+    }
+
     if (user_id.length < 3 || user_id.length > 15) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号长度必须在3-15位之间' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小木屋号长度必须在3-15位之间' });
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(user_id)) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号只能包含字母、数字和下划线' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小木屋号只能包含字母、数字和下划线' });
     }
 
     if (nickname.length > 10) {
@@ -178,13 +192,21 @@ router.post('/register', async (req, res) => {
       [userId.toString(), accessToken, refreshToken, userAgent]
     );
 
+    // 标记邀请码为已使用
+    if (inviteCode) {
+      await pool.execute(
+        'UPDATE invite_codes SET is_active = 2, used_at = CURRENT_TIMESTAMP WHERE code = ?',
+        [inviteCode]
+      );
+    }
+
     // 获取完整用户信息
     const [userRows] = await pool.execute(
       'SELECT id, user_id, nickname, avatar, bio, location, follow_count, fans_count, like_count FROM users WHERE id = ?',
       [userId.toString()]
     );
 
-    console.log(`用户注册成功 - 用户ID: ${userId}, 小石榴号: ${userRows[0].user_id}`);
+    console.log(`用户注册成功 - 用户ID: ${userId}, 小木屋号: ${userRows[0].user_id}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,
@@ -277,7 +299,7 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    console.log(`用户登录成功 - 用户ID: ${user.id}, 小石榴号: ${user.user_id}`);
+    console.log(`用户登录成功 - 用户ID: ${user.id}, 小木屋号: ${user.user_id}`);
 
     res.json({
       code: RESPONSE_CODES.SUCCESS,

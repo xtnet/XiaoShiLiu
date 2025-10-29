@@ -31,6 +31,7 @@ import NotificationManagement from '@/views/admin/NotificationManagement.vue'
 import SessionManagement from '@/views/admin/SessionManagement.vue'
 import AdminManagement from '@/views/admin/AdminManagement.vue'
 import AuditManagement from '@/views/admin/AuditManagement.vue'
+import InviteCodesManagement from '@/views/admin/InviteCodesManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -249,6 +250,11 @@ const router = createRouter({
           path: 'audit',
           name: 'admin_audit',
           component: AuditManagement
+        },
+        {
+          path: 'invite-codes',
+          name: 'admin_invite_codes',
+          component: InviteCodesManagement
         }
       ]
     }

@@ -39,6 +39,9 @@ class DatabaseInitializer {
       // 创建用户表
       await this.createUsersTable(connection);
 
+      // 创建邀请码表
+      await this.createInviteCodesTable(connection);
+
       // 创建管理员表
       await this.createAdminTable(connection);
 
@@ -411,6 +414,25 @@ class DatabaseInitializer {
     console.log('✓ audit 表创建成功');
   }
 
+  async createInviteCodesTable(connection) {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS \`invite_codes\` (
+          \`id\` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '邀请码ID',
+          \`code\` varchar(8) NOT NULL COMMENT '邀请码（8位小写数字与字母组合）',
+          \`is_active\` tinyint(1) DEFAULT 1 COMMENT '是否激活：1-未使用，2-已使用',
+          \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+          \`used_at\` timestamp NULL DEFAULT NULL COMMENT '使用时间',
+          PRIMARY KEY (\`id\`),
+          UNIQUE KEY \`uk_code\` (\`code\`),
+          KEY \`idx_code\` (\`code\`),
+          KEY \`idx_is_active\` (\`is_active\`),
+          KEY \`idx_created_at\` (\`created_at\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请码表';
+      `;
+    await connection.execute(sql);
+    console.log('✓ invite_codes 表创建成功');
+  }
+
   async insertDefaultAdmin() {
     const connection = await mysql.createConnection({
       ...this.dbConfig,
@@ -419,7 +441,7 @@ class DatabaseInitializer {
 
     try {
       console.log('插入默认管理员账户...');
-      
+
       // 默认管理员账户信息
       // 用户名: admin
       // 密码: 123456 (SHA-256加密后的值)
@@ -428,7 +450,7 @@ class DatabaseInitializer {
         ('admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
         ON DUPLICATE KEY UPDATE \`username\` = VALUES(\`username\`)
       `;
-      
+
       await connection.execute(adminSql);
     } catch (error) {
       console.error('插入默认管理员账户失败:', error.message);

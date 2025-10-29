@@ -146,7 +146,7 @@ const themeStore = useThemeStore()
 const { confirmState, handleConfirm, handleCancel, confirmLogout } = useConfirm()
 const { lock, unlock } = useScrollLock()
 
-const logoUrl = new URL('@/assets/imgs/小石榴.png', import.meta.url).href
+const logoUrl = new URL('@/assets/imgs/LOGO.png', import.meta.url).href
 
 const indicatorPosition = computed(() => {
   const index = themeStore.themeOptions.findIndex(option => option.value === themeStore.currentTheme)
@@ -278,7 +278,8 @@ const menuItems = [
   { path: '/admin/notifications', title: '通知管理', icon: 'notification' },
   { path: '/admin/sessions', title: '会话管理', icon: 'setting' },
   { path: '/admin/audit', title: '认证管理', icon: 'verified' },
-  { path: '/admin/admins', title: '管理员管理', icon: 'admin' }
+  { path: '/admin/admins', title: '管理员管理', icon: 'admin' },
+  { path: '/admin/invite-codes', title: '邀请管理', icon: 'invite' }
 ]
 
 // 当前页面标题
@@ -303,7 +304,8 @@ const currentPageDescription = computed(() => {
     '/admin/notifications': '管理系统通知消息',
     '/admin/sessions': '管理用户登录会话',
     '/admin/audit': '管理用户认证申请和审核',
-    '/admin/admins': '管理系统管理员账号'
+    '/admin/admins': '管理系统管理员账号',
+    '/admin/invite-codes': '管理邀请码设置'
   }
   return descriptions[route.path]
 })

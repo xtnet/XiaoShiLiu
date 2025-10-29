@@ -41,3 +41,17 @@ select {
   background-color: var(--bg-color-primary);
   box-sizing: border-box;
 }
+
+/* 自定义字体 */
+@font-face {
+  font-family: "lovely";
+  src: url("https://vip.666707.xyz:23060/d/fonts/PingFangSC-Medium.ttf") format("woff2");
+  font-display: swap;
+}
+
+/* 只在电脑端应用 */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    font-family: "lovely", sans-serif;
+  }
+}

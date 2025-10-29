@@ -12,7 +12,7 @@
                         <h3 class="user-nickname" v-user-hover="userHoverConfig">{{ user.nickname }}</h3>
                         <VerifiedBadge :verified="user.verified" />
                     </div>
-                    <div class="user-id">小石榴号：{{ user.userId }}</div>
+                    <div class="user-id">小木屋号：{{ user.userId }}</div>
                     <div class="user-stats">
                         <span class="stat-item">粉丝 · {{ formatNumber(user.followers) }}</span>
                         <span class="stat-item">笔记 · {{ formatNumber(user.post_count) }}</span>

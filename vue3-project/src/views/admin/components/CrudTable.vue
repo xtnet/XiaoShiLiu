@@ -180,6 +180,14 @@
                   {{ item[column.key].substring(0, column.maxLength) }}...
                 </span>
               </span>
+              <span v-else-if="column.formatter && typeof column.formatter === 'function'">
+                <template v-if="column.html && column.html === true">
+                  <span v-html="column.formatter(item[column.key], item)"></span>
+                </template>
+                <template v-else>
+                  {{ column.formatter(item[column.key], item) }}
+                </template>
+              </span>
               <span v-else>
                 {{ item[column.key] || '-' }}
               </span>
@@ -318,6 +326,10 @@ const props = defineProps({
   customActions: {
     type: Array,
     default: () => []
+  },
+  customLoadData: {
+    type: Function,
+    default: null
   }
 })
 
@@ -486,6 +498,9 @@ onMounted(() => {
   teleportObserver = setupTeleportWatcher()
   loadData()
   document.addEventListener('click', handleClickOutside)
+  
+  // 添加对refresh-table事件的监听
+  window.addEventListener('refresh-table', refreshData)
 })
 
 onUnmounted(() => {
@@ -493,6 +508,9 @@ onUnmounted(() => {
   if (teleportObserver) {
     teleportObserver.disconnect()
   }
+  
+  // 移除refresh-table事件监听
+  window.removeEventListener('refresh-table', refreshData)
 })
 
 const loadData = async (targetPage = null, useCache = true) => {
@@ -517,48 +535,64 @@ const loadData = async (targetPage = null, useCache = true) => {
   }
 
   try {
-    const params = new URLSearchParams({
-      page: pageToLoad,
-      limit: pagination.limit,
-      ...searchParams
-    })
-
-    // 添加排序参数
-    if (sortField.value && sortOrder.value) {
-      params.append('sortField', sortField.value)
-      params.append('sortOrder', sortOrder.value)
-    }
-
-    // 使用配置的API地址
-    const response = await fetch(`${apiConfig.baseURL}${props.apiEndpoint}?${params}`, {
-      headers: getAuthHeaders()
-    })
-    const result = await response.json()
-
-    if (result.code === 200) {
-      const responseData = {
-        data: result.data.data || result.data,
-        pagination: result.data.pagination || {
-          page: result.data.page || pageToLoad,
-          limit: result.data.limit || pagination.limit,
-          total: result.data.total || 0,
-          pages: result.data.totalPages || Math.ceil((result.data.total || 0) / (result.data.limit || pagination.limit))
-        }
-      }
-
-      // 缓存数据
-      pageCache.value.set(cacheKey, responseData)
-
-      if (!targetPage) {
-        // 只有当前页才更新显示数据
-        data.value = responseData.data
-        Object.assign(pagination, responseData.pagination)
-      }
-
-      return responseData
+    let responseData
+    
+    // 检查是否有自定义数据加载方法
+    if (props.customLoadData) {
+      // 使用自定义数据加载方法
+      responseData = await props.customLoadData(
+        pageToLoad,
+        pagination.limit,
+        searchParams,
+        sortField.value,
+        sortOrder.value
+      )
     } else {
-      console.error('加载数据失败:', result.message)
+      // 使用默认的数据加载逻辑
+      const params = new URLSearchParams({
+        page: pageToLoad,
+        limit: pagination.limit,
+        ...searchParams
+      })
+
+      // 添加排序参数
+      if (sortField.value && sortOrder.value) {
+        params.append('sortField', sortField.value)
+        params.append('sortOrder', sortOrder.value)
+      }
+
+      // 使用配置的API地址
+      const response = await fetch(`${apiConfig.baseURL}${props.apiEndpoint}?${params}`, {
+        headers: getAuthHeaders()
+      })
+      const result = await response.json()
+
+      if (result.code === 200) {
+        responseData = {
+          data: result.data.data || result.data,
+          pagination: result.data.pagination || {
+            page: result.data.page || pageToLoad,
+            limit: result.data.limit || pagination.limit,
+            total: result.data.total || 0,
+            pages: result.data.totalPages || Math.ceil((result.data.total || 0) / (result.data.limit || pagination.limit))
+          }
+        }
+      } else {
+        console.error('加载数据失败:', result.message)
+        return null
+      }
     }
+
+    // 缓存数据
+    pageCache.value.set(cacheKey, responseData)
+
+    if (!targetPage) {
+      // 只有当前页才更新显示数据
+      data.value = responseData.data
+      Object.assign(pagination, responseData.pagination)
+    }
+
+    return responseData
   } catch (error) {
     console.error('加载数据失败:', error)
   } finally {

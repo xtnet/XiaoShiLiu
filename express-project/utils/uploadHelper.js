@@ -1,11 +1,8 @@
-const axios = require('axios');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const config = require('../config/config');
 const crypto = require('crypto');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 /**
  * 保存图片文件到本地
@@ -21,17 +18,22 @@ async function saveImageToLocal(fileBuffer, filename) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    // 生成唯一文件名
-    const ext = path.extname(filename);
+    // 计算MD5并构造目标文件名（md5.扩展名）
+    const ext = (path.extname(filename) || '').toLowerCase();
     const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-    const uniqueFilename = `${Date.now()}_${hash}${ext}`;
-    const filePath = path.join(uploadDir, uniqueFilename);
 
-    // 保存文件
-    fs.writeFileSync(filePath, fileBuffer);
+    // 去重：若已存在相同MD5的文件（任意扩展名），直接复用
+    const existing = fs.readdirSync(uploadDir).find(f => f.startsWith(`${hash}.`));
+    const finalFilename = existing || `${hash}${ext}`;
+    const filePath = path.join(uploadDir, finalFilename);
+
+    // 若不存在则写入
+    if (!existing) {
+      fs.writeFileSync(filePath, fileBuffer);
+    }
 
     // 返回访问URL
-    const url = `${config.upload.image.local.baseUrl}/${config.upload.image.local.uploadDir}/${uniqueFilename}`;
+    const url = `${config.upload.image.local.baseUrl}/${config.upload.image.local.uploadDir}/${finalFilename}`;
     return {
       success: true,
       url: url
@@ -59,17 +61,22 @@ async function saveVideoToLocal(fileBuffer, filename) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    // 生成唯一文件名
-    const ext = path.extname(filename);
+    // 计算MD5并构造目标文件名（md5.扩展名）
+    const ext = (path.extname(filename) || '').toLowerCase();
     const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-    const uniqueFilename = `${Date.now()}_${hash}${ext}`;
-    const filePath = path.join(uploadDir, uniqueFilename);
 
-    // 保存文件
-    fs.writeFileSync(filePath, fileBuffer);
+    // 去重：若已存在相同MD5的文件（任意扩展名），直接复用
+    const existing = fs.readdirSync(uploadDir).find(f => f.startsWith(`${hash}.`));
+    const finalFilename = existing || `${hash}${ext}`;
+    const filePath = path.join(uploadDir, finalFilename);
+
+    // 若不存在则写入
+    if (!existing) {
+      fs.writeFileSync(filePath, fileBuffer);
+    }
 
     // 返回访问URL和文件路径
-    const url = `${config.upload.video.local.baseUrl}/${config.upload.video.local.uploadDir}/${uniqueFilename}`;
+    const url = `${config.upload.video.local.baseUrl}/${config.upload.video.local.uploadDir}/${finalFilename}`;
     return {
       success: true,
       url: url,
@@ -80,239 +87,6 @@ async function saveVideoToLocal(fileBuffer, filename) {
     return {
       success: false,
       message: error.message || '视频本地保存失败'
-    };
-  }
-}
-
-/**
- * 上传文件到图床
- * @param {Buffer} fileBuffer - 文件缓冲区
- * @param {string} filename - 文件名
- * @param {string} mimetype - 文件MIME类型
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadToImageHost(fileBuffer, filename, mimetype) {
-  try {
-    // 检查配置是否存在
-    if (!config.upload || !config.upload.image || !config.upload.image.imagehost || !config.upload.image.imagehost.apiUrl) {
-      console.error('❌ 图床配置不完整:', config.upload?.image?.imagehost);
-      return {
-        success: false,
-        message: '图床配置不完整，缺少apiUrl'
-      };
-    }
-
-    // 构建multipart/form-data请求体
-    const boundary = `----formdata-${Date.now()}`;
-
-    const formDataBody = Buffer.concat([
-      Buffer.from(`--${boundary}\r\n`),
-      Buffer.from(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`),
-      Buffer.from(`Content-Type: ${mimetype}\r\n\r\n`),
-      fileBuffer,
-      Buffer.from(`\r\n--${boundary}--\r\n`)
-    ]);
-
-    // 上传到图床
-    const response = await axios.post(config.upload.image.imagehost.apiUrl, formDataBody, {
-      headers: {
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        'Content-Length': formDataBody.length
-      },
-      timeout: config.upload.image.imagehost.timeout,
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-      })
-    });
-
-    if (response.data && response.data.errno === 0 && response.data.data && response.data.data.url) {
-      const imageUrl = response.data.data.url.trim().replace(/\`/g, '').replace(/\s+/g, '');
-      return {
-        success: true,
-        url: imageUrl
-      };
-    } else {
-      console.log('❌ 图床返回错误:', response.data);
-      return {
-        success: false,
-        message: '图床上传失败'
-      };
-    }
-  } catch (error) {
-    console.error('❌ 图床上传失败:', error.message);
-    return {
-      success: false,
-      message: error.message || '图床上传失败'
-    };
-  }
-}
-
-
-/**
- * 上传图片到 Cloudflare R2
- * @param {Buffer} fileBuffer - 文件缓冲区
- * @param {string} filename - 文件名
- * @param {string} mimetype - 文件MIME类型
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadImageToR2(fileBuffer, filename, mimetype) {
-  try {
-    const r2Config = config.upload.image.r2;
-    
-    // 验证必要的配置
-    if (!r2Config.accessKeyId || !r2Config.secretAccessKey || !r2Config.bucketName || !r2Config.endpoint) {
-      throw new Error('Cloudflare R2 配置不完整');
-    }
-
-    // 创建 S3 客户端（Cloudflare R2 兼容 S3 API）
-    const s3Client = new S3Client({
-      region: r2Config.region,
-      endpoint: r2Config.endpoint,
-      credentials: {
-        accessKeyId: r2Config.accessKeyId,
-        secretAccessKey: r2Config.secretAccessKey,
-      },
-    });
-
-    // 生成唯一文件名
-    const ext = path.extname(filename);
-    const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-    const uniqueFilename = `images/${Date.now()}_${hash}${ext}`;
-
-    // 上传参数
-    const uploadParams = {
-      Bucket: r2Config.bucketName,
-      Key: uniqueFilename,
-      Body: fileBuffer,
-      ContentType: mimetype,
-    };
-
-    // 执行上传
-    const command = new PutObjectCommand(uploadParams);
-    await s3Client.send(command);
-
-    // 构建访问URL
-    let fileUrl;
-    if (r2Config.publicUrl) {
-      // 使用自定义域名
-      fileUrl = `${r2Config.publicUrl}/${uniqueFilename}`;
-    } else {
-      // 使用默认的 R2 公共URL格式
-      const accountId = r2Config.accountId;
-      fileUrl = `https://pub-${accountId}.r2.dev/${uniqueFilename}`;
-    }
-
-    return {
-      success: true,
-      url: fileUrl
-    };
-  } catch (error) {
-    console.error('Cloudflare R2 图片上传失败:', error.message);
-    return {
-      success: false,
-      message: error.message || 'Cloudflare R2 图片上传失败'
-    };
-  }
-}
-
-/**
- * 上传视频到 Cloudflare R2
- * @param {Buffer} fileBuffer - 文件缓冲区
- * @param {string} filename - 文件名
- * @param {string} mimetype - 文件MIME类型
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadVideoToR2(fileBuffer, filename, mimetype) {
-  try {
-    const r2Config = config.upload.video.r2;
-    
-    // 验证必要的配置
-    if (!r2Config.accessKeyId || !r2Config.secretAccessKey || !r2Config.bucketName || !r2Config.endpoint) {
-      throw new Error('Cloudflare R2 配置不完整');
-    }
-
-    // 创建 S3 客户端（Cloudflare R2 兼容 S3 API）
-    const s3Client = new S3Client({
-      region: r2Config.region,
-      endpoint: r2Config.endpoint,
-      credentials: {
-        accessKeyId: r2Config.accessKeyId,
-        secretAccessKey: r2Config.secretAccessKey,
-      },
-    });
-
-    // 生成唯一文件名
-    const ext = path.extname(filename);
-    const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-    const uniqueFilename = `videos/${Date.now()}_${hash}${ext}`;
-
-    // 上传参数
-    const uploadParams = {
-      Bucket: r2Config.bucketName,
-      Key: uniqueFilename,
-      Body: fileBuffer,
-      ContentType: mimetype,
-    };
-
-    // 执行上传
-    const command = new PutObjectCommand(uploadParams);
-    await s3Client.send(command);
-
-    // 构建访问URL
-    let fileUrl;
-    if (r2Config.publicUrl) {
-      // 使用自定义域名
-      fileUrl = `${r2Config.publicUrl}/${uniqueFilename}`;
-    } else {
-      // 使用默认的 R2 公共URL格式
-      const accountId = r2Config.accountId;
-      fileUrl = `https://pub-${accountId}.r2.dev/${uniqueFilename}`;
-    }
-
-    return {
-      success: true,
-      url: fileUrl
-    };
-  } catch (error) {
-    console.error('Cloudflare R2 视频上传失败:', error.message);
-    return {
-      success: false,
-      message: error.message || 'Cloudflare R2 视频上传失败'
-    };
-  }
-}
-
-/**
- * 从文件路径上传到图床
- * @param {string} filePath - 文件路径
- * @param {string} originalname - 原始文件名
- * @param {string} mimetype - 文件MIME类型
- * @param {boolean} deleteAfterUpload - 上传后是否删除本地文件
- * @returns {Promise<{success: boolean, url?: string, message?: string}>}
- */
-async function uploadFileToImageHost(filePath, originalname, mimetype, deleteAfterUpload = true) {
-  try {
-    // 读取文件
-    const fileBuffer = fs.readFileSync(filePath);
-    const filename = originalname || path.basename(filePath);
-
-    const result = await uploadToImageHost(fileBuffer, filename, mimetype);
-
-    // 上传成功后删除本地文件
-    if (result.success && deleteAfterUpload && fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    return result;
-  } catch (error) {
-    console.error('❌ 图片上传失败:', error.message);
-    // 确保删除临时文件
-    if (deleteAfterUpload && fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    return {
-      success: false,
-      message: error.message || '图片上传失败'
     };
   }
 }
@@ -360,20 +134,7 @@ function adminAuth(req, res, next) {
  * @returns {Promise<{success: boolean, url?: string, message?: string}>}
  */
 async function uploadImage(fileBuffer, filename, mimetype) {
-  const strategy = config.upload.image.strategy;
-  
-  if (strategy === 'local') {
-    return await saveImageToLocal(fileBuffer, filename);
-  } else if (strategy === 'imagehost') {
-    return await uploadToImageHost(fileBuffer, filename, mimetype);
-  } else if (strategy === 'r2') {
-    return await uploadImageToR2(fileBuffer, filename, mimetype);
-  } else {
-    return {
-      success: false,
-      message: '未知的图片上传策略'
-    };
-  }
+  return await saveImageToLocal(fileBuffer, filename);
 }
 
 /**
@@ -384,18 +145,7 @@ async function uploadImage(fileBuffer, filename, mimetype) {
  * @returns {Promise<{success: boolean, url?: string, filePath?: string, message?: string}>}
  */
 async function uploadVideo(fileBuffer, filename, mimetype) {
-  const strategy = config.upload.video.strategy;
-  
-  if (strategy === 'local') {
-    return await saveVideoToLocal(fileBuffer, filename);
-  } else if (strategy === 'r2') {
-    return await uploadVideoToR2(fileBuffer, filename, mimetype);
-  } else {
-    return {
-      success: false,
-      message: '未知的视频上传策略'
-    };
-  }
+  return await saveVideoToLocal(fileBuffer, filename);
 }
 
 // 保持向后兼容的旧函数
@@ -415,12 +165,8 @@ async function uploadFile(fileBuffer, filename, mimetype) {
 
 
 module.exports = {
-  uploadToImageHost,
-  uploadFileToImageHost,
   saveImageToLocal,
   saveVideoToLocal,
-  uploadImageToR2,
-  uploadVideoToR2,
   uploadImage,
   uploadVideo,
   uploadFile,

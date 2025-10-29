@@ -111,7 +111,7 @@
             </div>
             <MultiImageUpload v-else-if="field.type === 'multi-image-upload'"
               :ref="el => setMultiImageUploadRef(field.key, el)" :model-value="getMultiImageUploadValue(field.key)"
-              @update:model-value="handleImageUploadChange" :max-images="field.maxImages || 9" />
+              @update:model-value="handleImageUploadChange" :max-images="field.maxImages ?? imageMaxCount" />
             <TagSelector v-else-if="field.type === 'tags'" :model-value="formData[field.key] || []"
               @update:model-value="updateField(field.key, $event)" :max-tags="field.maxTags || 10" />
             <div v-else-if="field.type === 'interest-input'" class="interest-input-container">
@@ -185,6 +185,8 @@ import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
 import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail'
 // import { getFriendsList } from '@/api/friends'
+import apiConfig from '@/config/api.js'
+const imageMaxCount = apiConfig.upload?.image?.maxCount || 9
 
 const props = defineProps({
   visible: Boolean,
@@ -1102,18 +1104,19 @@ const handleVideoFileSelect = async (event, fieldKey) => {
   const file = event.target.files[0]
   if (!file) return
 
-  // 验证文件类型和大小
-  const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv']
-  const maxSize = 100 * 1024 * 1024 // 100MB
+  // 验证文件类型和大小（集中配置）
+  const validTypes = apiConfig.upload?.video?.allowedTypes || ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm']
+  const maxSize = apiConfig.upload?.video?.maxFileSize || 100 * 1024 * 1024
 
   if (!validTypes.includes(file.type)) {
-    videoErrors.value[fieldKey] = '请选择有效的视频格式 (MP4, AVI, MOV, WMV, FLV)'
+    videoErrors.value[fieldKey] = '不支持的视频格式'
     return
   }
 
   if (file.size > maxSize) {
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
-    videoErrors.value[fieldKey] = `视频大小为 ${fileSizeMB}MB，超过 100MB 限制，请选择更小的视频`
+    const maxMB = (maxSize / (1024 * 1024)).toFixed(0)
+    videoErrors.value[fieldKey] = `视频大小为 ${fileSizeMB}MB，超过 ${maxMB}MB 限制，请选择更小的视频`
     return
   }
 
@@ -1171,9 +1174,9 @@ const handleAvatarDrop = (event, fieldKey) => {
 }
 
 const showAvatarCropDialog = async (file, fieldKey) => {
-  // 验证文件
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-  const maxSize = 5 * 1024 * 1024
+  // 验证文件（集中配置）
+  const validTypes = apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  const maxSize = apiConfig.upload?.image?.maxFileSize || 5 * 1024 * 1024
 
   if (!validTypes.includes(file.type)) {
     avatarErrors.value[fieldKey] = '请选择有效的图片格式 (JPEG, PNG, GIF, WebP)'
@@ -1182,7 +1185,8 @@ const showAvatarCropDialog = async (file, fieldKey) => {
 
   if (file.size > maxSize) {
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
-    avatarErrors.value[fieldKey] = `图片大小为 ${fileSizeMB}MB，超过 5MB 限制，请选择更小的图片`
+    const maxMB = (maxSize / (1024 * 1024)).toFixed(0)
+    avatarErrors.value[fieldKey] = `图片大小为 ${fileSizeMB}MB，超过 ${maxMB}MB 限制，请选择更小的图片`
     return
   }
 
@@ -1674,7 +1678,23 @@ defineExpose({
   gap: 8px;
 }
 
+.emoji-btn,
+.mention-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
 
+.emoji-btn:hover,
+.mention-btn:hover {
+  background-color: var(--bg-color-secondary);
+}
 
 .emoji-icon,
 .mention-icon {
@@ -1694,44 +1714,20 @@ defineExpose({
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparent;
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  animation: fadeIn 0.2s ease;
 }
 
 .emoji-panel {
   background: var(--bg-color-primary);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  animation: scaleIn 0.2s ease;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   max-width: 90vw;
   max-height: 90vh;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  overflow: hidden;
 }
 
 /* 头像上传样式 */

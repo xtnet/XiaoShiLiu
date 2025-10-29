@@ -53,8 +53,8 @@
 
           <div class="upload-tips">
             <p>• 最多上传{{ maxImages }}张图片（已确认{{ confirmedImages.length }}张）</p>
-            <p>• 支持 JPG、PNG 格式</p>
-            <p>• 单张图片不超过5MB</p>
+            <p>• 支持 {{ imageFormatsText }}</p>
+            <p>• 单张图片不超过{{ imageMaxMB }}MB</p>
             <p>• 长按图片可拖拽排序</p>
             <p v-if="localImages.length > 0">• 当前选择{{ localImages.length }}张，点击确认上传后才会显示在预览区域</p>
           </div>
@@ -77,6 +77,8 @@
 import { ref, watch } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useScrollLock } from '@/composables/useScrollLock'
+import apiConfig from '@/config/api.js'
+import { imageUploadApi } from '@/api/index.js'
 
 const props = defineProps({
   visible: {
@@ -100,7 +102,15 @@ const confirmedImages = ref([]) // 已确认的图片（显示在预览区域）
 const fileInput = ref(null)
 const error = ref('')
 const isUploading = ref(false)
-const maxImages = 9
+const maxImages = apiConfig.upload?.image?.maxCount || 9
+
+// 动态提示：从集中配置渲染
+const imageMaxMB = Math.round((apiConfig.upload?.image?.maxFileSize || 10 * 1024 * 1024) / (1024 * 1024))
+const imageFormatsText = (() => {
+  const types = apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/webp']
+  const friendly = types.map(t => (t.split('/')[1] || t).toUpperCase())
+  return friendly.join('、')
+})()
 
 // 拖拽相关状态
 const dragIndex = ref(-1)
@@ -168,15 +178,13 @@ const processFiles = async (files) => {
     const validFiles = []
 
     for (const file of files) {
-      // 检查文件类型
-      if (!file.type.startsWith('image/')) {
-        error.value = '只能上传图片文件'
-        continue
-      }
-
-      // 检查文件大小 (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        error.value = '图片大小不能超过5MB'
+      // 统一校验（类型与大小）
+      const validation = imageUploadApi.validateImageFile(file, {
+        maxSize: apiConfig.upload?.image?.maxFileSize || 10 * 1024 * 1024,
+        allowedTypes: apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/webp']
+      })
+      if (!validation.valid) {
+        error.value = validation.error || '图片文件不符合要求'
         continue
       }
 

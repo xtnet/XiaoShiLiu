@@ -4,24 +4,36 @@ const { HTTP_STATUS, RESPONSE_CODES } = require('../constants');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
 const { uploadFile, uploadVideo } = require('../utils/uploadHelper');
+const config = require('../config/config');
 
-// 配置 multer 内存存储（用于云端图床）
+// 将如 '10mb' 转换为字节
+function parseSizeToBytes(sizeStr) {
+  if (typeof sizeStr === 'number') return sizeStr;
+  if (!sizeStr || typeof sizeStr !== 'string') return undefined;
+  const match = sizeStr.toLowerCase().match(/^(\d+(?:\.\d+)?)(b|kb|mb|gb)?$/);
+  if (!match) return undefined;
+  const value = parseFloat(match[1]);
+  const unit = match[2] || 'b';
+  const map = { b: 1, kb: 1024, mb: 1024 * 1024, gb: 1024 * 1024 * 1024 };
+  return Math.floor(value * (map[unit] || 1));
+}
+
+// 配置 multer 内存存储（与本地保存配合使用）
 const storage = multer.memoryStorage();
 
-// 文件过滤器 - 图片
+// 文件过滤器 - 图片（依据集中配置）
 const imageFileFilter = (req, file, cb) => {
-  // 检查文件类型
-  if (file.mimetype.startsWith('image/')) {
+  const allowedTypes = config.upload.image.allowedTypes || [];
+  if (allowedTypes.length > 0 ? allowedTypes.includes(file.mimetype) : file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
     cb(new Error('只允许上传图片文件'), false);
   }
 };
 
-// 文件过滤器 - 视频
+// 文件过滤器 - 视频（依据集中配置）
 const videoFileFilter = (req, file, cb) => {
-  // 检查文件类型
-  const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm'];
+  const allowedTypes = config.upload.video.allowedTypes || [];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -34,7 +46,7 @@ const upload = multer({
   storage: storage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB 限制
+    fileSize: parseSizeToBytes(config.upload.image.maxSize) || 5 * 1024 * 1024
   }
 });
 
@@ -43,14 +55,14 @@ const upload = multer({
 const mixedFileFilter = (req, file, cb) => {
   if (file.fieldname === 'file') {
     // 视频文件验证
-    if (file.mimetype.startsWith('video/')) {
+    if (config.upload.video.allowedTypes?.includes(file.mimetype) || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
       cb(new Error('只支持视频文件'), false);
     }
   } else if (file.fieldname === 'thumbnail') {
     // 缩略图文件验证
-    if (file.mimetype.startsWith('image/')) {
+    if (config.upload.image.allowedTypes?.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
       cb(new Error('缩略图只支持图片文件'), false);
@@ -64,18 +76,18 @@ const videoUpload = multer({
   storage: storage,
   fileFilter: mixedFileFilter, // 使用混合文件过滤器
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB 限制
+    fileSize: parseSizeToBytes(config.upload.video.maxSize) || 100 * 1024 * 1024
   }
 });
 
-// 单图片上传到图床
+// 单图片上传
 router.post('/single', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '没有上传文件' });
     }
 
-    // 使用统一上传函数（根据配置选择策略）
+    // 使用统一上传函数（本地保存）
     const result = await uploadFile(
       req.file.buffer,
       req.file.originalname,
@@ -96,7 +108,7 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
         }
       });
     } else {
-      res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: result.message || '图床上传失败' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: result.message || '上传失败' });
     }
   } catch (error) {
     console.error('单图片上传失败:', error);
@@ -104,8 +116,8 @@ router.post('/single', authenticateToken, upload.single('file'), async (req, res
   }
 });
 
-// 多图片上传到图床
-router.post('/multiple', authenticateToken, upload.array('files', 9), async (req, res) => {
+// 多图片上传
+router.post('/multiple', authenticateToken, upload.array('files', config.upload.image.maxCount || 9), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
@@ -168,7 +180,7 @@ router.post('/multiple', authenticateToken, upload.array('files', 9), async (req
   }
 });
 
-// 单视频上传到图床
+// 单视频上传
 router.post('/video', authenticateToken, videoUpload.fields([
   { name: 'file', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
@@ -250,16 +262,16 @@ router.post('/video', authenticateToken, videoUpload.fields([
   }
 });
 
-// 注意：使用云端图床后，文件删除由图床服务商管理
+// 提示：如有文件删除需求，请实现对应的本地删除逻辑
 
 // 错误处理中间件
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件大小超过限制（5MB）' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件大小超过限制' });
     }
-    if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件数量超过限制（9个）' });
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') { // 原本使用LIMIT_FILE_COUNT
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '文件数量超过限制' });
     }
   }
 

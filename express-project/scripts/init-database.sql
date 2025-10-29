@@ -246,6 +246,20 @@ CREATE TABLE IF NOT EXISTS `audit` (
   CONSTRAINT `audit_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审核表';
 
+-- 16. 邀请码表
+CREATE TABLE IF NOT EXISTS `invite_codes` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '邀请码ID',
+  `code` varchar(8) NOT NULL COMMENT '邀请码（8位小写数字与字母组合）',
+  `is_active` tinyint(1) DEFAULT 1 COMMENT '是否激活：1-未使用，2-已使用',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `used_at` timestamp NULL DEFAULT NULL COMMENT '使用时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`),
+  KEY `idx_code` (`code`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请码表';
+
 -- 插入默认管理员账户
 -- 密码: 123456
 INSERT INTO `admin` (`username`, `password`) VALUES 

@@ -7,7 +7,7 @@
           <div class="logo-section">
             <div class="about-logo"><img :src="logoUrl" alt="小石榴" /></div>
 
-            <h2 class="about-title">关于小石榴</h2>
+            <h2 class="about-title">关于小木屋</h2>
           </div>
           <p class="version">v1.2.0</p>
         </div>
@@ -21,11 +21,21 @@
           <div class="intro-section">
             <h3>项目简介</h3>
             <p>
-              小石榴校园图文社区是一个面向开发者与学习者的开源示例项目，旨在提供从前端到后端的完整实践范本，帮助大家学习现代 Web 应用的架构设计、工程化与业务实现。
+              小木屋图文社区是一个面向开发者与学习者的开源示例项目，旨在提供从前端到后端的完整实践范本，帮助大家学习现代 Web 应用的架构设计、工程化与业务实现。
             </p>
           </div>
           <div class="author-section">
-            <h3>开发者</h3>
+            <h3>站长和开发者</h3>
+            <a href="https://www.666707.xyz/" target="_blank" class="author-link">
+              <div class="author-info">
+                <img class="author-avatar" src="http://110.42.70.159:23080/uploads/images/1760193107602_941cfe1c67232ebdbf4645281188c887.png" alt="ZTMYO">
+                <div class="author-details">
+                  <p class="author-name">@小天</p>
+                  <p class="author-desc">站长</p>
+                </div>
+              </div>
+            </a>
+            <br>
             <a href="https://github.com/ZTMYO" target="_blank" class="author-link">
               <div class="author-info">
                 <img class="author-avatar" :src="ztmyoUrl" alt="ZTMYO">
@@ -92,7 +102,7 @@
             <h3>版权声明</h3>
             <div class="copyright-content">
               <p>
-                <strong>设计灵感：</strong>本校园图文社区的UI设计和交互体验参考了小红书平台，旨在为下载该开源项目的人员提供一个熟悉的项目体验。
+                <strong>设计灵感：</strong>本项目的UI设计和交互体验参考了小红书平台，旨在为下载该开源项目的人员提供一个熟悉的项目体验。
               </p>
               <p>
                 <strong>开源项目：</strong>本项目基于 GPLv3 协议开源，仅供学习交流使用，不用于商业用途。所有代码遵循 GPLv3 开源协议，欢迎技术交流与讨论。
@@ -104,7 +114,7 @@
           </div>
 
           <div class="about-footer">
-            <p>&copy; 2025 小石榴校园图文社区. Made with ❤️ by @ZTMYO</p>
+            <p>&copy; 2025 小木屋图文社区</p>
           </div>
         </div>
       </div>
@@ -122,7 +132,7 @@ const emit = defineEmits(['close'])
 const { lock, unlock } = useScrollLock()
 
 // 静态资源URL
-const logoUrl = new URL('@/assets/imgs/小石榴.png', import.meta.url).href
+const logoUrl = new URL('@/assets/imgs/LOGO.png', import.meta.url).href
 const ztmyoUrl = new URL('@/assets/imgs/ztmyo.png', import.meta.url).href
 const liciUrl = new URL('@/assets/imgs/栗次元.ico', import.meta.url).href
 const xiaRouUrl = new URL('@/assets/imgs/夏柔.ico', import.meta.url).href

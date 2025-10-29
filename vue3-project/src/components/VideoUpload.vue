@@ -46,8 +46,8 @@
       <div v-else-if="!isUploading" class="upload-placeholder">
         <SvgIcon name="publish" class="upload-icon" />
         <p>添加视频</p>
-        <p class="upload-hint">支持 MP4、MOV、AVI 格式</p>
-        <p class="upload-hint">文件大小不超过100MB</p>
+        <p class="upload-hint">支持 {{ videoFormatsText }}</p>
+        <p class="upload-hint">文件大小不超过{{ videoMaxMB }}MB</p>
         <p class="drag-hint">或拖拽视频到此处</p>
       </div>
 
@@ -65,8 +65,8 @@
     </div>
 
     <div class="upload-tips">
-      <p>• 支持 MP4、MOV、AVI 格式</p>
-      <p>• 文件大小不超过100MB</p>
+      <p>• 支持 {{ videoFormatsText }}</p>
+      <p>• 文件大小不超过{{ videoMaxMB }}MB</p>
       <p>• 建议视频时长不超过5分钟</p>
       <p v-if="videoData && !isUploading">• 点击缩略图可自定义封面</p>
     </div>
@@ -82,6 +82,7 @@ import MessageToast from './MessageToast.vue'
 import { videoApi } from '@/api/video.js'
 import { uploadImage } from '@/api/upload.js'
 import { generateVideoThumbnail, blobToFile, generateThumbnailFilename } from '@/utils/videoThumbnail.js'
+import apiConfig from '@/config/api.js'
 
 const props = defineProps({
   modelValue: {
@@ -90,11 +91,19 @@ const props = defineProps({
   },
   maxSize: {
     type: Number,
-    default: 100 * 1024 * 1024 // 100MB
+    default: apiConfig.upload?.video?.maxFileSize || 100 * 1024 * 1024
   }
 })
 
 const emit = defineEmits(['update:modelValue', 'error', 'change'])
+
+// 动态提示：从集中配置渲染视频大小/格式
+const videoMaxMB = Math.round((apiConfig.upload?.video?.maxFileSize || 100 * 1024 * 1024) / (1024 * 1024))
+const videoFormatsText = (() => {
+  const types = apiConfig.upload?.video?.allowedTypes || ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm']
+  const friendly = types.map(t => (t.split('/')[1] || t).toUpperCase())
+  return friendly.join('、')
+})()
 
 // 响应式数据
 const fileInput = ref(null)
@@ -190,14 +199,19 @@ const handleFileDrop = (event) => {
 
 // 验证视频文件
 const validateVideoFile = (file) => {
-  // 验证文件类型
+  const allowedTypes = apiConfig.upload?.video?.allowedTypes || ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm']
+  const maxSize = props.maxSize || apiConfig.upload?.video?.maxFileSize || 100 * 1024 * 1024
+
   if (!file.type.startsWith('video/')) {
     return { valid: false, message: '请选择视频文件' }
   }
 
-  // 验证文件大小
-  if (file.size > props.maxSize) {
-    return { valid: false, message: `文件大小不能超过${formatFileSize(props.maxSize)}` }
+  if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+    return { valid: false, message: '不支持的视频格式' }
+  }
+
+  if (file.size > maxSize) {
+    return { valid: false, message: `文件大小不能超过${formatFileSize(maxSize)}` }
   }
 
   return { valid: true }
@@ -205,13 +219,17 @@ const validateVideoFile = (file) => {
 
 // 验证封面图片文件
 const validateCoverFile = (file) => {
-  // 验证文件类型
+  const maxCoverSize = apiConfig.upload?.image?.maxFileSize || 5 * 1024 * 1024
+  const allowedImageTypes = apiConfig.upload?.image?.allowedTypes || ['image/jpeg', 'image/png', 'image/webp']
+
   if (!file.type.startsWith('image/')) {
     return { valid: false, message: '请选择图片文件' }
   }
 
-  // 验证文件大小 (5MB)
-  const maxCoverSize = 5 * 1024 * 1024
+  if (allowedImageTypes.length > 0 && !allowedImageTypes.includes(file.type)) {
+    return { valid: false, message: '不支持的图片格式' }
+  }
+
   if (file.size > maxCoverSize) {
     return { valid: false, message: `封面图片大小不能超过${formatFileSize(maxCoverSize)}` }
   }
@@ -388,7 +406,7 @@ const startUpload = async () => {
       isUploading.value = false
       error.value = result.message || '视频上传失败'
       emit('error', error.value)
-      showMessage(error.value, 'error')
+      // showMessage(error.value, 'error') // 多余的提示
       return result // 返回失败结果
     }
   } catch (err) {
