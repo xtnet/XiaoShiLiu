@@ -44,10 +44,18 @@ export function useConfirm() {
 
   const handleCancel = () => {
     confirmState.value.visible = false
-    if (rejectPromise) {
-      rejectPromise(false)
-      resolvePromise = null
-      rejectPromise = null
+    if (confirmState.value.showCancel === false) {
+      if (resolvePromise) {
+        resolvePromise(false)
+        resolvePromise = null
+        rejectPromise = null
+      }
+    } else {
+      if (rejectPromise) {
+        rejectPromise(false)
+        resolvePromise = null
+        rejectPromise = null
+      }
     }
   }
 

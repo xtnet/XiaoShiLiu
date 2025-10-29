@@ -910,11 +910,16 @@ const deleteItem = async (item) => {
         clearCache()
         loadData(null, false)
       } else {
-        await showError('删除失败: ' + result.message)
+        const errorMessage = result.message || '删除失败，请稍后重试'
+        await showError(errorMessage)
       }
     } catch (error) {
       console.error('删除失败:', error)
-      await showError('删除失败')
+      // 只在真正发生异常时显示错误（不是用户关闭对话框）
+      if (error !== false) {
+        const errorMessage = error?.message || '删除失败，请稍后重试'
+        await showError(errorMessage)
+      }
     }
   } catch (error) {
     // 用户取消删除，不做任何操作
@@ -949,11 +954,17 @@ const submitForm = async (data) => {
       clearCache()
       loadData(null, false)
     } else {
-      await showError('操作失败: ' + result.message)
+      // 确保错误消息有效
+      const errorMessage = result.message || '操作失败，请稍后重试'
+      await showError(errorMessage)
     }
   } catch (error) {
     console.error('操作失败:', error)
-    await showError('操作失败')
+    // 只在真正发生异常时显示错误（不是用户关闭对话框）
+    if (error !== false) {
+      const errorMessage = error?.message || '操作失败，请稍后重试'
+      await showError(errorMessage)
+    }
   } finally {
     formLoading.value = false
   }
@@ -1015,16 +1026,20 @@ const showImageGallery = async (postId) => {
       }))
       currentImages.value = images
       showImageCarouselVisible.value = true
-    } else {
-      console.error('获取笔记图片失败:', result.message)
-      await showError('获取笔记图片失败: ' + result.message)
+      } else {
+        console.error('获取笔记图片失败:', result.message)
+        const errorMessage = result.message || '获取笔记图片失败'
+        await showError(errorMessage)
+      }
+    } catch (error) {
+      console.error('获取笔记图片失败:', error)
+      if (error !== false) {
+        const errorMessage = error?.message || '获取笔记图片失败'
+        await showError(errorMessage)
+      }
+    } finally {
+      loadingGallery.value = null
     }
-  } catch (error) {
-    console.error('获取笔记图片失败:', error)
-    await showError('获取笔记图片失败: ' + error.message)
-  } finally {
-    loadingGallery.value = null
-  }
 }
 
 const closeImageCarousel = () => {
@@ -1048,11 +1063,15 @@ const showMediaGallery = async (item) => {
         showVideoModalVisible.value = true
       } else {
         console.error('获取视频信息失败:', result.message)
-        await showError('获取视频信息失败: ' + result.message)
+        const errorMessage = result.message || '获取视频信息失败'
+        await showError(errorMessage)
       }
     } catch (error) {
       console.error('获取视频信息失败:', error)
-      await showError('获取视频信息失败: ' + error.message)
+      if (error !== false) {
+        const errorMessage = error?.message || '获取视频信息失败'
+        await showError(errorMessage)
+      }
     } finally {
       loadingGallery.value = null
     }
@@ -1207,7 +1226,7 @@ const toggleSelectAll = () => {
 
 const batchDelete = async () => {
   if (selectedItems.value.length === 0) {
-    await showError('请选择要删除的项目')
+    showError('请选择要删除的项目')
     return
   }
 
@@ -1239,7 +1258,10 @@ const batchDelete = async () => {
       }
     } catch (error) {
       console.error('批量删除失败:', error)
-      await showError('批量删除失败: ' + error.message)
+      if (error !== false) {
+        const errorMessage = error?.message || '批量删除失败，请稍后重试'
+        await showError(errorMessage)
+      }
     }
   } catch (error) {
     // 用户取消删除，不做任何操作
