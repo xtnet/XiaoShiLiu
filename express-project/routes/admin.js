@@ -496,18 +496,26 @@ const postsCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY p.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'title', 'view_count', 'like_count', 'collect_count', 'comment_count', 'created_at', 'nickname']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = sortField === 'nickname' ? 'u.' : 'p.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 'p.id',
+        'title': 'p.title',
+        'view_count': 'p.view_count',
+        'like_count': 'p.like_count',
+        'collect_count': 'p.collect_count',
+        'comment_count': 'p.comment_count',
+        'created_at': 'p.created_at',
+        'nickname': 'u.nickname'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'p.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -682,18 +690,23 @@ const commentsCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY c.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'content', 'like_count', 'created_at', 'nickname']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = sortField === 'nickname' ? 'u.' : 'c.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 'c.id',
+        'content': 'c.content',
+        'like_count': 'c.like_count',
+        'created_at': 'c.created_at',
+        'nickname': 'u.nickname'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'c.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -849,18 +862,21 @@ const likesCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY l.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'user_id', 'created_at']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = 'l.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 'l.id',
+        'user_id': 'l.user_id',
+        'created_at': 'l.created_at'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'l.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -1021,18 +1037,21 @@ const collectionsCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY c.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'user_id', 'created_at']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = 'c.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 'c.id',
+        'user_id': 'c.user_id',
+        'created_at': 'c.created_at'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'c.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -1208,17 +1227,21 @@ const followsCrudConfig = {
       const total = countResult[0].total
 
       // 排序处理
-      let orderClause = 'ORDER BY f.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'follower_id', 'following_id', 'created_at']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = 'f.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      const allowedSortFields = {
+        'id': 'f.id',
+        'follower_id': 'f.follower_id',
+        'following_id': 'f.following_id',
+        'created_at': 'f.created_at'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'f.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -1321,18 +1344,20 @@ const notificationsCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY n.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'created_at']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = 'n.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 'n.id',
+        'created_at': 'n.created_at'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 'n.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -1449,18 +1474,22 @@ const sessionsCrudConfig = {
       const [countResult] = await pool.execute(countQuery, params)
       const total = countResult[0].total
 
-      // 排序处理
-      let orderClause = 'ORDER BY s.created_at DESC'
-      if (req.query.sortField && req.query.sortOrder) {
-        const allowedSortFields = ['id', 'is_active', 'expires_at', 'created_at']
-        const sortField = req.query.sortField
-        const sortOrder = req.query.sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-        if (allowedSortFields.includes(sortField)) {
-          const fieldPrefix = 's.'
-          orderClause = `ORDER BY ${fieldPrefix}${sortField} ${sortOrder}`
-        }
+      // 排序处理 - 使用对象映射
+      const allowedSortFields = {
+        'id': 's.id',
+        'is_active': 's.is_active',
+        'expires_at': 's.expires_at',
+        'created_at': 's.created_at'
       }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[req.query.sortField] || 's.created_at'
+      const validSortOrder = allowedSortOrders[req.query.sortOrder?.toLowerCase()] || 'DESC'
+      const orderClause = `ORDER BY ${validSortField} ${validSortOrder}`
 
       // 获取数据
       const dataQuery = `
@@ -2164,22 +2193,34 @@ const categoriesCrudConfig = {
       const conditions = []
       const queryParams = []
 
-      if (name && name.trim()) {
+      if (name && typeof name === 'string' && name.trim()) {
         conditions.push('c.name LIKE ?')
         queryParams.push(`%${name.trim()}%`)
       }
 
-      if (category_title && category_title.trim()) {
+      if (category_title && typeof category_title === 'string' && category_title.trim()) {
         conditions.push('c.category_title LIKE ?')
         queryParams.push(`%${category_title.trim()}%`)
       }
 
       const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''
 
-      // 验证排序字段
-      const allowedSortFields = ['id', 'name', 'category_title', 'created_at', 'post_count']
-      const validSortField = allowedSortFields.includes(sortField) ? sortField : 'id'
-      const validSortOrder = ['asc', 'desc'].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC'
+      // 使用对象映射验证排序字段
+      const allowedSortFields = {
+        'id': 'c.id',
+        'name': 'c.name',
+        'category_title': 'c.category_title',
+        'created_at': 'c.created_at',
+        'post_count': 'post_count'
+      }
+      
+      const allowedSortOrders = {
+        'asc': 'ASC',
+        'desc': 'DESC'
+      }
+      
+      const validSortField = allowedSortFields[sortField] || allowedSortFields['id']
+      const validSortOrder = allowedSortOrders[sortOrder?.toLowerCase()] || allowedSortOrders['asc']
 
       // 获取总数
       const [countResult] = await pool.execute(`
@@ -2188,9 +2229,9 @@ const categoriesCrudConfig = {
         ${whereClause}
       `, queryParams)
 
-      // 获取数据
-      const limitNum = Number(limit);
-      const offsetNum = Number(offset);
+      // 获取数据 - 使用参数化查询
+      const limitNum = parseInt(limit)
+      const offsetNum = parseInt(offset)
 
       const [categories] = await pool.execute(`
         SELECT 
@@ -2204,8 +2245,8 @@ const categoriesCrudConfig = {
         ${whereClause}
         GROUP BY c.id, c.name, c.category_title, c.created_at
         ORDER BY ${validSortField} ${validSortOrder}
-        LIMIT ${limitNum} OFFSET ${offsetNum}
-      `, queryParams);
+        LIMIT ? OFFSET ?
+      `, [...queryParams, limitNum, offsetNum]);
 
       return {
         data: categories,

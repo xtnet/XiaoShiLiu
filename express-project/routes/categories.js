@@ -34,33 +34,36 @@ const { success, error } = require('../utils/responseHelper');
  */
 router.get('/', async (req, res) => {
   try {
-    const { sortField = 'id', sortOrder = 'asc', name } = req.query;
+    const { sortField = 'id', sortOrder = 'asc', name, category_title } = req.query;
 
-    // 验证排序字段
-    const allowedSortFields = ['id', 'name', 'created_at', 'post_count'];
-    const validSortField = allowedSortFields.includes(sortField) ? sortField : 'id';
-    const validSortOrder = ['asc', 'desc'].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
+    const allowedSortFields = {
+      'id': 'c.id',
+      'name': 'c.name',
+      'created_at': 'c.created_at',
+      'post_count': 'post_count'
+    };
+    const allowedSortOrders = {
+      'asc': 'ASC',
+      'desc': 'DESC'
+    };
+    const validSortField = allowedSortFields[sortField] || allowedSortFields['id'];
+    const validSortOrder = allowedSortOrders[sortOrder?.toLowerCase()] || allowedSortOrders['asc'];
 
     // 构建WHERE条件
-    let whereClause = '';
     const queryParams = [];
-    const { category_title } = req.query;
-
     const conditions = [];
-    if (name && name.trim()) {
+
+    if (name && typeof name === 'string' && name.trim()) {
       conditions.push('c.name LIKE ?');
       queryParams.push(`%${name.trim()}%`);
     }
 
-    if (category_title && category_title.trim()) {
+    if (category_title && typeof category_title === 'string' && category_title.trim()) {
       conditions.push('c.category_title LIKE ?');
       queryParams.push(`%${category_title.trim()}%`);
     }
 
-    if (conditions.length > 0) {
-      whereClause = 'WHERE ' + conditions.join(' AND ');
-    }
-
+    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
     const [categories] = await pool.execute(`
       SELECT 
         c.id, 
