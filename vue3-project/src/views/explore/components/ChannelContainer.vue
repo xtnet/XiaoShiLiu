@@ -1,7 +1,7 @@
 <script setup>
 import router from '@/router'
 import TabContainer from '@/components/TabContainer.vue'
-import { onMounted, watch, ref } from 'vue'
+import { onMounted, watch, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useScroll } from '@vueuse/core'
 import { useChannelStore } from '@/stores/channel'
@@ -25,6 +25,19 @@ const isAnimating = ref(false) // 是否正在播放动画
 const pendingChannelId = ref(null) // 等待切换的频道ID
 const currentRequestChannelId = ref(null) // 当前正在请求的频道ID
 const animationTimer = ref(null) // 动画计时器
+
+const savedScrollY = ref(0)
+
+const shouldShowFixedTab = computed(() => {
+  if (scrollY.value >= 100) {
+    savedScrollY.value = scrollY.value
+    return true
+  }
+  if (savedScrollY.value >= 100 && scrollY.value === 0) {
+    return true
+  }
+  return scrollY.value >= 100
+})
 
 // 监听路由变化，更新活跃频道
 watch(() => route.path, (newPath) => {
@@ -128,7 +141,7 @@ onUnmounted(() => {
     </div>
 
 
-    <div class="fixed-channel-container" :class="{ hidden: scrollY < 100 }">
+    <div class="fixed-channel-container" :class="{ hidden: !shouldShowFixedTab }">
         <TabContainer :tabs="channelStore.channels" :activeTab="channelStore.activeChannelId" :enableDrag="true"
             @tab-change="handleTabChange" />
     </div>
