@@ -92,6 +92,14 @@ const convertTextToMentionLinks = (text) => {
     return placeholder
   })
 
+  // 解码HTML实体，避免重复编码问题
+  const decodeHtmlEntities = (str) => {
+    const textarea = document.createElement('textarea')
+    textarea.innerHTML = str
+    return textarea.value
+  }
+  text = decodeHtmlEntities(text)
+
   // 处理[@nickname:user_id]格式（兼容旧格式）
   const mentionRegex = /\[@([^:]+):([^\]]+)\]/g
   text = text.replace(mentionRegex, (match, nickname, userId) => {
