@@ -2229,7 +2229,7 @@ const categoriesCrudConfig = {
         ${whereClause}
       `, queryParams)
 
-      // 获取数据 - 使用参数化查询
+      // 获取数据 - 直接拼接LIMIT和OFFSET
       const limitNum = parseInt(limit)
       const offsetNum = parseInt(offset)
 
@@ -2245,8 +2245,8 @@ const categoriesCrudConfig = {
         ${whereClause}
         GROUP BY c.id, c.name, c.category_title, c.created_at
         ORDER BY ${validSortField} ${validSortOrder}
-        LIMIT ? OFFSET ?
-      `, [...queryParams, limitNum, offsetNum]);
+        LIMIT ${limitNum} OFFSET ${offsetNum}
+      `, queryParams); // 只传递WHERE条件的参数
 
       return {
         data: categories,
