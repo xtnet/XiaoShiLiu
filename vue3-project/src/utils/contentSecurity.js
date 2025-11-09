@@ -77,15 +77,24 @@ export const sanitizeContent = (content) => {
     return placeholder
   })
 
-  // 4. 将所有剩余的HTML标签转义为纯文本（使用DOM的textContent特性）
+  // 4. 先解码HTML实体，避免重复编码
+  const decodeHtmlEntities = (text) => {
+    const textarea = document.createElement('textarea')
+    textarea.innerHTML = text
+    return textarea.value
+  }
+  
+  // 5. 将所有剩余的HTML标签转义为纯文本（使用DOM的textContent特性）
   const escapeHtml = (text) => {
     const div = document.createElement('div')
     div.textContent = text
     return div.innerHTML
   }
-  processedContent = escapeHtml(processedContent)
+  
+  // 先解码，再编码，避免重复编码问题
+  processedContent = escapeHtml(decodeHtmlEntities(processedContent))
 
-  // 5. 恢复被保护的内容
+  // 6. 恢复被保护的内容
   // 先恢复<br>标签
   brTags.forEach((tag, index) => {
     processedContent = processedContent.replace(`__BR_TAG_${index}__`, tag)
