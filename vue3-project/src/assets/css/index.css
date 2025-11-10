@@ -45,7 +45,7 @@ select {
 /* 自定义字体 */
 @font-face {
   font-family: "lovely";
-  src: url("https://vip.666707.xyz:23060/d/fonts/HarmonyOS_Sans_SC_Medium.woff2") format("woff2");
+  src: url("https://vip.666707.xyz:23060/d/fonts/PingFangSC-Medium.ttf") format("woff2");
   font-display: swap;
 }
 
