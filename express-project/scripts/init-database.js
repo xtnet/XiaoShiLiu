@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const config = require('../config/config');
+const { pool } = config;
 
 class DatabaseInitializer {
   constructor() {
@@ -13,6 +14,7 @@ class DatabaseInitializer {
   }
 
   async createDatabase() {
+    // 创建数据库需要特殊处理，因为连接池默认需要指定数据库
     const connection = await mysql.createConnection(this.dbConfig);
 
     try {
@@ -28,12 +30,10 @@ class DatabaseInitializer {
   }
 
   async initializeTables() {
-    const connection = await mysql.createConnection({
-      ...this.dbConfig,
-      database: config.database.database
-    });
-
+    // 从连接池获取连接
+    let connection;
     try {
+      connection = await pool.getConnection();
       console.log('开始创建数据表...');
 
       // 创建用户表
@@ -87,7 +87,10 @@ class DatabaseInitializer {
       console.error('创建数据表失败:', error.message);
       throw error;
     } finally {
-      await connection.end();
+      if (connection) {
+        connection.release();
+        console.log('数据库连接已释放回连接池');
+      }
     }
   }
 
@@ -412,12 +415,10 @@ class DatabaseInitializer {
   }
 
   async insertDefaultAdmin() {
-    const connection = await mysql.createConnection({
-      ...this.dbConfig,
-      database: config.database.database
-    });
-
+    // 从连接池获取连接
+    let connection;
     try {
+      connection = await pool.getConnection();
       console.log('插入默认管理员账户...');
       
       // 默认管理员账户信息
@@ -434,7 +435,10 @@ class DatabaseInitializer {
       console.error('插入默认管理员账户失败:', error.message);
       throw error;
     } finally {
-      await connection.end();
+      if (connection) {
+        connection.release();
+        console.log('数据库连接已释放回连接池');
+      }
     }
   }
 
