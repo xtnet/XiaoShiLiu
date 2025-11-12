@@ -1,18 +1,8 @@
 //该文件用于更新数据库中来自栗次元api的图片链接
-const mysql = require('mysql2/promise');
-const config = require('../config/config');
+const { pool } = require('../config/config');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-
-// 数据库配置
-const dbConfig = {
-  host: config.database.host,
-  user: config.database.user,
-  password: config.database.password,
-  database: config.database.database,
-  charset: config.database.charset
-};
 
 // 图片更新器
 class ImageUpdater {
@@ -198,8 +188,8 @@ class ImageUpdater {
 
     let connection;
     try {
-      // 连接数据库
-      connection = await mysql.createConnection(dbConfig);
+      // 从连接池获取连接
+      connection = await pool.getConnection();
       console.log('数据库连接成功\n');
 
       // 显示更新前的统计信息
@@ -232,8 +222,8 @@ class ImageUpdater {
       console.error('❌ 更新过程中发生错误:', error);
     } finally {
       if (connection) {
-        await connection.end();
-        console.log('\n数据库连接已关闭');
+        connection.release();
+        console.log('\n数据库连接已释放回连接池');
       }
     }
   }

@@ -1,18 +1,9 @@
-const mysql = require('mysql2/promise');
 const NotificationHelper = require('../utils/notificationHelper');
 const config = require('../config/config');
+const { pool } = config;
 const fs = require('fs');
 const path = require('path');
 
-// 数据库配置
-const dbConfig = {
-  host: config.database.host,
-  user: config.database.user,
-  password: config.database.password,
-  port: config.database.port,
-  database: config.database.database,
-  charset: config.database.charset
-};
 
 // 模拟数据生成器
 class DataGenerator {
@@ -849,8 +840,8 @@ class DataGenerator {
     try {
       console.log('开始生成模拟数据...');
 
-      // 创建数据库连接
-      connection = await mysql.createConnection(dbConfig);
+      // 从连接池获取连接
+      connection = await pool.getConnection();
       console.log('数据库连接成功');
 
       // 清空现有数据
@@ -1219,7 +1210,8 @@ class DataGenerator {
       console.error('生成模拟数据失败:', error);
     } finally {
       if (connection) {
-        await connection.end();
+        connection.release();
+        console.log('数据库连接已释放回连接池');
       }
     }
   }
