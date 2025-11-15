@@ -86,9 +86,24 @@ const getCategoryName = (category) => {
 }
 
 // 截断内容
+const sanitizeContent = (rawContent) => {
+  if (!rawContent) return ''
+  const decodedContent = rawContent
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+  // 将换行标签转换为空格，避免直接显示出来
+  const normalizedContent = decodedContent.replace(/<br\s*\/?>/gi, ' ')
+  // 去除其他 HTML 标签，保持纯文本显示
+  const withoutTags = normalizedContent.replace(/<\/?[^>]+>/g, ' ')
+  // 规整多余空白字符
+  return withoutTags.replace(/\s+/g, ' ').trim()
+}
+
 const truncateContent = (content) => {
-  if (!content) return ''
-  return content.length > 100 ? content.substring(0, 100) + '...' : content
+  const plainText = sanitizeContent(content)
+  return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText
 }
 
 // 格式化日期
