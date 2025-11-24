@@ -33,11 +33,12 @@ export default defineConfig({
     allowedHosts: [   //添加白名单域名，手动部署取消前面的注释把qq.com替换成你的白名单域名
       'localhost',
       '127.0.0.1',
-      'vip.666707.xyz'
+      'vip.666707.xyz',
+      'm.song3060.top',
     ],  
     proxy: {
       '/api': {
-        target: 'http://172.18.0.3:3001',//后端接口地址
+        target: 'http://172.16.246.17:3001',//后端接口地址
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       },
