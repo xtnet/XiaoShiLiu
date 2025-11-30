@@ -336,7 +336,7 @@
                   </div>
                   <ContentEditableInput ref="focusedInput" v-model="commentInput" :input-class="'comment-input'"
                     :placeholder="replyingTo ? `回复 ${replyingTo.username}：` : '说点什么...'" :enable-mention="true"
-                    :mention-users="mentionUsers" :enable-shift-enter-send="true" @focus="handleInputFocus"
+                    :mention-users="mentionUsers" :enable-ctrl-enter-send="true" @focus="handleInputFocus"
                     @mention="handleMentionInput" @paste-image="handlePasteImage" @send="handleSendComment" />
                 </div>
 

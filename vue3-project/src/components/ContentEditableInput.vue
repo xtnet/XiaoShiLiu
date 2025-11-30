@@ -33,7 +33,7 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  enableShiftEnterSend: {
+  enableCtrlEnterSend: {
     type: Boolean,
     default: false
   }
@@ -316,8 +316,8 @@ const removeMentionLink = (linkElement) => {
 const handleKeydown = (event) => {
   // 处理Enter键
   if (event.key === 'Enter') {
-    if (event.shiftKey && props.enableShiftEnterSend) {
-      // Shift+Enter发送
+    if (event.ctrlKey && props.enableCtrlEnterSend) {
+      // Ctrl+Enter发送
       event.preventDefault()
       emit('send')
       return

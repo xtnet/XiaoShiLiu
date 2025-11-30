@@ -40,7 +40,7 @@
             </div>
             <div class="shortcut-item">
               <span class="shortcut-desc">发送评论</span>
-              <kbd class="shortcut-key">Shift</kbd>
+              <kbd class="shortcut-key">Ctrl</kbd>
               <span class="plus">+</span>
               <kbd class="shortcut-key">Enter</kbd>
             </div>

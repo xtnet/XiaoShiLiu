@@ -1303,7 +1303,8 @@ watch(isLoggedIn, async (newValue, oldValue) => {
                           <div class="input-with-emoji">
                             <ContentEditableInput v-model="item.replyContent"
                               :input-class="'reply-input content-textarea'" :placeholder="`回复 ${item.username}：`"
-                              :enable-mention="true" @mention="handleMentionSelect"
+                              :enable-mention="true" :enable-ctrl-enter-send="true"
+                              @mention="handleMentionSelect" @send="handleSendReply(item)"
                               :ref="el => setReplyInputRef(item.notificationId, el)" />
                             <button class="mention-btn" @click="toggleMentionPanel(item)">
                               <SvgIcon name="mention" class="mention-icon" width="25" height="25" />
