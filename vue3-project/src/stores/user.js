@@ -8,6 +8,10 @@ export const useUserStore = defineStore('user', () => {
   const refreshToken = ref(localStorage.getItem('refreshToken') || '')
   const userInfo = ref(null)
   const isLoading = ref(false)
+  // 邮箱验证码相关状态
+  const isSendingEmailCode = ref(false)
+  const emailCodeCountdown = ref(0)
+  const emailCodeTimer = ref(null)
 
   // 计算属性
   const isLoggedIn = computed(() => {
@@ -201,12 +205,61 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 发送邮箱验证码
+  const sendEmailCode = async (email) => {
+    try {
+      isSendingEmailCode.value = true
+      const response = await authApi.sendEmailCode(email)
+      
+      if (response.success) {
+        startEmailCodeCountdown()
+        return { success: true, message: '验证码已发送，请查收邮箱' }
+      } else {
+        return { success: false, message: response.message || '发送验证码失败' }
+      }
+    } catch (error) {
+      console.error('发送验证码失败:', error)
+      return { success: false, message: '网络错误，请稍后重试' }
+    } finally {
+      isSendingEmailCode.value = false
+    }
+  }
+
+  // 开始邮箱验证码倒计时
+  const startEmailCodeCountdown = () => {
+    emailCodeCountdown.value = 60
+    // 清除之前的定时器
+    if (emailCodeTimer.value) {
+      clearInterval(emailCodeTimer.value)
+    }
+    emailCodeTimer.value = setInterval(() => {
+      emailCodeCountdown.value--
+      if (emailCodeCountdown.value <= 0) {
+        clearInterval(emailCodeTimer.value)
+        emailCodeTimer.value = null
+      }
+    }, 1000)
+  }
+
+  // 清除邮箱验证码倒计时
+  const clearEmailCodeCountdown = () => {
+    if (emailCodeTimer.value) {
+      clearInterval(emailCodeTimer.value)
+      emailCodeTimer.value = null
+    }
+    emailCodeCountdown.value = 0
+  }
+
   return {
     // 状态
     token,
     refreshToken,
     userInfo,
     isLoading,
+    
+    // 邮箱验证码相关状态
+    isSendingEmailCode,
+    emailCodeCountdown,
 
     // 计算属性
     isLoggedIn,
@@ -219,6 +272,10 @@ export const useUserStore = defineStore('user', () => {
     getCurrentUser,
     refreshUserToken,
     getUserStats,
-    updateUserInfo
+    updateUserInfo,
+
+    // 邮箱验证码相关方法
+    sendEmailCode,
+    clearEmailCodeCountdown
   }
 })

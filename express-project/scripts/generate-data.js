@@ -323,8 +323,8 @@ class DataGenerator {
   async insertUsers(connection, users) {
     for (const user of users) {
       const result = await connection.execute(
-        'INSERT INTO users (user_id, password, nickname, avatar, bio, location, follow_count, fans_count, like_count, is_active, last_login_at, gender, zodiac_sign, mbti, education, major, interests) VALUES (?, SHA2(?, 256), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [user.user_id, user.password, user.nickname, user.avatar, user.bio, user.location, 0, 0, 0, user.is_active, user.last_login_at, user.gender, user.zodiac_sign, user.mbti, user.education, user.major, user.interests]
+        'INSERT INTO users (user_id, password, nickname, avatar, bio, location, follow_count, fans_count, like_count, is_active, last_login_at, email, gender, zodiac_sign, mbti, education, major, interests) VALUES (?, SHA2(?, 256), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [user.user_id, user.password, user.nickname, user.avatar, user.bio, user.location, 0, 0, 0, user.is_active, user.last_login_at, user.email, user.gender, user.zodiac_sign, user.mbti, user.education, user.major, user.interests]
       );
       // 更新用户对象的id字段为数据库自增id
       user.id = result[0].insertId;
@@ -489,6 +489,8 @@ class DataGenerator {
         like_count: Math.floor(Math.random() * 5000),
         is_active: 1, // 添加is_active字段
         last_login_at: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)), // 添加last_login_at字段（随机30天内）
+        // 添加email字段，使用user_id和随机域名组合
+        email: `user${String(i + 1).padStart(3, '0')}@example.com`,
         // 6大信息字段（70%概率填写，30%概率为空）
         gender: Math.random() > 0.3 ? genders[Math.floor(Math.random() * genders.length)] : null,
         zodiac_sign: Math.random() > 0.3 ? zodiacSigns[Math.floor(Math.random() * zodiacSigns.length)] : null,
