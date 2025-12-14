@@ -50,6 +50,7 @@ Authorization: Bearer <your_jwt_token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | user_id | string | 是 | 用户ID（唯一） |
+| email | string | 是 | 邮箱地址 |
 | nickname | string | 是 | 昵称 |
 | password | string | 是 | 密码（6-20位） |
 | avatar | string | 否 | 头像URL |
@@ -179,6 +180,23 @@ Authorization: Bearer <your_jwt_token>
     "created_at": "2025-08-30T00:00:00.000Z"
   }
 }
+```
+
+### 6. 发送邮箱验证码
+**接口地址**: `POST /api/auth/send-email-code`
+
+**请求参数**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| email | string | 是 | 邮箱地址 |
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "message": "验证码发送成功"
+}
+
 ```
 
 ---

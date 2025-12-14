@@ -19,6 +19,7 @@
 | id | BIGINT | 用户ID | 主键，自增 |
 | password | VARCHAR(255) | 密码 | 可为空 |
 | user_id | VARCHAR(50) | 小石榴号 | 唯一标识 |
+| email | VARCHAR(100) | 邮箱 | 唯一标识 |
 | nickname | VARCHAR(100) | 昵称 | 显示名称 |
 | avatar | VARCHAR(500) | 头像URL | 用户头像 |
 | bio | TEXT | 个人简介 | 用户介绍 |
