@@ -105,6 +105,25 @@ const config = {
   // 缓存配置
   cache: {
     ttl: 300 // 5分钟
+  },
+
+  // 邮件服务配置
+  email: {
+    // SMTP服务器配置
+    smtp: {
+      host: process.env.SMTP_HOST || 'smtp.qq.com',
+      port: parseInt(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'false' ? false : true, // 默认使用SSL
+      auth: {
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASSWORD || ''
+      }
+    },
+    // 发件人配置
+    from: {
+      email: process.env.EMAIL_FROM || '',
+      name: process.env.EMAIL_FROM_NAME || '小石榴校园图文社区'
+    }
   }
 };
 

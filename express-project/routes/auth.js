@@ -5,12 +5,15 @@ const { pool } = require('../config/config');
 const { generateAccessToken, generateRefreshToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/auth');
 const { getIPLocation, getRealIP } = require('../utils/ipLocation');
+const { sendEmailCode } = require('../utils/email');
 const svgCaptcha = require('svg-captcha');
 const path = require('path');
 const fs = require('fs');
 
 // 存储验证码的临时对象
 const captchaStore = new Map();
+// 存储邮箱验证码的临时对象
+const emailCodeStore = new Map();
 
 // 生成验证码
 router.get('/captcha', (req, res) => {
@@ -94,12 +97,68 @@ router.get('/check-user-id', async (req, res) => {
   }
 });
 
+// 发送邮箱验证码
+router.post('/send-email-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入邮箱地址' });
+    }
+    
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
+    }
+    
+    // 检查邮箱是否已被注册
+    const [existingUser] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (existingUser.length > 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.CONFLICT, message: '该邮箱已被注册' });
+    }
+    
+    // 生成6位随机验证码
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // 发送验证码到邮箱
+    await sendEmailCode(email, code);
+    
+    // 存储验证码（10分钟过期）
+    const expires = Date.now() + 10 * 60 * 1000;
+    emailCodeStore.set(email, {
+      code,
+      expires
+    });
+    
+    // 清理过期的验证码
+    for (const [key, value] of emailCodeStore.entries()) {
+      if (Date.now() > value.expires) {
+        emailCodeStore.delete(key);
+      }
+    }
+    
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '验证码发送成功，请查收邮箱'
+    });
+    
+  } catch (error) {
+    console.error('发送邮箱验证码失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '验证码发送失败，请稍后重试' });
+  }
+});
+
 // 用户注册
 router.post('/register', async (req, res) => {
   try {
-    const { user_id, nickname, password, captchaId, captchaText } = req.body;
+    const { user_id, nickname, password, captchaId, captchaText, email, emailCode } = req.body;
 
-    if (!user_id || !nickname || !password || !captchaId || !captchaText) {
+    if (!user_id || !nickname || !password || !captchaId || !captchaText || !email || !emailCode) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
     }
     // 检查用户ID是否已存在
@@ -128,6 +187,30 @@ router.post('/register', async (req, res) => {
 
     // 验证码验证成功，删除已使用的验证码
     captchaStore.delete(captchaId);
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
+    }
+
+    // 验证邮箱验证码
+    const storedEmailCode = emailCodeStore.get(email);
+    if (!storedEmailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期或不存在' });
+    }
+
+    if (Date.now() > storedEmailCode.expires) {
+      emailCodeStore.delete(email);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期' });
+    }
+
+    if (emailCode !== storedEmailCode.code) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码错误' });
+    }
+
+    // 邮箱验证码验证成功，删除已使用的验证码
+    emailCodeStore.delete(email);
 
     if (user_id.length < 3 || user_id.length > 15) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号长度必须在3-15位之间' });
@@ -162,8 +245,8 @@ router.post('/register', async (req, res) => {
 
     // 插入新用户（密码使用SHA2哈希加密）
     const [result] = await pool.execute(
-      'INSERT INTO users (user_id, nickname, password, avatar, bio, location) VALUES (?, ?, SHA2(?, 256), ?, ?, ?)',
-      [user_id, nickname, password, defaultAvatar, '', ipLocation]
+      'INSERT INTO users (user_id, nickname, password, email, avatar, bio, location) VALUES (?, ?, SHA2(?, 256), ?, ?, ?, ?)',
+      [user_id, nickname, password, email, defaultAvatar, '', ipLocation]
     );
 
     const userId = result.insertId;

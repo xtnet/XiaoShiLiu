@@ -101,6 +101,7 @@ class DatabaseInitializer {
         \`password\` varchar(255) DEFAULT NULL COMMENT '密码',
         \`user_id\` varchar(50) NOT NULL COMMENT '小石榴号',
         \`nickname\` varchar(100) NOT NULL COMMENT '昵称',
+        \`email\` varchar(100) DEFAULT NULL COMMENT '邮箱',
         \`avatar\` varchar(500) DEFAULT NULL COMMENT '头像URL',
         \`bio\` text DEFAULT NULL COMMENT '个人简介',
         \`location\` varchar(100) DEFAULT NULL COMMENT 'IP属地',
@@ -120,7 +121,9 @@ class DatabaseInitializer {
         \`verified\` tinyint(1) DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证',
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`user_id\` (\`user_id\`),
+        UNIQUE KEY \`email\` (\`email\`),
         KEY \`idx_user_id\` (\`user_id\`),
+        KEY \`idx_email\` (\`email\`),
         KEY \`idx_created_at\` (\`created_at\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
     `;

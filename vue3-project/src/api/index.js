@@ -234,6 +234,11 @@ export const authApi = {
   // 获取当前用户信息
   getCurrentUser() {
     return request.get('/auth/me')
+  },
+
+  // 发送邮箱验证码
+  sendEmailCode(data) {
+    return request.post('/auth/send-email-code', data)
   }
 }
 

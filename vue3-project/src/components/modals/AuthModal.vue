@@ -12,7 +12,7 @@
           <p class="auth-subtitle">{{ isLoginMode ? '欢迎回来！' : '加入我们，开始分享美好生活' }}</p>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="auth-form">
+        <form @submit.prevent="handleSubmit" class="auth-form" novalidate>
           <div class="form-group">
             <label for="user_id" class="form-label">小石榴号</label>
             <input type="text" id="user_id" v-model="formData.user_id" class="form-input"
@@ -44,6 +44,29 @@
               :class="{ 'error': showErrors && errors.confirmPassword }" placeholder="请再次输入密码" maxlength="20"
               @input="clearError('confirmPassword')" />
             <span v-if="showErrors && errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</span>
+          </div>
+
+          <div v-if="!isLoginMode" class="form-group">
+            <label for="email" class="form-label">邮箱</label>
+            <input type="email" id="email" v-model="formData.email" class="form-input"
+              :class="{ 'error': showErrors && errors.email }" placeholder="请输入邮箱地址" maxlength="100"
+              @input="clearError('email')" />
+            <span v-if="showErrors && errors.email" class="error-message">{{ errors.email }}</span>
+          </div>
+
+          <div v-if="!isLoginMode" class="form-group">
+            <label for="emailCode" class="form-label">邮箱验证码</label>
+            <div class="form-input-with-button">
+              <input type="text" id="emailCode" v-model="formData.emailCode" class="form-input"
+                :class="{ 'error': showErrors && errors.emailCode }" placeholder="请输入邮箱验证码" maxlength="6"
+                @input="clearError('emailCode')" />
+              <button type="button" class="email-code-btn"
+                :disabled="userStore.isSendingEmailCode || userStore.emailCodeCountdown > 0 || !formData.email"
+                @click="sendEmailCode">
+                {{ userStore.emailCodeCountdown > 0 ? `${userStore.emailCodeCountdown}秒后重发` : (userStore.isSendingEmailCode ? '发送中...' : '获取验证码') }}
+              </button>
+            </div>
+            <span v-if="showErrors && errors.emailCode" class="error-message">{{ errors.emailCode }}</span>
           </div>
 
           <div v-if="submitError" class="submit-error">
@@ -114,6 +137,8 @@ const formData = reactive({
   nickname: '',
   password: '',
   confirmPassword: '',
+  email: '',
+  emailCode: '',
   captchaText: ''
 })
 
@@ -122,6 +147,8 @@ const errors = reactive({
   nickname: '',
   password: '',
   confirmPassword: '',
+  email: '',
+  emailCode: '',
   captchaText: ''
 })
 
@@ -140,8 +167,7 @@ const isFormValid = computed(() => {
   if (isLoginMode.value) {
     return formData.user_id.trim() && formData.password.trim() && !errors.user_id && !errors.password
   } else {
-    return formData.user_id.trim() && formData.nickname.trim() && formData.password.trim() && formData.confirmPassword.trim() &&
-      !errors.user_id && !errors.nickname && !errors.password && !errors.confirmPassword
+    return formData.user_id.trim() && formData.nickname.trim() && formData.password.trim() && formData.confirmPassword.trim() && formData.email.trim() && formData.emailCode.trim() && !errors.user_id && !errors.nickname && !errors.password && !errors.confirmPassword && !errors.email && !errors.emailCode
   }
 })
 
@@ -214,6 +240,28 @@ const validateConfirmPassword = () => {
   }
 }
 
+// 验证邮箱
+const validateEmail = () => {
+  if (!formData.email.trim()) {
+    errors.email = '请输入邮箱地址'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errors.email = '请输入有效的邮箱地址'
+  } else {
+    errors.email = ''
+  }
+}
+
+// 验证邮箱验证码
+const validateEmailCode = () => {
+  if (!formData.emailCode.trim()) {
+    errors.emailCode = '请输入邮箱验证码'
+  } else if (formData.emailCode.length !== 6) {
+    errors.emailCode = '邮箱验证码长度为6位'
+  } else {
+    errors.emailCode = ''
+  }
+}
+
 const clearError = (field) => {
   errors[field] = ''
   submitError.value = ''
@@ -266,21 +314,49 @@ const validateCaptcha = () => {
   }
 }
 
+// 发送邮箱验证码
+const sendEmailCode = async () => {
+  // 验证邮箱格式
+  validateEmail()
+  if (errors.email) {
+    showErrors.value = true
+    return
+  }
+
+  try {
+    const response = await userStore.sendEmailCode({email:formData.email})
+    if (response.success) {
+      showToastMessage(response.message, 'success')
+    } else {
+      unifiedMessage.value = response.message || '发送验证码失败'
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    unifiedMessage.value = '网络错误，请稍后重试'
+  }
+}
+
 const resetForm = () => {
   formData.user_id = ''
   formData.nickname = ''
   formData.password = ''
   formData.confirmPassword = ''
+  formData.email = ''
+  formData.emailCode = ''
   formData.captchaText = ''
   errors.user_id = ''
   errors.nickname = ''
   errors.password = ''
   errors.confirmPassword = ''
+  errors.email = ''
+  errors.emailCode = ''
   errors.captchaText = ''
   submitError.value = ''
   showErrors.value = false
   captchaId.value = ''
   captchaSvg.value = ''
+  // 清除邮箱验证码倒计时
+  userStore.clearEmailCodeCountdown()
 }
 
 const toggleMode = () => {
@@ -301,7 +377,15 @@ const toggleMode = () => {
 
 // 处理验证码确认
 const handleCaptchaConfirm = async () => {
-  // 验证验证码
+  // 再次验证邮箱验证码
+  validateEmailCode()
+  if (errors.emailCode) {
+    closeCaptchaModal()
+    showErrors.value = true
+    return
+  }
+
+  // 验证图形验证码
   validateCaptcha()
   if (errors.captchaText) {
     return
@@ -342,6 +426,8 @@ const handleSubmit = async () => {
     validatePassword()
     validateNickname()
     validateConfirmPassword()
+    validateEmail()
+    validateEmailCode()
 
     if (!isFormValid.value) {
       return
@@ -369,6 +455,8 @@ const performSubmit = async () => {
         user_id: formData.user_id,
         nickname: formData.nickname,
         password: formData.password,
+        email: formData.email,
+        emailCode: formData.emailCode,
         captchaId: captchaId.value,
         captchaText: formData.captchaText,
         avatar: new URL('@/assets/imgs/avatar.png', import.meta.url).href,
@@ -391,10 +479,16 @@ const performSubmit = async () => {
         window.location.reload()
       }, 1000)
     } else {
-      // 如果是验证码相关错误，刷新验证码
+      // 如果是图形验证码相关错误，刷新验证码
       if (!isLoginMode.value && showCaptchaModal.value &&
-        (result.message.includes('验证码') || result.message.includes('captcha'))) {
+        (result.message.includes('验证码已过期') || result.message.includes('验证码错误') || result.message.includes('captcha')) &&
+        !result.message.includes('邮箱验证码')) {
         refreshCaptcha()
+      } else if (result.message.includes('邮箱验证码')) {
+        // 邮箱验证码错误，关闭图形验证码模态框并显示错误
+        errors.emailCode = result.message
+        showErrors.value = true
+        closeCaptchaModal()
       } else if (result.message.includes('用户ID已存在')) {
         // 用户ID重复错误，设置到对应字段
         errors.user_id = result.message
@@ -657,6 +751,37 @@ onMounted(() => {
 
 .switch-btn:hover {
   opacity: 0.8;
+}
+
+/* 邮箱验证码输入框和按钮样式 */
+.form-input-with-button {
+  display: flex;
+  gap: 8px;
+}
+
+.form-input-with-button .form-input {
+  flex: 1;
+}
+
+.email-code-btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.email-code-btn:hover:not(:disabled) {
+  background-color: var(--primary-color-dark);
+}
+
+.email-code-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 响应式设计 */
