@@ -178,6 +178,25 @@ API_BASE_URL=http://localhost:3001
 
 # CORS Configuration
 CORS_ORIGIN=http://localhost:5173
+
+# Email Service Configuration
+# Enable email functionality (true/false)
+# Set to false to skip email verification during registration, suitable for users without SMTP service
+EMAIL_ENABLED=true
+# SMTP Server Address
+SMTP_HOST=smtp.qq.com
+# SMTP Server Port
+SMTP_PORT=465
+# Use SSL/TLS (true/false)
+SMTP_SECURE=true
+# Email Account
+SMTP_USER=your_email@example.com
+# Email Password/Authorization Code
+SMTP_PASSWORD=your_email_password
+# Sender Email
+EMAIL_FROM=your_email@example.com
+# Sender Name
+EMAIL_FROM_NAME=XiaoShiLiu Campus Community
 ```
 
 #### Frontend Environment Variables (vue3-project/.env)
@@ -357,7 +376,32 @@ environment:
 
 > **Note**: To use Cloudflare R2 storage, you need to first create an R2 bucket and obtain the corresponding access key in the Cloudflare console.
 
-#### 6. Reverse Proxy Configuration
+#### 6. Email Feature Configuration
+
+The project supports email verification functionality, controlled by the `EMAIL_ENABLED` switch:
+
+1. **Enable Email Feature** (`EMAIL_ENABLED=true`)
+   - Email address and verification required during registration
+   - SMTP server configuration required
+   ```env
+   EMAIL_ENABLED=true
+   SMTP_HOST=smtp.qq.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=your_email@example.com
+   SMTP_PASSWORD=your_email_password
+   EMAIL_FROM=your_email@example.com
+   EMAIL_FROM_NAME=XiaoShiLiu Campus Community
+   ```
+
+2. **Disable Email Feature** (`EMAIL_ENABLED=false`, default)
+   - No email verification required during registration
+   - Suitable for scenarios without SMTP service or where email verification is not needed
+   ```env
+   EMAIL_ENABLED=false
+   ```
+
+#### 7. Reverse Proxy Configuration
 
 **Important Note**: If you are using a reverse proxy server such as Nginx or Apache, you need to modify the following configurations:
 

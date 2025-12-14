@@ -46,7 +46,7 @@
             <span v-if="showErrors && errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</span>
           </div>
 
-          <div v-if="!isLoginMode" class="form-group">
+          <div v-if="!isLoginMode && emailEnabled" class="form-group">
             <label for="email" class="form-label">邮箱</label>
             <input type="email" id="email" v-model="formData.email" class="form-input"
               :class="{ 'error': showErrors && errors.email }" placeholder="请输入邮箱地址" maxlength="100"
@@ -54,7 +54,7 @@
             <span v-if="showErrors && errors.email" class="error-message">{{ errors.email }}</span>
           </div>
 
-          <div v-if="!isLoginMode" class="form-group">
+          <div v-if="!isLoginMode && emailEnabled" class="form-group">
             <label for="emailCode" class="form-label">邮箱验证码</label>
             <div class="form-input-with-button">
               <input type="text" id="emailCode" v-model="formData.emailCode" class="form-input"
@@ -126,6 +126,9 @@ const userStore = useUserStore()
 
 const { lock, unlock } = useScrollLock()
 
+// 邮件功能是否启用
+const emailEnabled = ref(false)
+
 const isAnimating = ref(false)
 const isLoginMode = ref(props.initialMode === 'login')
 const isSubmitting = ref(false)
@@ -167,7 +170,11 @@ const isFormValid = computed(() => {
   if (isLoginMode.value) {
     return formData.user_id.trim() && formData.password.trim() && !errors.user_id && !errors.password
   } else {
-    return formData.user_id.trim() && formData.nickname.trim() && formData.password.trim() && formData.confirmPassword.trim() && formData.email.trim() && formData.emailCode.trim() && !errors.user_id && !errors.nickname && !errors.password && !errors.confirmPassword && !errors.email && !errors.emailCode
+    const baseValid = formData.user_id.trim() && formData.nickname.trim() && formData.password.trim() && formData.confirmPassword.trim() && !errors.user_id && !errors.nickname && !errors.password && !errors.confirmPassword
+    if (emailEnabled.value) {
+      return baseValid && formData.email.trim() && formData.emailCode.trim() && !errors.email && !errors.emailCode
+    }
+    return baseValid
   }
 })
 
@@ -377,12 +384,14 @@ const toggleMode = () => {
 
 // 处理验证码确认
 const handleCaptchaConfirm = async () => {
-  // 再次验证邮箱验证码
-  validateEmailCode()
-  if (errors.emailCode) {
-    closeCaptchaModal()
-    showErrors.value = true
-    return
+  // 邮件功能启用时才验证邮箱验证码
+  if (emailEnabled.value) {
+    validateEmailCode()
+    if (errors.emailCode) {
+      closeCaptchaModal()
+      showErrors.value = true
+      return
+    }
   }
 
   // 验证图形验证码
@@ -426,8 +435,10 @@ const handleSubmit = async () => {
     validatePassword()
     validateNickname()
     validateConfirmPassword()
-    validateEmail()
-    validateEmailCode()
+    if (emailEnabled.value) {
+      validateEmail()
+      validateEmailCode()
+    }
 
     if (!isFormValid.value) {
       return
@@ -451,18 +462,22 @@ const performSubmit = async () => {
         password: formData.password
       })
     } else {
-      result = await userStore.register({
+      const registerData = {
         user_id: formData.user_id,
         nickname: formData.nickname,
         password: formData.password,
-        email: formData.email,
-        emailCode: formData.emailCode,
         captchaId: captchaId.value,
         captchaText: formData.captchaText,
         avatar: new URL('@/assets/imgs/avatar.png', import.meta.url).href,
         bio: '用户没有任何简介',
         location: '未知'
-      })
+      }
+      // 邮件功能启用时才传邮箱相关参数
+      if (emailEnabled.value) {
+        registerData.email = formData.email
+        registerData.emailCode = formData.emailCode
+      }
+      result = await userStore.register(registerData)
     }
 
     if (result.success) {
@@ -523,9 +538,23 @@ const closeModal = () => {
   }, 200)
 }
 
+// 获取邮件功能配置
+const fetchEmailConfig = async () => {
+  try {
+    const response = await fetch('/api/auth/email-config')
+    const result = await response.json()
+    if (result.code === 200) {
+      emailEnabled.value = result.data.emailEnabled
+    }
+  } catch (error) {
+    console.error('获取邮件配置失败:', error)
+  }
+}
+
 onMounted(() => {
   lock()
   isAnimating.value = true
+  fetchEmailConfig()
 })
 </script>
 

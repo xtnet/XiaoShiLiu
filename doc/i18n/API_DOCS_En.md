@@ -2,7 +2,7 @@
 
 ## Project Information
 - **Project Name**: Xiaoshiliu Image and Text Community
-- **Version**: v1.2.0
+- **Version**: v1.3.0
 - **Base URL**: `http://localhost:3001`
 - **Database**: xiaoshiliu (MySQL)
 - **Update Time**: 2025-09-13
@@ -49,9 +49,13 @@ General parameters for interfaces that support pagination:
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|------------|
-| user_id | string | Yes | User ID (unique) |
-| nickname | string | Yes | Nickname |
+| user_id | string | Yes | User ID (unique, 3-15 alphanumeric characters and underscores) |
+| nickname | string | Yes | Nickname (less than 10 characters) |
 | password | string | Yes | Password (6-20 characters) |
+| captchaId | string | Yes | Captcha ID |
+| captchaText | string | Yes | Captcha text |
+| email | string | Conditional | Email address (required when email feature is enabled) |
+| emailCode | string | Conditional | Email verification code (required when email feature is enabled) |
 | avatar | string | No | Avatar URL |
 | bio | string | No | Personal introduction |
 | location | string | No | Location (if not provided, the system will automatically obtain the location based on IP) |
@@ -61,6 +65,8 @@ General parameters for interfaces that support pagination:
 - If the user manually provides the location parameter, the value provided by the user will be used preferentially
 - For local environments, location will display as "Local"
 - The system will not store the user's IP address, only obtain the location information for display purposes
+- When email feature is enabled (`EMAIL_ENABLED=true`), email and emailCode parameters are required
+- When email feature is disabled (`EMAIL_ENABLED=false`), email and emailCode parameters are optional, no email verification required during registration
 
 **Response Example**:
 ```json
@@ -178,6 +184,48 @@ General parameters for interfaces that support pagination:
     "verified": 0,
     "created_at": "2025-08-30T00:00:00.000Z"
   }
+}
+```
+
+### 6. Send Email Verification Code
+**Interface Address**: `POST /api/auth/send-email-code`
+
+**Description**: Only available when email feature is enabled (`EMAIL_ENABLED=true`)
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | Email address |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification code sent successfully"
+}
+```
+
+**Error Response** (when email feature is disabled):
+```json
+{
+  "code": 400,
+  "message": "Email feature is not enabled"
+}
+```
+
+### 7. Get Email Feature Configuration
+**Interface Address**: `GET /api/auth/email-config`
+
+**Description**: Get whether the email feature is currently enabled. Frontend uses this configuration to decide whether to display email-related fields.
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "data": {
+    "emailEnabled": true
+  },
+  "message": "success"
 }
 ```
 

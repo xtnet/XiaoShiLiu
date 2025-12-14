@@ -196,6 +196,25 @@ R2_REGION=auto
 
 # CORS配置
 CORS_ORIGIN=http://localhost:5173
+
+# 邮件服务配置
+# 是否启用邮件功能 (true/false)
+# 设置为false时，注册不需要邮箱验证，适合没有SMTP服务的用户
+EMAIL_ENABLED=true
+# SMTP服务器地址
+SMTP_HOST=smtp.qq.com
+# SMTP服务器端口
+SMTP_PORT=465
+# 是否使用SSL/TLS (true/false)
+SMTP_SECURE=true
+# 邮箱账号
+SMTP_USER=your_email@example.com
+# 邮箱密码/授权码
+SMTP_PASSWORD=your_email_password
+# 发件人邮箱
+EMAIL_FROM=your_email@example.com
+# 发件人名称
+EMAIL_FROM_NAME=小石榴校园图文社区
 ```
 
 安装依赖并初始化数据库：
@@ -319,6 +338,31 @@ XiaoShiLiu/
 4. 生成 API 令牌（权限：R2:Edit）
 5. 获取账户 ID
 6. 配置环境变量
+
+### 邮件功能配置
+
+项目支持邮箱验证功能，可通过 `EMAIL_ENABLED` 开关控制：
+
+1. **启用邮件功能** (`EMAIL_ENABLED=true`)
+   - 注册时需要填写邮箱并验证
+   - 需要配置SMTP服务器信息
+   ```env
+   EMAIL_ENABLED=true
+   SMTP_HOST=smtp.qq.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=your_email@example.com
+   SMTP_PASSWORD=your_email_password
+   EMAIL_FROM=your_email@example.com
+   EMAIL_FROM_NAME=小石榴校园图文社区
+   ```
+
+2. **禁用邮件功能** (`EMAIL_ENABLED=false`，默认)
+   - 注册时不需要邮箱验证
+   - 适合没有SMTP服务或不需要邮箱验证的场景
+   ```env
+   EMAIL_ENABLED=false
+   ```
 
 ### 反向代理配置
 

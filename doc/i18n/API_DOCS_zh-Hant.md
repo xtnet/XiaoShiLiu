@@ -2,7 +2,7 @@
 
 ## 專案資訊
 - **專案名稱**: 小石榴圖文社區
-- **版本**: v1.2.0
+- **版本**: v1.3.0
 - **基礎URL**: `http://localhost:3001`
 - **數據庫**: xiaoshiliu (MySQL)
 - **更新時間**: 2025-09-13
@@ -49,18 +49,24 @@ Authorization: Bearer <your_jwt_token>
 **請求參數**:
 | 參數 | 型別 | 必填 | 說明 |
 |------|------|------|------|
-| user_id | string | 是 | 用戶ID（唯一） |
-| nickname | string | 是 | 昵稱 |
+| user_id | string | 是 | 用戶ID（唯一，3-15位字母數字下劃線） |
+| nickname | string | 是 | 昵稱（少於10位） |
 | password | string | 是 | 密碼（6-20位） |
-| avatar | string | 否 | 头像URL |
-| bio | string | 否 | 个人简介 |
-| location | string | 否 | 所在地（如不提供，系統將自動根據IP獲取属地） |
+| captchaId | string | 是 | 圖形驗證碼ID |
+| captchaText | string | 是 | 圖形驗證碼內容 |
+| email | string | 條件必填 | 郵箱地址（郵件功能啟用時必填） |
+| emailCode | string | 條件必填 | 郵箱驗證碼（郵件功能啟用時必填） |
+| avatar | string | 否 | 頭像URL |
+| bio | string | 否 | 個人簡介 |
+| location | string | 否 | 所在地（如不提供，系統將自動根據IP獲取屬地） |
 
 **功能說明**:
-- 系統會自動通過第三方API獲取用戶属地信息
+- 系統會自動通過第三方API獲取用戶屬地信息
 - 如果用戶手動提供了location參數，則優先使用用戶提供的值
 - 對於本地環境，location將顯示為"本地"
-- 系統不會儲存用戶的IP地址，僅獲取属地信息用於顯示
+- 系統不會儲存用戶的IP地址，僅獲取屬地信息用於顯示
+- 當郵件功能啟用時（`EMAIL_ENABLED=true`），需要提供email和emailCode參數
+- 當郵件功能禁用時（`EMAIL_ENABLED=false`），email和emailCode參數可選，註冊時不需要郵箱驗證
 
 **響應範例**:
 ```json
@@ -178,6 +184,48 @@ Authorization: Bearer <your_jwt_token>
     "verified": 0,
     "created_at": "2025-08-30T00:00:00.000Z"
   }
+}
+```
+
+### 6. 發送郵箱驗證碼
+**接口地址**: `POST /api/auth/send-email-code`
+
+**說明**: 僅在郵件功能啟用時可用（`EMAIL_ENABLED=true`）
+
+**請求參數**:
+| 參數 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| email | string | 是 | 郵箱地址 |
+
+**回應範例**:
+```json
+{
+  "code": 200,
+  "message": "驗證碼發送成功"
+}
+```
+
+**錯誤回應**（郵件功能未啟用時）:
+```json
+{
+  "code": 400,
+  "message": "郵件功能未啟用"
+}
+```
+
+### 7. 獲取郵件功能配置
+**接口地址**: `GET /api/auth/email-config`
+
+**說明**: 獲取當前郵件功能是否啟用，前端根據此配置決定是否顯示郵箱相關字段
+
+**回應範例**:
+```json
+{
+  "code": 200,
+  "data": {
+    "emailEnabled": true
+  },
+  "message": "success"
 }
 ```
 

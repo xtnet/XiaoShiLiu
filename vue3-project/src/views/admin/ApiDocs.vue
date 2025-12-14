@@ -3,7 +3,7 @@
     <div class="docs-header">
       <h2>小石榴图文社区 API 接口文档</h2>
       <div class="docs-info">
-        <span class="version">版本: v1.2.0</span>
+        <span class="version">版本: v1.3.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
         <span class="update-time">更新时间: 2024-09-28</span>
       </div>

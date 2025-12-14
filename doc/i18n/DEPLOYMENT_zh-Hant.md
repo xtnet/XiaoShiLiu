@@ -178,6 +178,25 @@ API_BASE_URL=http://localhost:3001
 
 # CORS 配置
 CORS_ORIGIN=http://localhost:5173
+
+# 郵件服務配置
+# 是否啟用郵件功能 (true/false)
+# 設置為false時，註冊不需要郵箱驗證，適合沒有SMTP服務的用戶
+EMAIL_ENABLED=true
+# SMTP服務器地址
+SMTP_HOST=smtp.qq.com
+# SMTP服務器端口
+SMTP_PORT=465
+# 是否使用SSL/TLS (true/false)
+SMTP_SECURE=true
+# 郵箱賬號
+SMTP_USER=your_email@example.com
+# 郵箱密碼/授權碼
+SMTP_PASSWORD=your_email_password
+# 發件人郵箱
+EMAIL_FROM=your_email@example.com
+# 發件人名稱
+EMAIL_FROM_NAME=小石榴校園圖文社區
 ```
 
 #### 前端環境變數 (.env)
@@ -358,7 +377,32 @@ docker-compose exec backend ls -la /app/uploads
 
 > **注意**：要使用 Cloudflare R2 儲存，您需要先在 Cloudflare 控制台中創建 R2 桶和獲取相對應的存取金鑰。
 
-#### 6. 反向代理配置
+#### 6. 郵件功能配置
+
+專案支援郵箱驗證功能，可通過 `EMAIL_ENABLED` 開關控制：
+
+1. **啟用郵件功能** (`EMAIL_ENABLED=true`)
+   - 註冊時需要填寫郵箱並驗證
+   - 需要配置SMTP服務器信息
+   ```env
+   EMAIL_ENABLED=true
+   SMTP_HOST=smtp.qq.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=your_email@example.com
+   SMTP_PASSWORD=your_email_password
+   EMAIL_FROM=your_email@example.com
+   EMAIL_FROM_NAME=小石榴校園圖文社區
+   ```
+
+2. **禁用郵件功能** (`EMAIL_ENABLED=false`，預設)
+   - 註冊時不需要郵箱驗證
+   - 適合沒有SMTP服務或不需要郵箱驗證的場景
+   ```env
+   EMAIL_ENABLED=false
+   ```
+
+#### 7. 反向代理配置
 
 **重要提示**：如果您使用了 Nginx、Apache 等反向代理服務器，需要修改以下配置：
 

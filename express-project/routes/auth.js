@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { HTTP_STATUS, RESPONSE_CODES, ERROR_MESSAGES } = require('../constants');
-const { pool } = require('../config/config');
+const { pool, email: emailConfig } = require('../config/config');
 const { generateAccessToken, generateRefreshToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/auth');
 const { getIPLocation, getRealIP } = require('../utils/ipLocation');
@@ -14,6 +14,17 @@ const fs = require('fs');
 const captchaStore = new Map();
 // 存储邮箱验证码的临时对象
 const emailCodeStore = new Map();
+
+// 获取邮件功能配置状态
+router.get('/email-config', (req, res) => {
+  res.json({
+    code: RESPONSE_CODES.SUCCESS,
+    data: {
+      emailEnabled: emailConfig.enabled
+    },
+    message: 'success'
+  });
+});
 
 // 生成验证码
 router.get('/captcha', (req, res) => {
@@ -100,53 +111,58 @@ router.get('/check-user-id', async (req, res) => {
 // 发送邮箱验证码
 router.post('/send-email-code', async (req, res) => {
   try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入邮箱地址' });
     }
-    
+
     // 验证邮箱格式
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
     }
-    
+
     // 检查邮箱是否已被注册
     const [existingUser] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
-    
+
     if (existingUser.length > 0) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.CONFLICT, message: '该邮箱已被注册' });
     }
-    
+
     // 生成6位随机验证码
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // 发送验证码到邮箱
     await sendEmailCode(email, code);
-    
+
     // 存储验证码（10分钟过期）
     const expires = Date.now() + 10 * 60 * 1000;
     emailCodeStore.set(email, {
       code,
       expires
     });
-    
+
     // 清理过期的验证码
     for (const [key, value] of emailCodeStore.entries()) {
       if (Date.now() > value.expires) {
         emailCodeStore.delete(key);
       }
     }
-    
+
     res.json({
       code: RESPONSE_CODES.SUCCESS,
       message: '验证码发送成功，请查收邮箱'
     });
-    
+
   } catch (error) {
     console.error('发送邮箱验证码失败:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '验证码发送失败，请稍后重试' });
@@ -158,9 +174,21 @@ router.post('/register', async (req, res) => {
   try {
     const { user_id, nickname, password, captchaId, captchaText, email, emailCode } = req.body;
 
-    if (!user_id || !nickname || !password || !captchaId || !captchaText || !email || !emailCode) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
+    // 根据邮件功能是否启用，决定必填参数
+    const isEmailEnabled = emailConfig.enabled;
+
+    if (isEmailEnabled) {
+      // 邮件功能启用时，邮箱和邮箱验证码必填
+      if (!user_id || !nickname || !password || !captchaId || !captchaText || !email || !emailCode) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
+      }
+    } else {
+      // 邮件功能未启用时，邮箱和邮箱验证码可选
+      if (!user_id || !nickname || !password || !captchaId || !captchaText) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
+      }
     }
+
     // 检查用户ID是否已存在
     const [existingUser] = await pool.execute(
       'SELECT id FROM users WHERE user_id = ?',
@@ -188,29 +216,32 @@ router.post('/register', async (req, res) => {
     // 验证码验证成功，删除已使用的验证码
     captchaStore.delete(captchaId);
 
-    // 验证邮箱格式
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
-    }
+    // 邮件功能启用时才验证邮箱
+    if (isEmailEnabled) {
+      // 验证邮箱格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
+      }
 
-    // 验证邮箱验证码
-    const storedEmailCode = emailCodeStore.get(email);
-    if (!storedEmailCode) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期或不存在' });
-    }
+      // 验证邮箱验证码
+      const storedEmailCode = emailCodeStore.get(email);
+      if (!storedEmailCode) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期或不存在' });
+      }
 
-    if (Date.now() > storedEmailCode.expires) {
+      if (Date.now() > storedEmailCode.expires) {
+        emailCodeStore.delete(email);
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期' });
+      }
+
+      if (emailCode !== storedEmailCode.code) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码错误' });
+      }
+
+      // 邮箱验证码验证成功，删除已使用的验证码
       emailCodeStore.delete(email);
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期' });
     }
-
-    if (emailCode !== storedEmailCode.code) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码错误' });
-    }
-
-    // 邮箱验证码验证成功，删除已使用的验证码
-    emailCodeStore.delete(email);
 
     if (user_id.length < 3 || user_id.length > 15) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '小石榴号长度必须在3-15位之间' });
@@ -228,9 +259,6 @@ router.post('/register', async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码长度必须在6-20位之间' });
     }
 
-
-
-
     // 获取用户IP属地
     const userIP = getRealIP(req);
     let ipLocation;
@@ -244,9 +272,11 @@ router.post('/register', async (req, res) => {
     const defaultAvatar = 'https://img20.360buyimg.com/openfeedback/jfs/t1/349561/26/2288/51193/68c324e1F0847c3c5/21f0e026204657da.png';
 
     // 插入新用户（密码使用SHA2哈希加密）
+    // 邮件功能未启用时，email字段存储空字符串
+    const userEmail = isEmailEnabled ? email : '';
     const [result] = await pool.execute(
       'INSERT INTO users (user_id, nickname, password, email, avatar, bio, location) VALUES (?, ?, SHA2(?, 256), ?, ?, ?, ?)',
-      [user_id, nickname, password, email, defaultAvatar, '', ipLocation]
+      [user_id, nickname, password, userEmail, defaultAvatar, '', ipLocation]
     );
 
     const userId = result.insertId;

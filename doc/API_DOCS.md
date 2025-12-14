@@ -2,7 +2,7 @@
 
 ## 项目信息
 - **项目名称**: 小石榴图文社区
-- **版本**: v1.2.0
+- **版本**: v1.3.0
 - **基础URL**: `http://localhost:3001`
 - **数据库**: xiaoshiliu (MySQL)
 - **更新时间**: 2024-09-28
@@ -49,10 +49,13 @@ Authorization: Bearer <your_jwt_token>
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| user_id | string | 是 | 用户ID（唯一） |
-| email | string | 是 | 邮箱地址 |
-| nickname | string | 是 | 昵称 |
+| user_id | string | 是 | 用户ID（唯一，3-15位字母数字下划线） |
+| nickname | string | 是 | 昵称（少于10位） |
 | password | string | 是 | 密码（6-20位） |
+| captchaId | string | 是 | 图形验证码ID |
+| captchaText | string | 是 | 图形验证码内容 |
+| email | string | 条件必填 | 邮箱地址（邮件功能启用时必填） |
+| emailCode | string | 条件必填 | 邮箱验证码（邮件功能启用时必填） |
 | avatar | string | 否 | 头像URL |
 | bio | string | 否 | 个人简介 |
 | location | string | 否 | 所在地（如不提供，系统将自动根据IP获取属地） |
@@ -62,6 +65,8 @@ Authorization: Bearer <your_jwt_token>
 - 如果用户手动提供了location参数，则优先使用用户提供的值
 - 对于本地环境，location将显示为"本地"
 - 系统不会存储用户的IP地址，仅获取属地信息用于显示
+- 当邮件功能启用时（`EMAIL_ENABLED=true`），需要提供email和emailCode参数
+- 当邮件功能禁用时（`EMAIL_ENABLED=false`），email和emailCode参数可选，注册时不需要邮箱验证
 
 **响应示例**:
 ```json
@@ -185,6 +190,8 @@ Authorization: Bearer <your_jwt_token>
 ### 6. 发送邮箱验证码
 **接口地址**: `POST /api/auth/send-email-code`
 
+**说明**: 仅在邮件功能启用时可用（`EMAIL_ENABLED=true`）
+
 **请求参数**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -196,7 +203,30 @@ Authorization: Bearer <your_jwt_token>
   "code": 200,
   "message": "验证码发送成功"
 }
+```
 
+**错误响应**（邮件功能未启用时）:
+```json
+{
+  "code": 400,
+  "message": "邮件功能未启用"
+}
+```
+
+### 7. 获取邮件功能配置
+**接口地址**: `GET /api/auth/email-config`
+
+**说明**: 获取当前邮件功能是否启用，前端根据此配置决定是否显示邮箱相关字段
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "data": {
+    "emailEnabled": true
+  },
+  "message": "success"
+}
 ```
 
 ---

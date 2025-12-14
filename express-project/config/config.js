@@ -5,7 +5,7 @@
  * @author ZTMYO
  * @github https://github.com/ZTMYO
  * @description Express应用的核心配置管理
- * @version v1.2.0
+ * @version v1.3.0
  */
 
 const mysql = require('mysql2/promise');
@@ -109,6 +109,8 @@ const config = {
 
   // 邮件服务配置
   email: {
+    // 是否启用邮件功能
+    enabled: process.env.EMAIL_ENABLED === 'true', // 默认不启用
     // SMTP服务器配置
     smtp: {
       host: process.env.SMTP_HOST || 'smtp.qq.com',
