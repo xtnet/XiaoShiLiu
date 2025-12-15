@@ -299,7 +299,9 @@ watch(() => props.visible, (newValue) => {
     lock()
 
     // 初始化表单数据
-    form.avatar = props.userInfo.avatar || defaultAvatar
+    // 检查头像URL是否有效（排除错误的默认头像路径）
+    const isValidAvatar = props.userInfo.avatar && !props.userInfo.avatar.includes('/asset/imgs/avatar.png')
+    form.avatar = isValidAvatar ? props.userInfo.avatar : defaultAvatar
     form.nickname = props.userInfo.nickname || ''
     form.bio = props.userInfo.bio || ''
 

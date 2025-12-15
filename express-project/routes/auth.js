@@ -269,11 +269,12 @@ router.post('/register', async (req, res) => {
     }
     // 获取用户User-Agent
     const userAgent = req.headers['user-agent'] || '';
-    const defaultAvatar = 'https://img20.360buyimg.com/openfeedback/jfs/t1/349561/26/2288/51193/68c324e1F0847c3c5/21f0e026204657da.png';
+    // 默认头像使用空字符串，前端会使用本地默认头像
+    const defaultAvatar = '';
 
     // 插入新用户（密码使用SHA2哈希加密）
-    // 邮件功能未启用时，email字段存储空字符串
-    const userEmail = isEmailEnabled ? email : '';
+    // 邮件功能未启用时，email字段存储NULL
+    const userEmail = isEmailEnabled ? email : null;
     const [result] = await pool.execute(
       'INSERT INTO users (user_id, nickname, password, email, avatar, bio, location) VALUES (?, ?, SHA2(?, 256), ?, ?, ?, ?)',
       [user_id, nickname, password, userEmail, defaultAvatar, '', ipLocation]
