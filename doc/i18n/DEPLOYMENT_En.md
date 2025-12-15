@@ -42,11 +42,86 @@ git clone https://github.com/ZTMYO/XiaoShiLiu.git
 cd XiaoShiLiu
 ```
 
-#### 2. Configure Environment Variables (Optional)
+#### 2. Configure Environment Variables
 
+Copy the environment configuration file:
 ```bash
-# Optional: If you have custom environment variables, you can create a .env file
-# This repository does not provide .env.docker, so you can skip it if there is no special need. You can use the default values in docker-compose.yml instead.
+cp .env.docker .env
+```
+
+Edit the `.env` file and modify the configuration as needed:
+
+```env
+# Database configuration
+DB_HOST=mysql
+DB_USER=xiaoshiliu_user
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# JWT configuration
+JWT_SECRET=xiaoshiliu_secret_key_2025_docker
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# Upload configuration
+UPLOAD_MAX_SIZE=50mb
+# Image upload strategy (local: local storage, imagehost: third-party image hosting, r2: Cloudflare R2)
+IMAGE_UPLOAD_STRATEGY=imagehost
+# Video upload strategy (local: local storage, r2: Cloudflare R2)
+VIDEO_UPLOAD_STRATEGY=local
+
+# Local storage configuration
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+VIDEO_UPLOAD_DIR=uploads/videos
+VIDEO_COVER_DIR=uploads/covers
+
+# Third-party image hosting configuration (when IMAGE_UPLOAD_STRATEGY=imagehost)
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+
+# Cloudflare R2 configuration (when IMAGE_UPLOAD_STRATEGY=r2 or VIDEO_UPLOAD_STRATEGY=r2)
+# Uncomment and fill in real configuration if using R2 storage
+# R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+# R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+# R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+# R2_BUCKET_NAME=your_bucket_name_here
+# R2_ACCOUNT_ID=your_account_id_here
+# R2_REGION=auto
+# R2_PUBLIC_URL=https://your-custom-domain.com
+
+# API configuration
+API_BASE_URL=http://localhost:3001
+
+# Email service configuration
+# Enable email functionality (true/false), disabled by default
+EMAIL_ENABLED=false
+# SMTP server address
+SMTP_HOST=smtp.qq.com
+# SMTP server port
+SMTP_PORT=465
+# Use SSL/TLS (true/false)
+SMTP_SECURE=true
+# Email account
+SMTP_USER=your_email@example.com
+# Email password/authorization code
+SMTP_PASSWORD=your_email_password
+# Sender email
+EMAIL_FROM=your_email@example.com
+# Sender name
+EMAIL_FROM_NAME=XiaoShiLiu Campus Community
+
+# Frontend build configuration
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# Service port configuration
+FRONTEND_PORT=80
+BACKEND_PORT=3001
+DB_PORT_EXTERNAL=3306
+
+# Production environment flag
+NODE_ENV=production
 ```
 
 #### 3. One-Click Start

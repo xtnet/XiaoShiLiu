@@ -195,19 +195,56 @@ DB_PORT=3306
 # JWT配置
 JWT_SECRET=xiaoshiliu_secret_key_2025
 JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# API配置
+API_BASE_URL=http://localhost:3001
 
 # 上傳配置
 UPLOAD_MAX_SIZE=50mb
-# 圖片上傳策略 (local: 本地儲存, imagehost: 第三方圖床)
-UPLOAD_STRATEGY=imagehost
+# 圖片上傳策略 (local: 本地儲存, imagehost: 第三方圖床, r2: Cloudflare R2)
+IMAGE_UPLOAD_STRATEGY=imagehost
+# 視頻上傳策略 (local: 本地儲存, r2: Cloudflare R2)
+VIDEO_UPLOAD_STRATEGY=local
 
 # 本地儲存配置
 LOCAL_UPLOAD_DIR=uploads
 LOCAL_BASE_URL=http://localhost:3001
+VIDEO_UPLOAD_DIR=uploads/videos
+VIDEO_COVER_DIR=uploads/covers
 
-# 第三方圖床配置
+# 第三方圖床配置（當IMAGE_UPLOAD_STRATEGY=imagehost時使用）
 IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
 IMAGEHOST_TIMEOUT=60000
+
+# Cloudflare R2 配置（當IMAGE_UPLOAD_STRATEGY=r2或VIDEO_UPLOAD_STRATEGY=r2時使用）
+R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your_bucket_name_here
+R2_ACCOUNT_ID=your_account_id_here
+R2_REGION=auto
+
+# CORS配置
+CORS_ORIGIN=http://localhost:5173
+
+# 郵件服務配置
+# 是否啟用郵件功能 (true/false)，預設不啟用
+EMAIL_ENABLED=false
+# SMTP伺服器地址
+SMTP_HOST=smtp.qq.com
+# SMTP伺服器端口
+SMTP_PORT=465
+# 是否使用SSL/TLS (true/false)
+SMTP_SECURE=true
+# 郵箱賬號
+SMTP_USER=your_email@example.com
+# 郵箱密碼/授權碼
+SMTP_PASSWORD=your_email_password
+# 發件人郵箱
+EMAIL_FROM=your_email@example.com
+# 發件人名稱
+EMAIL_FROM_NAME=小石榴校園圖文社區
 ```
 
 ### 前端配置 (vue3-project/.env)
@@ -222,7 +259,9 @@ VITE_APP_TITLE=小石榴圖文社區
 ```
 
 > 💡 **配置說明**：
-> - 後端支援本地儲存和第三方圖床兩種上傳策略
+> - 後端支援本地儲存、第三方圖床和 Cloudflare R2 三種上傳策略
+> - 圖片和視頻可以分別配置不同的上傳策略
+> - 郵件功能預設關閉，啟用後支援郵箱驗證註冊和找回密碼
 > - 前端使用 Vite 環境變數，變數名需以 `VITE_` 開頭
 > - 詳細配置說明請參考 [部署指南](DEPLOYMENT_zh-Hant.md)
 

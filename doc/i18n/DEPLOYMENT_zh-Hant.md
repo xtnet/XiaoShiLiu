@@ -42,11 +42,86 @@ git clone https://github.com/ZTMYO/XiaoShiLiu.git
 cd XiaoShiLiu
 ```
 
-#### 2. 配置環境變數（選擇性）
+#### 2. 配置環境變數
 
+複製環境配置文件：
 ```bash
-# 選擇性：如果您有自定義環境變數，您可以建立一個 .env 文件
-# 此儲存庫不提供 .env.docker，所以如果您沒有特殊需求，可以跳過它。您可以使用 docker-compose.yml 中的默認值。您可以使用 docker-compose.yml 中的默認值。
+cp .env.docker .env
+```
+
+編輯 `.env` 文件，根據需要修改配置：
+
+```env
+# 資料庫配置
+DB_HOST=mysql
+DB_USER=xiaoshiliu_user
+DB_PASSWORD=123456
+DB_NAME=xiaoshiliu
+DB_PORT=3306
+
+# JWT配置
+JWT_SECRET=xiaoshiliu_secret_key_2025_docker
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# 上傳配置
+UPLOAD_MAX_SIZE=50mb
+# 圖片上傳策略 (local: 本地儲存, imagehost: 第三方圖床, r2: Cloudflare R2)
+IMAGE_UPLOAD_STRATEGY=imagehost
+# 視頻上傳策略 (local: 本地儲存, r2: Cloudflare R2)
+VIDEO_UPLOAD_STRATEGY=local
+
+# 本地儲存配置
+LOCAL_UPLOAD_DIR=uploads
+LOCAL_BASE_URL=http://localhost:3001
+VIDEO_UPLOAD_DIR=uploads/videos
+VIDEO_COVER_DIR=uploads/covers
+
+# 第三方圖床配置（當IMAGE_UPLOAD_STRATEGY=imagehost時使用）
+IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
+IMAGEHOST_TIMEOUT=60000
+
+# Cloudflare R2 配置（當IMAGE_UPLOAD_STRATEGY=r2或VIDEO_UPLOAD_STRATEGY=r2時使用）
+# 如需使用R2儲存，請取消註釋並填入真實配置
+# R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+# R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+# R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+# R2_BUCKET_NAME=your_bucket_name_here
+# R2_ACCOUNT_ID=your_account_id_here
+# R2_REGION=auto
+# R2_PUBLIC_URL=https://your-custom-domain.com
+
+# API配置
+API_BASE_URL=http://localhost:3001
+
+# 郵件服務配置
+# 是否啟用郵件功能 (true/false)，預設不啟用
+EMAIL_ENABLED=false
+# SMTP伺服器地址
+SMTP_HOST=smtp.qq.com
+# SMTP伺服器端口
+SMTP_PORT=465
+# 是否使用SSL/TLS (true/false)
+SMTP_SECURE=true
+# 郵箱賬號
+SMTP_USER=your_email@example.com
+# 郵箱密碼/授權碼
+SMTP_PASSWORD=your_email_password
+# 發件人郵箱
+EMAIL_FROM=your_email@example.com
+# 發件人名稱
+EMAIL_FROM_NAME=小石榴校園圖文社區
+
+# 前端構建配置
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# 服務端口配置
+FRONTEND_PORT=80
+BACKEND_PORT=3001
+DB_PORT_EXTERNAL=3306
+
+# 生產環境標識
+NODE_ENV=production
 ```
 
 #### 3. 一鍵啟動

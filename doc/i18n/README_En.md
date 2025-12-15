@@ -194,19 +194,56 @@ DB_PORT=3306
 # JWT configuration
 JWT_SECRET=xiaoshiliu_secret_key_2025
 JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# API configuration
+API_BASE_URL=http://localhost:3001
 
 # Upload configuration
 UPLOAD_MAX_SIZE=50mb
-# Image upload strategy (local: local storage, imagehost: third-party image hosting)
-UPLOAD_STRATEGY=imagehost
+# Image upload strategy (local: local storage, imagehost: third-party image hosting, r2: Cloudflare R2)
+IMAGE_UPLOAD_STRATEGY=imagehost
+# Video upload strategy (local: local storage, r2: Cloudflare R2)
+VIDEO_UPLOAD_STRATEGY=local
 
 # Local storage configuration
 LOCAL_UPLOAD_DIR=uploads
 LOCAL_BASE_URL=http://localhost:3001
+VIDEO_UPLOAD_DIR=uploads/videos
+VIDEO_COVER_DIR=uploads/covers
 
-# Third-party image hosting configuration
+# Third-party image hosting configuration (when IMAGE_UPLOAD_STRATEGY=imagehost)
 IMAGEHOST_API_URL=https://api.xinyew.cn/api/jdtc
 IMAGEHOST_TIMEOUT=60000
+
+# Cloudflare R2 configuration (when IMAGE_UPLOAD_STRATEGY=r2 or VIDEO_UPLOAD_STRATEGY=r2)
+R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your_bucket_name_here
+R2_ACCOUNT_ID=your_account_id_here
+R2_REGION=auto
+
+# CORS configuration
+CORS_ORIGIN=http://localhost:5173
+
+# Email service configuration
+# Enable email functionality (true/false), disabled by default
+EMAIL_ENABLED=false
+# SMTP server address
+SMTP_HOST=smtp.qq.com
+# SMTP server port
+SMTP_PORT=465
+# Use SSL/TLS (true/false)
+SMTP_SECURE=true
+# Email account
+SMTP_USER=your_email@example.com
+# Email password/authorization code
+SMTP_PASSWORD=your_email_password
+# Sender email
+EMAIL_FROM=your_email@example.com
+# Sender name
+EMAIL_FROM_NAME=XiaoShiLiu Campus Community
 ```
 
 ### Frontend Configuration (vue3-project/.env)
@@ -221,7 +258,9 @@ VITE_APP_TITLE=XiaoShiLiu Image-Text Community
 ```
 
 > 💡 **Configuration Notes**:
-> - Backend supports both local storage and third-party image hosting upload strategies
+> - Backend supports local storage, third-party image hosting, and Cloudflare R2 upload strategies
+> - Images and videos can be configured with different upload strategies
+> - Email functionality is disabled by default; when enabled, it supports email verification registration and password recovery
 > - Frontend uses Vite environment variables, variable names must start with `VITE_`
 > - For detailed configuration instructions, please refer to the [Deployment Guide](DEPLOYMENT_En.md)
 

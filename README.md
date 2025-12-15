@@ -230,6 +230,24 @@ R2_REGION=auto
 
 # CORS配置
 CORS_ORIGIN=http://localhost:5173
+
+# 邮件服务配置
+# 是否启用邮件功能 (true/false)，默认不启用
+EMAIL_ENABLED=false
+# SMTP服务器地址
+SMTP_HOST=smtp.qq.com
+# SMTP服务器端口
+SMTP_PORT=465
+# 是否使用SSL/TLS (true/false)
+SMTP_SECURE=true
+# 邮箱账号
+SMTP_USER=your_email@example.com
+# 邮箱密码/授权码
+SMTP_PASSWORD=your_email_password
+# 发件人邮箱
+EMAIL_FROM=your_email@example.com
+# 发件人名称
+EMAIL_FROM_NAME=小石榴校园图文社区
 ```
 
 ### 前端配置 (vue3-project/.env)
@@ -248,6 +266,7 @@ VITE_APP_TITLE=小石榴图文社区
 > 💡 **配置说明**：
 > - 后端支持本地存储、第三方图床和 Cloudflare R2 三种上传策略
 > - 图片和视频可以分别配置不同的上传策略
+> - 邮件功能默认关闭，启用后支持邮箱验证注册和找回密码
 > - 前端使用 Vite 环境变量，变量名需以 `VITE_` 开头
 > - 详细配置说明请参考 [部署指南](./doc/DEPLOYMENT.md)
 
