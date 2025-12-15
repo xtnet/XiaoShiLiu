@@ -254,6 +254,21 @@ export const authApi = {
   // 解除邮箱绑定
   unbindEmail() {
     return request.delete('/auth/unbind-email')
+  },
+
+  // 发送找回密码验证码
+  sendResetCode(data) {
+    return request.post('/auth/send-reset-code', data)
+  },
+
+  // 验证找回密码验证码
+  verifyResetCode(data) {
+    return request.post('/auth/verify-reset-code', data)
+  },
+
+  // 重置密码
+  resetPassword(data) {
+    return request.post('/auth/reset-password', data)
   }
 }
 

@@ -238,6 +238,167 @@ router.post('/bind-email', authenticateToken, async (req, res) => {
   }
 });
 
+// 发送找回密码验证码
+router.post('/send-reset-code', async (req, res) => {
+  try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入邮箱地址' });
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
+    }
+
+    // 检查邮箱是否已注册
+    const [existingUser] = await pool.execute(
+      'SELECT id, user_id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUser.length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.NOT_FOUND, message: '该邮箱未绑定任何账号' });
+    }
+
+    // 生成6位随机验证码
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 发送验证码到邮箱
+    await sendEmailCode(email, code);
+
+    // 存储验证码（10分钟过期）
+    const expires = Date.now() + 10 * 60 * 1000;
+    emailCodeStore.set(`reset_${email}`, {
+      code,
+      expires,
+      userId: existingUser[0].id
+    });
+
+    // 清理过期的验证码
+    for (const [key, value] of emailCodeStore.entries()) {
+      if (Date.now() > value.expires) {
+        emailCodeStore.delete(key);
+      }
+    }
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '验证码发送成功，请查收邮箱',
+      data: {
+        user_id: existingUser[0].user_id
+      }
+    });
+
+  } catch (error) {
+    console.error('发送找回密码验证码失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '验证码发送失败，请稍后重试' });
+  }
+});
+
+// 验证找回密码验证码
+router.post('/verify-reset-code', async (req, res) => {
+  try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
+    const { email, emailCode } = req.body;
+
+    if (!email || !emailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
+    }
+
+    // 验证邮箱验证码
+    const storedData = emailCodeStore.get(`reset_${email}`);
+    if (!storedData) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期，请重新获取' });
+    }
+
+    if (Date.now() > storedData.expires) {
+      emailCodeStore.delete(`reset_${email}`);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期，请重新获取' });
+    }
+
+    if (storedData.code !== emailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码错误' });
+    }
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '验证码验证成功'
+    });
+
+  } catch (error) {
+    console.error('验证找回密码验证码失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '验证失败，请稍后重试' });
+  }
+});
+
+// 重置密码
+router.post('/reset-password', async (req, res) => {
+  try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
+    const { email, emailCode, newPassword } = req.body;
+
+    if (!email || !emailCode || !newPassword) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '缺少必要参数' });
+    }
+
+    // 验证密码长度
+    if (newPassword.length < 6 || newPassword.length > 20) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '密码长度必须在6-20位之间' });
+    }
+
+    // 验证邮箱验证码
+    const storedData = emailCodeStore.get(`reset_${email}`);
+    if (!storedData) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期，请重新获取' });
+    }
+
+    if (Date.now() > storedData.expires) {
+      emailCodeStore.delete(`reset_${email}`);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码已过期，请重新获取' });
+    }
+
+    if (storedData.code !== emailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '验证码错误' });
+    }
+
+    // 更新密码
+    await pool.execute(
+      'UPDATE users SET password = SHA2(?, 256) WHERE email = ?',
+      [newPassword, email]
+    );
+
+    // 删除已使用的验证码
+    emailCodeStore.delete(`reset_${email}`);
+
+    console.log(`用户重置密码成功 - 邮箱: ${email}`);
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '密码重置成功，请使用新密码登录'
+    });
+
+  } catch (error) {
+    console.error('重置密码失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '重置密码失败，请稍后重试' });
+  }
+});
+
 // 解除邮箱绑定
 router.delete('/unbind-email', authenticateToken, async (req, res) => {
   try {

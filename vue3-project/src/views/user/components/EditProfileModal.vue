@@ -70,7 +70,8 @@
                 <input v-model="emailForm.email" type="email" placeholder="请输入邮箱地址" maxlength="100" autocomplete="off" />
               </div>
               <div class="email-code-row">
-                <input v-model="emailForm.code" type="text" placeholder="请输入验证码" maxlength="6" autocomplete="off" />
+                <input v-model="emailForm.code" type="text" placeholder="请输入验证码" maxlength="6" autocomplete="off"
+                  @keyup.enter="handleBindEmail" />
                 <button type="button" class="email-code-btn"
                   :disabled="userStore.isSendingEmailCode || userStore.emailCodeCountdown > 0 || !isEmailValid"
                   @click="handleSendEmailCode">
@@ -166,6 +167,11 @@
 
 
   <MentionModal :visible="showMentionPanel" @close="closeMentionPanel" @select="handleMentionSelect" />
+
+  <!-- 解绑邮箱确认对话框 -->
+  <ConfirmDialog v-model:visible="showUnbindConfirmDialog" title="解除邮箱绑定"
+    message="确定要解除邮箱绑定吗？解绑后将无法通过邮箱找回密码。" type="warning" confirm-text="解绑" cancel-text="取消"
+    @confirm="confirmUnbindEmail" @cancel="showUnbindConfirmDialog = false" />
 </template>
 
 <script setup>
@@ -183,6 +189,7 @@ import CropModal from './CropModal.vue'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
 import { useUserStore } from '@/stores/user.js'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps({
   visible: {
@@ -281,13 +288,17 @@ const handleBindEmail = async () => {
   }
 }
 
+// 解绑邮箱确认对话框状态
+const showUnbindConfirmDialog = ref(false)
+
 // 解除邮箱绑定
-const handleUnbindEmail = async () => {
-  // 二次确认
-  if (!confirm('确定要解除邮箱绑定吗？解绑后将无法通过邮箱找回密码。')) {
-    return
-  }
-  
+const handleUnbindEmail = () => {
+  // 显示确认对话框
+  showUnbindConfirmDialog.value = true
+}
+
+// 确认解绑邮箱
+const confirmUnbindEmail = async () => {
   isUnbindingEmail.value = true
   
   try {

@@ -5,7 +5,7 @@
       <div class="docs-info">
         <span class="version">版本: v1.3.0</span>
         <span class="base-url">基础URL: http://localhost:3001/</span>
-        <span class="update-time">更新时间: 2024-09-28</span>
+        <span class="update-time">更新时间: 2025-12-15</span>
       </div>
     </div>
 
@@ -330,6 +330,76 @@ const apiGroups = ref([
         description: '获取当前登录用户的详细信息',
         auth: true,
         expanded: false
+      },
+      {
+        method: 'GET',
+        path: '/api/auth/email-config',
+        title: '获取邮件功能配置',
+        description: '获取当前邮件功能是否启用',
+        expanded: false
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/send-email-code',
+        title: '发送邮箱验证码',
+        description: '发送注册用邮箱验证码（仅邮件功能启用时可用）',
+        expanded: false,
+        params: [
+          { name: 'email', type: 'string', required: true, description: '邮箱地址' }
+        ]
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/bind-email',
+        title: '绑定邮箱',
+        description: '为当前用户绑定邮箱（仅邮件功能启用时可用）',
+        auth: true,
+        expanded: false,
+        params: [
+          { name: 'email', type: 'string', required: true, description: '邮箱地址' },
+          { name: 'emailCode', type: 'string', required: true, description: '邮箱验证码' }
+        ]
+      },
+      {
+        method: 'DELETE',
+        path: '/api/auth/unbind-email',
+        title: '解除邮箱绑定',
+        description: '解除当前用户的邮箱绑定（仅邮件功能启用时可用）',
+        auth: true,
+        expanded: false
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/send-reset-code',
+        title: '发送找回密码验证码',
+        description: '发送找回密码用邮箱验证码（仅邮件功能启用时可用）',
+        expanded: false,
+        params: [
+          { name: 'email', type: 'string', required: true, description: '已绑定的邮箱地址' }
+        ]
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/verify-reset-code',
+        title: '验证找回密码验证码',
+        description: '验证找回密码验证码是否正确（仅邮件功能启用时可用）',
+        expanded: false,
+        params: [
+          { name: 'email', type: 'string', required: true, description: '邮箱地址' },
+          { name: 'emailCode', type: 'string', required: true, description: '邮箱验证码' }
+        ]
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/reset-password',
+        title: '重置密码',
+        description: '通过邮箱验证码重置密码（仅邮件功能启用时可用）',
+        expanded: false,
+        params: [
+          { name: 'email', type: 'string', required: true, description: '邮箱地址' },
+          { name: 'emailCode', type: 'string', required: true, description: '邮箱验证码' },
+          { name: 'newPassword', type: 'string', required: true, description: '新密码（6-20位）' }
+        ]
       }
     ]
   },

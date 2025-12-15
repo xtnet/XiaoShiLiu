@@ -229,6 +229,102 @@ General parameters for interfaces that support pagination:
 }
 ```
 
+### 8. Bind Email
+**Interface Address**: `POST /api/auth/bind-email`
+
+**Description**: Bind email for current user, only available when email feature is enabled
+
+**Authentication Required**: Yes
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | Email address |
+| emailCode | string | Yes | Email verification code |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Email bindingsuccessful"
+}
+```
+
+### 9. Unbind Email
+**Interface Address**: `DELETE /api/auth/unbind-email`
+
+**Description**: Unbind email for current user, only available when email feature is enabled
+
+**Authentication Required**: Yes
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Email unbinding successful"
+}
+```
+
+### 10. Send Password Reset Code
+**Interface Address**: `POST /api/auth/send-reset-code`
+
+**Description**: Send password reset verification code to email, only available when email feature is enabled
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | Bound email address |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification code sent successfully",
+  "data": {
+    "user_id": "xiaoshiliu"
+  }
+}
+```
+
+### 11. Verify Password Reset Code
+**Interface Address**: `POST /api/auth/verify-reset-code`
+
+**Description**: Verify if the password reset code is correct, only available when email feature is enabled
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | Email address |
+| emailCode | string | Yes | Email verification code |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Verification code verified successfully"
+}
+```
+
+### 12. Reset Password
+**Interface Address**: `POST /api/auth/reset-password`
+
+**Description**: Reset password using email verification code, only available when email feature is enabled
+
+**Request Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | Email address |
+| emailCode | string | Yes | Email verification code |
+| newPassword | string | Yes | New password (6-20 characters) |
+
+**Response Example**:
+```json
+{
+  "code": 200,
+  "message": "Password reset successful, please login with new password"
+}
+```
+
 ---
 
 ## User-related Interfaces

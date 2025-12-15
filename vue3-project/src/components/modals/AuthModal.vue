@@ -92,6 +92,12 @@
             {{ isLoginMode ? '立即注册' : '立即登录' }}
           </button>
         </div>
+
+        <div v-if="isLoginMode && emailEnabled" class="forgot-password">
+          <button type="button" class="forgot-btn" @click="openResetPassword">
+            忘记密码？
+          </button>
+        </div>
       </div>
     </div>
 
@@ -120,7 +126,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'success'])
+const emit = defineEmits(['close', 'success', 'open-reset-password'])
 
 const userStore = useUserStore()
 
@@ -543,6 +549,15 @@ const closeModal = () => {
   }, 200)
 }
 
+// 打开找回密码
+const openResetPassword = () => {
+  isAnimating.value = false
+  unlock()
+  setTimeout(() => {
+    emit('open-reset-password')
+  }, 200)
+}
+
 // 获取邮件功能配置
 const fetchEmailConfig = async () => {
   try {
@@ -785,6 +800,24 @@ onMounted(() => {
 
 .switch-btn:hover {
   opacity: 0.8;
+}
+
+.forgot-password {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.forgot-btn {
+  background: none;
+  border: none;
+  color: var(--text-color-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.forgot-btn:hover {
+  color: var(--primary-color);
 }
 
 /* 邮箱验证码输入框和按钮样式 */
