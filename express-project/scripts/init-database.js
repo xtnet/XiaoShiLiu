@@ -121,7 +121,6 @@ class DatabaseInitializer {
         \`verified\` tinyint(1) DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证',
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`user_id\` (\`user_id\`),
-        UNIQUE KEY \`email\` (\`email\`),
         KEY \`idx_user_id\` (\`user_id\`),
         KEY \`idx_email\` (\`email\`),
         KEY \`idx_created_at\` (\`created_at\`)
@@ -423,7 +422,7 @@ class DatabaseInitializer {
     try {
       connection = await pool.getConnection();
       console.log('插入默认管理员账户...');
-      
+
       // 默认管理员账户信息
       // 用户名: admin
       // 密码: 123456 (SHA-256加密后的值)
@@ -432,7 +431,7 @@ class DatabaseInitializer {
         ('admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
         ON DUPLICATE KEY UPDATE \`username\` = VALUES(\`username\`)
       `;
-      
+
       await connection.execute(adminSql);
     } catch (error) {
       console.error('插入默认管理员账户失败:', error.message);
@@ -472,10 +471,29 @@ class DatabaseInitializer {
   }
 }
 
+// 等待用户按回车退出
+async function waitForExit() {
+  console.log('\n按回车键退出...');
+  return new Promise((resolve) => {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.once('data', () => {
+      process.stdin.setRawMode(false);
+      resolve();
+    });
+  });
+}
+
 // 如果直接运行此脚本
 if (require.main === module) {
   const initializer = new DatabaseInitializer();
-  initializer.run();
+  initializer.run().then(async () => {
+    await waitForExit();
+    process.exit(0);
+  }).catch(async () => {
+    await waitForExit();
+    process.exit(1);
+  });
 }
 
 module.exports = DatabaseInitializer;

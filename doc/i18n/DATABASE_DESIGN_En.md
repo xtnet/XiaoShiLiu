@@ -19,6 +19,7 @@ Database structure design for the Xiaoshiliu-style image-text community project 
 | id | BIGINT | User ID | Primary key, auto-increment |
 | password | VARCHAR(255) | Password | Nullable |
 | user_id | VARCHAR(50) | Xiaoshiliu ID | Unique identifier |
+| email | VARCHAR(100) | Email | Optional, nullable |
 | nickname | VARCHAR(100) | Nickname | Display name |
 | avatar | VARCHAR(500) | Avatar URL | User avatar |
 | bio | TEXT | Personal Bio | User introduction |

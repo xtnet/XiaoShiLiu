@@ -281,7 +281,7 @@ class DataGenerator {
     const tables = [
       'user_sessions', 'notifications', 'comments', 'collections',
       'likes', 'post_tags', 'follows', 'post_images', 'posts',
-      'tags', 'users', 'admin', 'categories','audit','post_videos'
+      'tags', 'users', 'admin', 'categories', 'audit', 'post_videos'
     ];
 
     for (const table of tables) {
@@ -1252,10 +1252,29 @@ class DataGenerator {
   }
 }
 
+// 等待用户按回车退出
+async function waitForExit() {
+  console.log('\n按回车键退出...');
+  return new Promise((resolve) => {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.once('data', () => {
+      process.stdin.setRawMode(false);
+      resolve();
+    });
+  });
+}
+
 // 运行数据生成器
 if (require.main === module) {
   const generator = new DataGenerator();
-  generator.insertData();
+  generator.insertData().then(async () => {
+    await waitForExit();
+    process.exit(0);
+  }).catch(async () => {
+    await waitForExit();
+    process.exit(1);
+  });
 }
 
 module.exports = DataGenerator;

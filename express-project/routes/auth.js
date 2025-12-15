@@ -169,6 +169,119 @@ router.post('/send-email-code', async (req, res) => {
   }
 });
 
+// 绑定邮箱
+router.post('/bind-email', authenticateToken, async (req, res) => {
+  try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
+    const { email, emailCode } = req.body;
+    const userId = req.user.id;
+
+    if (!email || !emailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '请输入邮箱和验证码' });
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱格式不正确' });
+    }
+
+    // 检查邮箱是否已被其他用户使用
+    const [existingUser] = await pool.execute(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, userId.toString()]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.CONFLICT, message: '该邮箱已被其他用户绑定' });
+    }
+
+    // 验证邮箱验证码
+    const storedEmailCode = emailCodeStore.get(email);
+    if (!storedEmailCode) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期或不存在' });
+    }
+
+    if (Date.now() > storedEmailCode.expires) {
+      emailCodeStore.delete(email);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码已过期' });
+    }
+
+    if (emailCode !== storedEmailCode.code) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮箱验证码错误' });
+    }
+
+    // 验证码验证成功，删除已使用的验证码
+    emailCodeStore.delete(email);
+
+    // 更新用户邮箱
+    await pool.execute(
+      'UPDATE users SET email = ? WHERE id = ?',
+      [email, userId.toString()]
+    );
+
+    console.log(`用户绑定邮箱成功 - 用户ID: ${userId}, 邮箱: ${email}`);
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '邮箱绑定成功',
+      data: { email }
+    });
+
+  } catch (error) {
+    console.error('绑定邮箱失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '绑定邮箱失败，请稍后重试' });
+  }
+});
+
+// 解除邮箱绑定
+router.delete('/unbind-email', authenticateToken, async (req, res) => {
+  try {
+    // 检查邮件功能是否启用
+    if (!emailConfig.enabled) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '邮件功能未启用' });
+    }
+
+    const userId = req.user.id;
+
+    // 检查用户是否已绑定邮箱
+    const [userRows] = await pool.execute(
+      'SELECT email FROM users WHERE id = ?',
+      [userId.toString()]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ code: RESPONSE_CODES.NOT_FOUND, message: '用户不存在' });
+    }
+
+    const currentEmail = userRows[0].email;
+    if (!currentEmail || currentEmail.trim() === '') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ code: RESPONSE_CODES.VALIDATION_ERROR, message: '您尚未绑定邮箱' });
+    }
+
+    // 解除邮箱绑定（将email设为空字符串）
+    await pool.execute(
+      'UPDATE users SET email = ? WHERE id = ?',
+      ['', userId.toString()]
+    );
+
+    console.log(`用户解除邮箱绑定成功 - 用户ID: ${userId}, 原邮箱: ${currentEmail}`);
+
+    res.json({
+      code: RESPONSE_CODES.SUCCESS,
+      message: '邮箱解绑成功'
+    });
+
+  } catch (error) {
+    console.error('解除邮箱绑定失败:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ code: RESPONSE_CODES.ERROR, message: '解除邮箱绑定失败，请稍后重试' });
+  }
+});
+
 // 用户注册
 router.post('/register', async (req, res) => {
   try {
@@ -273,8 +386,8 @@ router.post('/register', async (req, res) => {
     const defaultAvatar = '';
 
     // 插入新用户（密码使用SHA2哈希加密）
-    // 邮件功能未启用时，email字段存储NULL
-    const userEmail = isEmailEnabled ? email : null;
+    // 邮件功能未启用时，email字段存储空字符串
+    const userEmail = isEmailEnabled ? email : '';
     const [result] = await pool.execute(
       'INSERT INTO users (user_id, nickname, password, email, avatar, bio, location) VALUES (?, ?, SHA2(?, 256), ?, ?, ?, ?)',
       [user_id, nickname, password, userEmail, defaultAvatar, '', ipLocation]
@@ -499,7 +612,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     const [userRows] = await pool.execute(
-      'SELECT id, user_id, nickname, avatar, bio, location, follow_count, fans_count, like_count, is_active, created_at, gender, zodiac_sign, mbti, education, major, interests,verified FROM users WHERE id = ?',
+      'SELECT id, user_id, nickname, avatar, bio, location, email, follow_count, fans_count, like_count, is_active, created_at, gender, zodiac_sign, mbti, education, major, interests,verified FROM users WHERE id = ?',
       [userId.toString()]
     );
 

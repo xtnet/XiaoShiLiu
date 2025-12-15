@@ -56,6 +56,34 @@
 
 
 
+          <!-- 邮箱（仅在邮件功能启用时显示） -->
+          <div v-if="emailEnabled" class="form-group">
+            <label class="form-label">邮箱:</label>
+            <div v-if="hasEmail" class="email-display">
+              <span class="email-text">{{ props.userInfo.email }}</span>
+              <button type="button" class="unbind-email-btn" @click="handleUnbindEmail" :disabled="isUnbindingEmail">
+                {{ isUnbindingEmail ? '解绑中...' : '解绑' }}
+              </button>
+            </div>
+            <div v-else class="email-bind-container">
+              <div class="email-input-row">
+                <input v-model="emailForm.email" type="email" placeholder="请输入邮箱地址" maxlength="100" autocomplete="off" />
+              </div>
+              <div class="email-code-row">
+                <input v-model="emailForm.code" type="text" placeholder="请输入验证码" maxlength="6" autocomplete="off" />
+                <button type="button" class="email-code-btn"
+                  :disabled="userStore.isSendingEmailCode || userStore.emailCodeCountdown > 0 || !isEmailValid"
+                  @click="handleSendEmailCode">
+                  {{ userStore.emailCodeCountdown > 0 ? `${userStore.emailCodeCountdown}秒` : (userStore.isSendingEmailCode ? '发送中...' : '获取验证码') }}
+                </button>
+              </div>
+              <button type="button" class="bind-email-btn" :disabled="!emailForm.email || !emailForm.code || isBindingEmail" @click="handleBindEmail">
+                {{ isBindingEmail ? '绑定中...' : '绑定邮箱' }}
+              </button>
+              <span v-if="emailError" class="email-error">{{ emailError }}</span>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">性别:</label>
             <DropdownSelect v-model="form.gender" :options="genderOptions" placeholder="请选择性别" label-key="label"
@@ -141,9 +169,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, watch, inject, computed } from 'vue'
+import { ref, reactive, nextTick, watch, inject, computed, onMounted } from 'vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { imageUploadApi } from '@/api/index.js'
+import { imageUploadApi, authApi } from '@/api/index.js'
 import Cropper from 'cropperjs'
 import 'cropperjs/dist/cropper.css'
 import EmojiPicker from '@/components/EmojiPicker.vue'
@@ -154,6 +182,7 @@ import ContentEditableInput from '@/components/ContentEditableInput.vue'
 import CropModal from './CropModal.vue'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { sanitizeContent } from '@/utils/contentSecurity'
+import { useUserStore } from '@/stores/user.js'
 
 const props = defineProps({
   visible: {
@@ -174,7 +203,114 @@ const $message = inject('$message')
 // 滚动锁定
 const { lock, unlock } = useScrollLock()
 
+// 用户store
+const userStore = useUserStore()
+
 const defaultAvatar = new URL('@/assets/imgs/avatar.png', import.meta.url).href
+
+// 邮箱相关
+const emailEnabled = ref(false)
+const emailForm = reactive({
+  email: '',
+  code: ''
+})
+const emailError = ref('')
+const isBindingEmail = ref(false)
+const isUnbindingEmail = ref(false)
+const showUnbindConfirm = ref(false)
+
+// 计算属性：是否已绑定邮箱
+const hasEmail = computed(() => {
+  return props.userInfo.email && props.userInfo.email.trim() !== ''
+})
+
+// 计算属性：邮箱格式是否有效
+const isEmailValid = computed(() => {
+  return emailForm.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailForm.email)
+})
+
+// 获取邮件功能配置
+const fetchEmailConfig = async () => {
+  try {
+    const response = await authApi.getEmailConfig()
+    if (response.success) {
+      emailEnabled.value = response.data.emailEnabled
+    }
+  } catch (error) {
+    console.error('获取邮件配置失败:', error)
+  }
+}
+
+// 发送邮箱验证码
+const handleSendEmailCode = async () => {
+  if (!emailForm.email) return
+  emailError.value = ''
+  
+  const result = await userStore.sendEmailCode({ email: emailForm.email })
+  if (!result.success) {
+    emailError.value = result.message
+  }
+}
+
+// 绑定邮箱
+const handleBindEmail = async () => {
+  if (!emailForm.email || !emailForm.code) return
+  emailError.value = ''
+  isBindingEmail.value = true
+  
+  try {
+    const result = await userStore.bindEmail({
+      email: emailForm.email,
+      emailCode: emailForm.code
+    })
+    
+    if (result.success) {
+      $message.success('邮箱绑定成功')
+      // 清空表单
+      emailForm.email = ''
+      emailForm.code = ''
+      // 触发父组件刷新用户信息
+      emit('save', { email: emailForm.email })
+    } else {
+      emailError.value = result.message
+    }
+  } catch (error) {
+    emailError.value = '绑定失败，请稍后重试'
+  } finally {
+    isBindingEmail.value = false
+  }
+}
+
+// 解除邮箱绑定
+const handleUnbindEmail = async () => {
+  // 二次确认
+  if (!confirm('确定要解除邮箱绑定吗？解绑后将无法通过邮箱找回密码。')) {
+    return
+  }
+  
+  isUnbindingEmail.value = true
+  
+  try {
+    const result = await userStore.unbindEmail()
+    
+    if (result.success) {
+      $message.success('邮箱解绑成功')
+      // 触发父组件刷新用户信息
+      emit('save', { email: '' })
+    } else {
+      $message.error(result.message || '解绑失败')
+    }
+  } catch (error) {
+    $message.error('解绑失败，请稍后重试')
+  } finally {
+    isUnbindingEmail.value = false
+  }
+}
+
+// 组件挂载时获取邮件配置
+onMounted(() => {
+  fetchEmailConfig()
+})
 
 // 表单数据
 const form = reactive({
@@ -1196,5 +1332,115 @@ const handleSave = async () => {
     width: fit-content;
   }
 
+}
+
+/* 邮箱相关样式 */
+.email-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.email-text {
+  color: var(--text-color-primary);
+  font-size: 14px;
+}
+
+.unbind-email-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unbind-email-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.unbind-email-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-bind-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.email-input-row input,
+.email-code-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: var(--bg-color-primary);
+  color: var(--text-color-primary);
+  box-sizing: border-box;
+  caret-color: var(--primary-color);
+}
+
+.email-input-row input:focus,
+.email-code-row input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.email-code-row {
+  display: flex;
+  gap: 8px;
+}
+
+.email-code-btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.email-code-btn:hover:not(:disabled) {
+  background-color: var(--primary-color-dark);
+  color: white;
+}
+
+.email-code-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bind-email-btn {
+  padding: 10px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.bind-email-btn:hover:not(:disabled) {
+  background-color: var(--primary-color-dark);
+}
+
+.bind-email-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-error {
+  color: var(--primary-color);
+  font-size: 12px;
 }
 </style>

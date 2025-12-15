@@ -158,7 +158,7 @@ export const useUserStore = defineStore('user', () => {
   const getCurrentUser = async () => {
     try {
       const response = await authApi.getCurrentUser()
-      
+
       if (response.success && response.data) {
         userInfo.value = response.data
         // 更新localStorage中的用户信息
@@ -210,7 +210,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       isSendingEmailCode.value = true
       const response = await authApi.sendEmailCode(email)
-      
+
       if (response.success) {
         startEmailCodeCountdown()
         return { success: true, message: '验证码已发送，请查收邮箱' }
@@ -222,6 +222,48 @@ export const useUserStore = defineStore('user', () => {
       return { success: false, message: '网络错误，请稍后重试' }
     } finally {
       isSendingEmailCode.value = false
+    }
+  }
+
+  // 绑定邮箱
+  const bindEmail = async (data) => {
+    try {
+      const response = await authApi.bindEmail(data)
+
+      if (response.success) {
+        // 更新本地用户信息
+        if (userInfo.value) {
+          userInfo.value.email = data.email
+          localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+        }
+        return { success: true, message: '邮箱绑定成功' }
+      } else {
+        return { success: false, message: response.message || '绑定邮箱失败' }
+      }
+    } catch (error) {
+      console.error('绑定邮箱失败:', error)
+      return { success: false, message: '网络错误，请稍后重试' }
+    }
+  }
+
+  // 解除邮箱绑定
+  const unbindEmail = async () => {
+    try {
+      const response = await authApi.unbindEmail()
+
+      if (response.success) {
+        // 更新本地用户信息
+        if (userInfo.value) {
+          userInfo.value.email = ''
+          localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+        }
+        return { success: true, message: '邮箱解绑成功' }
+      } else {
+        return { success: false, message: response.message || '解绑邮箱失败' }
+      }
+    } catch (error) {
+      console.error('解绑邮箱失败:', error)
+      return { success: false, message: '网络错误，请稍后重试' }
     }
   }
 
@@ -256,7 +298,7 @@ export const useUserStore = defineStore('user', () => {
     refreshToken,
     userInfo,
     isLoading,
-    
+
     // 邮箱验证码相关状态
     isSendingEmailCode,
     emailCodeCountdown,
@@ -276,6 +318,8 @@ export const useUserStore = defineStore('user', () => {
 
     // 邮箱验证码相关方法
     sendEmailCode,
-    clearEmailCodeCountdown
+    clearEmailCodeCountdown,
+    bindEmail,
+    unbindEmail
   }
 })

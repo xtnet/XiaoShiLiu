@@ -239,6 +239,21 @@ export const authApi = {
   // 发送邮箱验证码
   sendEmailCode(data) {
     return request.post('/auth/send-email-code', data)
+  },
+
+  // 获取邮件功能配置
+  getEmailConfig() {
+    return request.get('/auth/email-config')
+  },
+
+  // 绑定邮箱
+  bindEmail(data) {
+    return request.post('/auth/bind-email', data)
+  },
+
+  // 解除邮箱绑定
+  unbindEmail() {
+    return request.delete('/auth/unbind-email')
   }
 }
 

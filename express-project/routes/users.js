@@ -1141,7 +1141,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     // 获取更新后的用户信息
     const [updatedUser] = await pool.execute(
-      'SELECT id, user_id, nickname, avatar, bio, location, gender, zodiac_sign, mbti, education, major, interests, follow_count, fans_count, like_count FROM users WHERE id = ?',
+      'SELECT id, user_id, nickname, avatar, bio, location, email, gender, zodiac_sign, mbti, education, major, interests, follow_count, fans_count, like_count FROM users WHERE id = ?',
       [targetUserId.toString()]
     );
 

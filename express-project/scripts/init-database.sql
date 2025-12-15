@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS `users` (
   `verified` tinyint(1) DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证',
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),
-  UNIQUE KEY `email` (`email`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_email` (`email`),
   KEY `idx_created_at` (`created_at`)

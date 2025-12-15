@@ -12,13 +12,13 @@
           <p class="auth-subtitle">{{ isLoginMode ? '欢迎回来！' : '加入我们，开始分享美好生活' }}</p>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="auth-form" novalidate>
+        <form @submit.prevent="handleSubmit" class="auth-form" novalidate autocomplete="off">
           <div class="form-group">
             <label for="user_id" class="form-label">小石榴号</label>
             <input type="text" id="user_id" v-model="formData.user_id" class="form-input"
               :class="{ 'error': showErrors && errors.user_id }"
               :placeholder="isLoginMode ? '请输入小石榴号' : '请输入小石榴号（3-15位字母数字下划线）'" maxlength="15"
-              @input="clearError('user_id')" />
+              autocomplete="off" @input="clearError('user_id')" />
             <span v-if="showErrors && errors.user_id" class="error-message">{{ errors.user_id }}</span>
           </div>
 
@@ -26,7 +26,7 @@
             <label for="nickname" class="form-label">昵称</label>
             <input type="text" id="nickname" v-model="formData.nickname" class="form-input"
               :class="{ 'error': showErrors && errors.nickname }" placeholder="请输入昵称（少于10位）" maxlength="10"
-              @input="clearError('nickname')" />
+              autocomplete="off" @input="clearError('nickname')" />
             <span v-if="showErrors && errors.nickname" class="error-message">{{ errors.nickname }}</span>
           </div>
 
@@ -34,7 +34,7 @@
             <label for="password" class="form-label">密码</label>
             <input type="password" id="password" v-model="formData.password" class="form-input"
               :class="{ 'error': showErrors && errors.password }" :placeholder="isLoginMode ? '请输入密码' : '请设置密码（6-20位）'"
-              maxlength="20" @input="clearError('password')" />
+              maxlength="20" autocomplete="new-password" @input="clearError('password')" />
             <span v-if="showErrors && errors.password" class="error-message">{{ errors.password }}</span>
           </div>
 
@@ -42,7 +42,7 @@
             <label for="confirmPassword" class="form-label">确认密码</label>
             <input type="password" id="confirmPassword" v-model="formData.confirmPassword" class="form-input"
               :class="{ 'error': showErrors && errors.confirmPassword }" placeholder="请再次输入密码" maxlength="20"
-              @input="clearError('confirmPassword')" />
+              autocomplete="new-password" @input="clearError('confirmPassword')" />
             <span v-if="showErrors && errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</span>
           </div>
 
@@ -50,7 +50,7 @@
             <label for="email" class="form-label">邮箱</label>
             <input type="email" id="email" v-model="formData.email" class="form-input"
               :class="{ 'error': showErrors && errors.email }" placeholder="请输入邮箱地址" maxlength="100"
-              @input="clearError('email')" />
+              autocomplete="off" @input="clearError('email')" />
             <span v-if="showErrors && errors.email" class="error-message">{{ errors.email }}</span>
           </div>
 
@@ -59,9 +59,9 @@
             <div class="form-input-with-button">
               <input type="text" id="emailCode" v-model="formData.emailCode" class="form-input"
                 :class="{ 'error': showErrors && errors.emailCode }" placeholder="请输入邮箱验证码" maxlength="6"
-                @input="clearError('emailCode')" />
+                autocomplete="one-time-code" @input="clearError('emailCode')" />
               <button type="button" class="email-code-btn"
-                :disabled="userStore.isSendingEmailCode || userStore.emailCodeCountdown > 0 || !formData.email"
+                :disabled="userStore.isSendingEmailCode || userStore.emailCodeCountdown > 0 || !isEmailValid"
                 @click="sendEmailCode">
                 {{ userStore.emailCodeCountdown > 0 ? `${userStore.emailCodeCountdown}秒后重发` : (userStore.isSendingEmailCode ? '发送中...' : '获取验证码') }}
               </button>
@@ -165,6 +165,11 @@ const captchaId = ref('')
 const captchaSvg = ref('')
 const showCaptchaModal = ref(false)
 const isLoadingCaptcha = ref(false)
+
+// 计算属性：邮箱格式是否有效
+const isEmailValid = computed(() => {
+  return formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+})
 
 const isFormValid = computed(() => {
   if (isLoginMode.value) {

@@ -195,7 +195,7 @@ Authorization: Bearer <your_jwt_token>
 **請求參數**:
 | 參數 | 型別 | 必填 | 說明 |
 |------|------|------|------|
-| email | string | 是 | 郵箱地址 |
+| email | string | 是 | 郵箱地址（調用此接口時必填） |
 
 **回應範例**:
 ```json

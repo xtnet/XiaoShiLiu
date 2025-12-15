@@ -195,7 +195,7 @@ General parameters for interfaces that support pagination:
 **Request Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| email | string | Yes | Email address |
+| email | string | Yes | Email address (required when calling this API) |
 
 **Response Example**:
 ```json

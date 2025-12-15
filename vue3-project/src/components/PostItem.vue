@@ -65,7 +65,6 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 
 // Props定义
