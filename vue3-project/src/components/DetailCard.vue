@@ -2524,7 +2524,7 @@ onMounted(async () => {
     if (!scrollContainer || isLoadingMore.value || !hasMoreCommentsToShow.value) return
     
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer
-    console.log('滚动位置:', scrollTop, '高度:', scrollHeight, '可视高度:', clientHeight, '距离底部:', scrollHeight - scrollTop - clientHeight)
+
     // 当滚动到距离底部100px时触发加载更多
     if (scrollHeight - scrollTop <= clientHeight + 100) {
       loadMoreComments()
