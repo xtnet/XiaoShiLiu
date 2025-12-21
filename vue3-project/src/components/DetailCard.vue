@@ -306,11 +306,9 @@
                   </div>
                 </div>
 
-                <!-- 加载更多按钮 -->
-                <div v-if="hasMoreCommentsToShow" class="load-more-container">
-                  <button class="load-more-btn" @click="loadMoreComments">
-                    点击查看更多评论
-                  </button>
+                <!-- 加载更多提示 -->
+                <div v-if="hasMoreCommentsToShow" class="load-more-comments">
+                  <span>加载更多中...</span>
                 </div>
 
                 <!-- 没有更多评论提示 -->
@@ -748,6 +746,8 @@ const replyingTo = ref(null)
 const expandedReplies = ref(new Set())
 
 const showEmojiPanel = ref(false)
+// 加载状态（防止重复请求）
+const isLoadingMore = ref(false)
 const showMentionPanel = ref(false)
 const showImageUpload = ref(false)
 const uploadedImages = ref([])
@@ -930,9 +930,12 @@ const loadMoreComments = async () => {
     return
   }
 
-  if (!hasMoreCommentsToShow.value) {
+  if (!hasMoreCommentsToShow.value || isLoadingMore.value) {
     return
   }
+
+  // 设置加载状态
+  isLoadingMore.value = true
 
   // 加载前：保存当前滚动位置
   // 移动端滚动容器是 contentSection，桌面端是 scrollableContent
@@ -963,6 +966,9 @@ const loadMoreComments = async () => {
     })
   } catch (error) {
     console.error('加载更多评论失败:', error)
+  } finally {
+    // 无论成功还是失败，都要重置加载状态
+    isLoadingMore.value = false
   }
 }
 
@@ -2512,21 +2518,45 @@ onMounted(async () => {
   window.addEventListener('resize', handleResize)
   document.addEventListener('keydown', handleKeydown)
 
+  // 滚动监听函数
+  const handleScroll = () => {
+    const scrollContainer = scrollableContent.value
+    if (!scrollContainer || isLoadingMore.value || !hasMoreCommentsToShow.value) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+
+    // 当滚动到距离底部100px时触发加载更多
+    if (scrollHeight - scrollTop <= clientHeight + 100) {
+      loadMoreComments()
+    }
+  }
+
   if (window.innerWidth <= 768) {
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', adjustMobilePadding)
       window.visualViewport.addEventListener('scroll', adjustMobilePadding)
     }
     
-    if (contentSection.value) {
-      const handleScroll = () => {
-        adjustMobilePadding()
-      }
-      contentSection.value.addEventListener('scroll', handleScroll, { passive: true })
+    if (scrollableContent.value) {
+      scrollableContent.value.addEventListener('scroll', handleScroll, { passive: true })
+      scrollableContent.value.addEventListener('scroll', adjustMobilePadding)
       
       const cleanupScroll = () => {
-        if (contentSection.value) {
-          contentSection.value.removeEventListener('scroll', handleScroll)
+        if (scrollableContent.value) {
+          scrollableContent.value.removeEventListener('scroll', handleScroll)
+          scrollableContent.value.removeEventListener('scroll', adjustMobilePadding)
+        }
+      }
+      onUnmounted(cleanupScroll)
+    }
+  } else {
+    // 监听scrollableContent的滚动事件
+    if (scrollableContent.value) {
+      scrollableContent.value.addEventListener('scroll', handleScroll, { passive: true })
+      
+      const cleanupScroll = () => {
+        if (scrollableContent.value) {
+          scrollableContent.value.removeEventListener('scroll', handleScroll)
         }
       }
       onUnmounted(cleanupScroll)
@@ -4546,27 +4576,13 @@ function handleAvatarError(event) {
 }
 
 
-/* 加载更多按钮样式 */
-.load-more-container {
+/* 加载更多提示样式 */
+.load-more-comments {
   display: flex;
   justify-content: center;
   padding: 16px 0;
-}
-
-.load-more-btn {
-  background: transparent;
   color: var(--text-color-secondary);
-  border: none;
-  border-radius: 20px;
-  padding: 8px 24px;
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.load-more-btn:hover {
-  color: var(--text-color-primary);
-  background: var(--bg-color-secondary);
 }
 
 .no-more-comments {
