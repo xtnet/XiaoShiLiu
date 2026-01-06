@@ -746,6 +746,7 @@ const replyingTo = ref(null)
 const expandedReplies = ref(new Set())
 
 const showEmojiPanel = ref(false)
+const hasTriggeredBottom = ref(false) // 追踪是否已触发底部事件
 // 加载状态（防止重复请求）
 const isLoadingMore = ref(false)
 const showMentionPanel = ref(false)
@@ -2527,7 +2528,13 @@ onMounted(async () => {
 
     // 当滚动到距离底部100px时触发加载更多
     if (scrollHeight - scrollTop <= clientHeight + 100) {
-      loadMoreComments()
+      if (!hasTriggeredBottom.value) {
+        hasTriggeredBottom.value = true
+        loadMoreComments()
+      }
+    } else {
+      // 离开底部后重置触发状态，允许再次触发
+      hasTriggeredBottom.value = false
     }
   }
 
