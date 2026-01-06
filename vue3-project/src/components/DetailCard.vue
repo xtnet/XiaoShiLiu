@@ -566,7 +566,7 @@ const isInputFocused = ref(false)
 const scrollableContent = ref(null)
 const contentSection = ref(null)
 const authorWrapper = ref(null)
-let lastScrollTop = 0
+const lastScrollTop = ref(0)
 
 const currentImageIndex = ref(0)
 const showImageControls = ref(false)
@@ -942,7 +942,7 @@ const loadMoreComments = async () => {
   // 移动端滚动容器是 contentSection，桌面端是 scrollableContent
   const scrollContainer = (window.innerWidth <= 768 && contentSection.value) ? contentSection.value : scrollableContent.value
   if (scrollContainer) {
-    lastScrollTop = scrollContainer.scrollTop
+    lastScrollTop.value = scrollContainer.scrollTop
   }
 
   try {
@@ -962,7 +962,7 @@ const loadMoreComments = async () => {
     nextTick(() => {
       const scrollContainer = (window.innerWidth <= 768 && contentSection.value) ? contentSection.value : scrollableContent.value
       if (scrollContainer) {
-        scrollContainer.scrollTop = lastScrollTop
+        scrollContainer.scrollTop = lastScrollTop.value
       }
     })
   } catch (error) {
